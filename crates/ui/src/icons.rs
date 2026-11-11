@@ -1,0 +1,581 @@
+//! Phosphor Icons (MIT), Simple Icons brand marks (CC0) and the Serein mark rasterized once
+//! into one bundled atlas and tinted at draw time.
+//!
+//! `assets/icons/atlas.png` holds white glyphs on transparency in fixed 64px cells;
+//! `index.tsv` maps upstream icon names to cells. See `assets/icons/README.md` for provenance.
+use crate::design;
+use egui::emath::GuiRounding;
+use egui::{Color32, ColorImage, Rect, Response, Sense, TextureHandle, Vec2};
+use std::sync::OnceLock;
+
+const ATLAS: &[u8] = include_bytes!("../../../assets/icons/atlas.png");
+const INDEX: &str = include_str!("../../../assets/icons/index.tsv");
+const COLUMNS: usize = 8;
+const CELL: f32 = 64.0;
+const GLYPH: f32 = 56.0;
+const LAYER_CELLS: [u32; 4] = [16, 24, 32, 64];
+const TEXTURE_KEY: &str = "phosphor-icons";
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Icon {
+	ChevronDown,
+	ChevronRight,
+	Gear,
+	Microphone,
+	MicrophoneSlash,
+	Headphones,
+	HeadphonesSlash,
+	Pin,
+	People,
+	AddPeople,
+	Profile,
+	Search,
+	Plus,
+	Smile,
+	Bell,
+	Phone,
+	InCall,
+	HangUp,
+	Video,
+	VideoSlash,
+	ScreenShare,
+	Activities,
+	Soundboard,
+	Reply,
+	Pencil,
+	More,
+	Inbox,
+	Help,
+	Reload,
+	Threads,
+	Speaker,
+	Hash,
+	Forum,
+	Send,
+	Attach,
+	Close,
+	External,
+	GitHub,
+	Twitch,
+	Steam,
+	Spotify,
+	YouTube,
+	XLogo,
+	Reddit,
+	Facebook,
+	Instagram,
+	TikTok,
+	PayPal,
+	Amazon,
+	Bluesky,
+	Mastodon,
+	Skype,
+	GameController,
+	Television,
+	Globe,
+	Link,
+	Copy,
+	Verified,
+	Calendar,
+	Serein,
+	File,
+	FileImage,
+	FilePdf,
+	FileZip,
+	FileText,
+	FileCode,
+	FileAudio,
+	FileVideo,
+	Trash,
+	ArrowDown,
+	ArrowUp,
+	Check,
+	Gif,
+	Star,
+	StarFill,
+	Fire,
+	ArrowLeft,
+	PlayStation,
+	BattleNet,
+	EpicGames,
+	LeagueOfLegends,
+	RiotGames,
+	Bungie,
+	Roblox,
+	Crunchyroll,
+	Ebay,
+	Folder,
+	FolderOpen,
+	CaretLeft,
+	Download,
+	ArrowRight,
+	Image,
+	Sparkle,
+	Compass,
+	Megaphone,
+	ShieldWarning,
+	Crown,
+	ChartBar,
+	ShoppingCart,
+	Lock,
+	EyeSlash,
+	Sliders,
+	SortArrows,
+	Thread,
+	DeviceMobile,
+	/// Stacked servers, for mutual-server counts.
+	Servers,
+	Fullscreen,
+	Cut,
+	Paste,
+	SelectAll,
+	/// Horizontally mirrored reply glyph from the shared atlas.
+	Forward,
+}
+
+impl Icon {
+	/// Canonical atlas cells; Forward reuses the mirrored Reply cell.
+	pub const ALL: [Icon; 110] = [
+		Icon::ChevronDown,
+		Icon::ChevronRight,
+		Icon::Gear,
+		Icon::Microphone,
+		Icon::MicrophoneSlash,
+		Icon::Headphones,
+		Icon::HeadphonesSlash,
+		Icon::Pin,
+		Icon::People,
+		Icon::AddPeople,
+		Icon::Profile,
+		Icon::Search,
+		Icon::Plus,
+		Icon::Smile,
+		Icon::Bell,
+		Icon::Phone,
+		Icon::InCall,
+		Icon::HangUp,
+		Icon::Video,
+		Icon::VideoSlash,
+		Icon::ScreenShare,
+		Icon::Activities,
+		Icon::Soundboard,
+		Icon::Reply,
+		Icon::Pencil,
+		Icon::More,
+		Icon::Inbox,
+		Icon::Help,
+		Icon::Reload,
+		Icon::Threads,
+		Icon::Speaker,
+		Icon::Hash,
+		Icon::Forum,
+		Icon::Send,
+		Icon::Attach,
+		Icon::Close,
+		Icon::External,
+		Icon::GitHub,
+		Icon::Twitch,
+		Icon::Steam,
+		Icon::Spotify,
+		Icon::YouTube,
+		Icon::XLogo,
+		Icon::Reddit,
+		Icon::Facebook,
+		Icon::Instagram,
+		Icon::TikTok,
+		Icon::PayPal,
+		Icon::Amazon,
+		Icon::Bluesky,
+		Icon::Mastodon,
+		Icon::Skype,
+		Icon::GameController,
+		Icon::Television,
+		Icon::Globe,
+		Icon::Link,
+		Icon::Copy,
+		Icon::Verified,
+		Icon::Calendar,
+		Icon::Serein,
+		Icon::File,
+		Icon::FileImage,
+		Icon::FilePdf,
+		Icon::FileZip,
+		Icon::FileText,
+		Icon::FileCode,
+		Icon::FileAudio,
+		Icon::FileVideo,
+		Icon::Trash,
+		Icon::ArrowDown,
+		Icon::ArrowUp,
+		Icon::Check,
+		Icon::Gif,
+		Icon::Star,
+		Icon::StarFill,
+		Icon::Fire,
+		Icon::ArrowLeft,
+		Icon::PlayStation,
+		Icon::BattleNet,
+		Icon::EpicGames,
+		Icon::LeagueOfLegends,
+		Icon::RiotGames,
+		Icon::Bungie,
+		Icon::Roblox,
+		Icon::Crunchyroll,
+		Icon::Ebay,
+		Icon::Folder,
+		Icon::FolderOpen,
+		Icon::CaretLeft,
+		Icon::Download,
+		Icon::ArrowRight,
+		Icon::Image,
+		Icon::Sparkle,
+		Icon::Compass,
+		Icon::Megaphone,
+		Icon::ShieldWarning,
+		Icon::Crown,
+		Icon::ChartBar,
+		Icon::ShoppingCart,
+		Icon::Lock,
+		Icon::EyeSlash,
+		Icon::Sliders,
+		Icon::SortArrows,
+		Icon::Thread,
+		Icon::DeviceMobile,
+		Icon::Servers,
+		Icon::Fullscreen,
+		Icon::Cut,
+		Icon::Paste,
+		Icon::SelectAll,
+	];
+	/// Upstream icon name recorded in `index.tsv`.
+	fn asset(self) -> &'static str {
+		match self {
+			Icon::Folder => "folder",
+			Icon::FolderOpen => "folder-open",
+			Icon::ChevronDown => "caret-down",
+			Icon::ChevronRight => "caret-right",
+			Icon::Gear => "gear",
+			Icon::Microphone => "microphone",
+			Icon::MicrophoneSlash => "microphone-slash",
+			Icon::Headphones => "headphones",
+			Icon::HeadphonesSlash => "headphones-slash",
+			Icon::Pin => "push-pin",
+			Icon::People => "users",
+			Icon::AddPeople => "user-plus",
+			Icon::Profile => "user-circle",
+			Icon::Search => "magnifying-glass",
+			Icon::Plus => "plus",
+			Icon::Smile => "smiley",
+			Icon::Bell => "bell",
+			Icon::Phone => "phone",
+			Icon::InCall => "phone-call",
+			Icon::HangUp => "phone-disconnect",
+			Icon::Video => "video-camera",
+			Icon::VideoSlash => "video-camera-slash",
+			Icon::ScreenShare => "monitor-arrow-up",
+			Icon::Activities => "rocket-launch",
+			Icon::Soundboard => "waveform",
+			Icon::Reply | Icon::Forward => "arrow-bend-up-left",
+			Icon::Pencil => "pencil-simple",
+			Icon::More => "dots-three",
+			Icon::Inbox => "tray",
+			Icon::Help => "question",
+			Icon::Reload => "arrow-clockwise",
+			Icon::Threads => "chats",
+			Icon::Thread => "thread",
+			Icon::Speaker => "speaker-high",
+			Icon::Hash => "hash",
+			Icon::Forum => "chat-centered-text",
+			Icon::Send => "paper-plane-right",
+			Icon::Attach => "plus-circle",
+			Icon::Close => "x",
+			Icon::External => "arrow-square-out",
+			Icon::GitHub => "github-logo",
+			Icon::Twitch => "twitch-logo",
+			Icon::Steam => "steam-logo",
+			Icon::Spotify => "spotify-logo",
+			Icon::YouTube => "youtube-logo",
+			Icon::XLogo => "x-logo",
+			Icon::Reddit => "reddit-logo",
+			Icon::Facebook => "facebook-logo",
+			Icon::Instagram => "instagram-logo",
+			Icon::TikTok => "tiktok-logo",
+			Icon::PayPal => "paypal-logo",
+			Icon::Amazon => "amazon-logo",
+			Icon::Bluesky => "bluesky",
+			Icon::Mastodon => "mastodon-logo",
+			Icon::Skype => "skype-logo",
+			Icon::GameController => "game-controller",
+			Icon::Television => "television",
+			Icon::Globe => "globe",
+			Icon::Link => "link",
+			Icon::Copy => "copy",
+			Icon::Verified => "seal-check",
+			Icon::Calendar => "calendar-blank",
+			Icon::Serein => "serein-mark",
+			Icon::File => "file",
+			Icon::FileImage => "file-image",
+			Icon::FilePdf => "file-pdf",
+			Icon::FileZip => "file-zip",
+			Icon::FileText => "file-text",
+			Icon::FileCode => "file-code",
+			Icon::FileAudio => "file-audio",
+			Icon::FileVideo => "file-video",
+			Icon::Trash => "trash",
+			Icon::ArrowDown => "arrow-down",
+			Icon::ArrowUp => "arrow-up",
+			Icon::Check => "check",
+			Icon::Gif => "gif",
+			Icon::Star => "star",
+			Icon::StarFill => "star-fill",
+			Icon::Fire => "fire",
+			Icon::ArrowLeft => "arrow-left",
+			Icon::PlayStation => "playstation",
+			Icon::BattleNet => "battle-net",
+			Icon::EpicGames => "epic-games",
+			Icon::LeagueOfLegends => "league-of-legends",
+			Icon::RiotGames => "riot-games",
+			Icon::Bungie => "bungie",
+			Icon::Roblox => "roblox",
+			Icon::Crunchyroll => "crunchyroll",
+			Icon::Ebay => "ebay",
+			Icon::CaretLeft => "caret-left",
+			Icon::Download => "download-simple",
+			Icon::ArrowRight => "arrow-right",
+			Icon::Image => "image",
+			Icon::Sparkle => "sparkle",
+			Icon::Compass => "compass",
+			Icon::Megaphone => "megaphone-simple",
+			Icon::ShieldWarning => "shield-warning",
+			Icon::Crown => "crown",
+			Icon::ChartBar => "chart-bar",
+			Icon::ShoppingCart => "shopping-cart-simple",
+			Icon::Lock => "lock-simple",
+			Icon::EyeSlash => "eye-slash",
+			Icon::Sliders => "sliders-horizontal",
+			Icon::SortArrows => "arrows-down-up",
+			Icon::DeviceMobile => "device-mobile",
+			Icon::Servers => "hard-drives",
+			Icon::Fullscreen => "corners-out",
+			Icon::Cut => "scissors",
+			Icon::Paste => "clipboard-text",
+			Icon::SelectAll => "selection-all",
+		}
+	}
+	fn cell(self) -> usize {
+		if self == Self::Forward {
+			return Self::Reply.cell();
+		}
+		// Resolved once from the bundled index, then a plain array lookup per paint.
+		static CELLS: OnceLock<[usize; Icon::ALL.len()]> = OnceLock::new();
+		CELLS.get_or_init(|| {
+			let mut cells = [0; Icon::ALL.len()];
+			for icon in Icon::ALL {
+				let asset = icon.asset();
+				cells[icon as usize] = INDEX
+					.lines()
+					.find_map(|line| {
+						let (name, cell) = line.split_once('\t').expect("bundled icon index");
+						(name == asset).then(|| cell.parse().expect("bundled icon cell"))
+					})
+					.expect("every icon is in the bundled atlas");
+			}
+			cells
+		})[self as usize]
+	}
+}
+
+/// Decoded per upload rather than cached: the texture owns the pixels afterwards, and a
+/// retained copy would keep 1.7 MB alive for the whole session.
+fn decoded() -> egui::ColorImage {
+	let image = image::load_from_memory_with_format(ATLAS, image::ImageFormat::Png)
+		.expect("bundled icon atlas")
+		.into_rgba8();
+	let size = [image.width() as usize, image.height() as usize];
+	egui::ColorImage::from_rgba_unmultiplied(size, &image)
+}
+
+/// Upload the atlas for `ctx` during application creation, outside the render callback.
+pub fn install(ctx: &egui::Context) {
+	let _ = layer(ctx, 64);
+	let _ = layer(ctx, 32);
+}
+
+#[derive(Clone, Default)]
+struct AtlasLayers {
+	cells: Vec<(u32, TextureHandle)>,
+}
+
+fn source_image() -> &'static ColorImage {
+	static SOURCE: OnceLock<ColorImage> = OnceLock::new();
+	SOURCE.get_or_init(decoded)
+}
+
+fn layer(ctx: &egui::Context, cell: u32) -> TextureHandle {
+	let id = egui::Id::unique(TEXTURE_KEY);
+	if let Some(layers) = ctx.data(|data| data.get_temp::<AtlasLayers>(id))
+		&& let Some((_, texture)) = layers.cells.iter().find(|(stored, _)| *stored == cell)
+	{
+		return texture.clone();
+	}
+	let source = source_image();
+	let longest = source.resolution()[0].max(source.resolution()[1]) as u32;
+	let edge = (longest / CELL as u32) * cell;
+	let image = crate::resample::downscale_filter(
+		source,
+		edge.max(1),
+		image::imageops::FilterType::Triangle,
+	);
+	let texture = ctx.load_texture("Phosphor Icons 2.1.1", image, egui::TextureOptions::LINEAR);
+	ctx.data_mut(|data| {
+		let mut layers = data.get_temp::<AtlasLayers>(id).unwrap_or_default();
+		if !layers.cells.iter().any(|(stored, _)| *stored == cell) {
+			layers.cells.push((cell, texture.clone()));
+		}
+		data.insert_temp(id, layers);
+	});
+	texture
+}
+
+/// Paint `icon` centred in `rect` with `color`.
+pub fn paint(painter: &egui::Painter, icon: Icon, rect: Rect, color: Color32) {
+	let size = rect.width().min(rect.height());
+	let ppp = painter.pixels_per_point();
+	let drawn = size * (CELL / GLYPH);
+	let rect = Rect::from_center_size(rect.center(), Vec2::splat(drawn)).round_to_pixels(ppp);
+	let cell = crate::resample::covering_edge(drawn * ppp, &LAYER_CELLS);
+	let texture = layer(painter.ctx(), cell);
+	let index = icon.cell();
+	let col = (index % COLUMNS) as f32;
+	let row = (index / COLUMNS) as f32;
+	let rows = source_image().resolution()[1] as f32 / CELL;
+	let mut uv = Rect::from_min_max(
+		egui::pos2(col / COLUMNS as f32, row / rows),
+		egui::pos2((col + 1.0) / COLUMNS as f32, (row + 1.0) / rows),
+	);
+	if icon == Icon::Forward {
+		std::mem::swap(&mut uv.min.x, &mut uv.max.x);
+	}
+	painter.image(texture.id(), rect, uv, color);
+}
+
+/// `icon` as an atom, so widgets built from atoms (buttons, combo boxes) can show it beside text.
+pub fn atom(icon: Icon, size: f32, color: Color32) -> egui::Atom<'static> {
+	egui::Atom::paint(Vec2::splat(size), move |ui, args| {
+		paint(ui.painter(), icon, args.rect, color);
+	})
+}
+
+/// Glyph for a channel row: threads, forums, voice, announcements and direct messages.
+pub fn channel(kind: u8) -> Icon {
+	match kind {
+		1 => Icon::Profile,
+		3 => Icon::People,
+		2 | 13 => Icon::Speaker,
+		5 => Icon::Megaphone,
+		10..=12 => Icon::Threads,
+		15 | 16 => Icon::Forum,
+		_ => Icon::Hash,
+	}
+}
+
+/// Glyph size for one square standard button. The validated theme scale never changes its hitbox.
+pub(crate) fn button_glyph_size(size: f32) -> f32 {
+	(size * 0.70 * design::icon_scale()).min(size)
+}
+
+/// Square icon button that highlights on hover and exposes `label` to accessibility.
+pub fn button(ui: &mut egui::Ui, icon: Icon, size: f32, label: &str) -> Response {
+	button_with_tooltip(ui, icon, size, label, false)
+}
+
+/// Message toolbar labels appear as soon as the pointer reaches the action.
+pub(crate) fn button_immediate(ui: &mut egui::Ui, icon: Icon, size: f32, label: &str) -> Response {
+	button_with_tooltip(ui, icon, size, label, true)
+}
+
+pub(crate) fn immediate_tooltip(response: Response, label: &str) -> Response {
+	if (response.hovered() || response.has_focus())
+		&& !response.ctx.input(|input| input.pointer.any_down())
+		&& !egui::Popup::is_any_open(&response.ctx)
+	{
+		egui::Tooltip::for_widget(&response).show(|ui| {
+			ui.label(label);
+		});
+	}
+	response
+}
+
+fn button_with_tooltip(
+	ui: &mut egui::Ui,
+	icon: Icon,
+	size: f32,
+	label: &str,
+	immediate: bool,
+) -> Response {
+	let label = crate::i18n::translate_if_key(label);
+	let colors = design::palette(ui);
+	let (rect, response) = ui.allocate_exact_size(Vec2::splat(size), Sense::click());
+	if response.hovered() || response.has_focus() {
+		ui.painter().rect_filled(rect, 6, colors.hover);
+	}
+	let color = if !ui.is_enabled() {
+		colors.muted.gamma_multiply(0.5)
+	} else if icon == Icon::Trash {
+		colors
+			.danger
+			.gamma_multiply(if response.hovered() || response.has_focus() {
+				1.0
+			} else {
+				0.8
+			})
+	} else if response.hovered() || response.has_focus() {
+		colors.text_strong
+	} else {
+		colors.muted
+	};
+	paint(
+		ui.painter(),
+		icon,
+		Rect::from_center_size(rect.center(), Vec2::splat(button_glyph_size(size))),
+		color,
+	);
+	response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, ui.is_enabled(), &label));
+	if immediate {
+		immediate_tooltip(response, &label)
+	} else {
+		response.on_hover_text(&label)
+	}
+}
+
+/// Toggleable variant: `active` keeps the icon in the strong text colour.
+pub fn toggle(ui: &mut egui::Ui, icon: Icon, size: f32, active: bool, label: &str) -> Response {
+	let label = crate::i18n::translate_if_key(label);
+	let colors = design::palette(ui);
+	let (rect, response) = ui.allocate_exact_size(Vec2::splat(size), Sense::click());
+	if response.hovered() || response.has_focus() {
+		ui.painter().rect_filled(rect, 6, colors.hover);
+	}
+	let color = if active || response.hovered() || response.has_focus() {
+		colors.text_strong
+	} else {
+		colors.muted
+	};
+	paint(
+		ui.painter(),
+		icon,
+		Rect::from_center_size(rect.center(), Vec2::splat(button_glyph_size(size))),
+		color,
+	);
+	response.widget_info(|| {
+		egui::WidgetInfo::selected(egui::Role::Button, ui.is_enabled(), active, &label)
+	});
+	response.on_hover_text(&label)
+}
+
+/// Inline glyph used beside labels (channel kinds, section headers).
+pub fn inline(ui: &mut egui::Ui, icon: Icon, size: f32, color: Color32) -> Rect {
+	let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), Sense::hover());
+	paint(ui.painter(), icon, rect, color);
+	rect
+}

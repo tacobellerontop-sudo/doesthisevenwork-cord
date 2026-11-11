@@ -1,0 +1,236 @@
+//! Inline attachment decoding on every desktop platform. The caller owns validated, bounded
+//! network I/O and hands over an anonymous read-only stream: decoders never see a URL or an
+//! account token. Every backend yields bounded [`Picture`]s in the decoder's native layout
+//! (planar YUV where available, so colour conversion can run on the GPU) and stereo PCM.
+//!
+//! * Windows: Media Foundation (`media_foundation`).
+//! * macOS: a bounded MPEG-4/MOV demuxer (`mp4`) feeding VideoToolbox and Symphonia's AAC decoder.
+//! * Linux: GStreamer's `decodebin` pulling bytes from the same stream through `appsrc`.
+use std::io::{Read, Seek};
+
+mod picture;
+pub use picture::{Color, Layout, Matrix, Picture, pack_plane};
+
+#[cfg(target_os = "windows")]
+mod media_foundation;
+#[cfg(target_os = "windows")]
+pub use media_foundation::Decoder;
+
+#[cfg(target_os = "macos")]
+mod apple;
+#[cfg(target_os = "macos")]
+mod mp4;
+#[cfg(target_os = "macos")]
+pub use apple::Decoder;
+
+/// Hardware-backed decoding of one live H.264 elementary stream (camera or Go Live).
+/// Windows uses the Media Foundation decoder with a DXGI device manager when available,
+/// macOS uses VideoToolbox, Linux lets GStreamer's `decodebin` pick the installed decoder.
+#[cfg(target_os = "macos")]
+#[path = "live_apple.rs"]
+pub mod live;
+#[cfg(target_os = "windows")]
+#[path = "live_windows.rs"]
+pub mod live;
+#[cfg(target_os = "linux")]
+#[path = "live_gst.rs"]
+pub mod live;
+
+/// Largest live access unit any backend accepts.
+pub const MAX_ACCESS_UNIT: usize = 2 * 1024 * 1024 + 64 * 1024;
+
+/// Live reception accepts UHD or portrait/ultrawide pictures within the same pixel budget.
+pub const MAX_LIVE_DIMENSION: u32 = 3840;
+pub const MAX_LIVE_PIXELS: u64 = 3840 * 2160;
+
+pub fn check_live_dimensions(width: u32, height: u32) -> Result<(), &'static str> {
+	if width == 0 || height == 0 {
+		return Err(INVALID);
+	}
+	if width > MAX_LIVE_DIMENSION
+		|| height > MAX_LIVE_DIMENSION
+		|| u64::from(width) * u64::from(height) > MAX_LIVE_PIXELS
+	{
+		return Err("Live playback supports videos up to 4K (3840×2160).");
+	}
+	Ok(())
+}
+
+/// One decoded live picture.
+pub type LiveFrame = Picture;
+
+/// Receives live pictures from the decoder's own thread, in decode order.
+pub type LiveSink = Box<dyn Fn(LiveFrame) + Send + Sync>;
+/// Preserves the caller's opaque millisecond tag through asynchronous decoding.
+pub type TimedLiveSink = Box<dyn Fn(LiveFrame, u64) + Send + Sync>;
+
+#[cfg(target_os = "linux")]
+mod gst;
+#[cfg(target_os = "linux")]
+pub use gst::Decoder;
+
+/// Longest attachment any backend plays inline.
+pub const MAX_SECONDS: f64 = 2.0 * 60.0 * 60.0;
+/// Largest compressed sample, or decoded YUV frame, any backend accepts.
+pub const MAX_BYTES: usize = 16 * 1024 * 1024;
+/// Largest decoded RGB frame: 4K at four bytes per pixel, plus a decoder's aligned surface
+/// padding.
+pub const MAX_FRAME_BYTES: usize = 40 * 1024 * 1024;
+pub const UNSUPPORTED: &str = "This video format or codec is not supported on this system.";
+pub const INVALID: &str = "The video could not be decoded safely.";
+/// A live decoder queue is full; the access unit was not accepted but the decoder is healthy.
+pub const BUSY: &str = "The video decoder is falling behind.";
+pub const TOO_LARGE: &str = "This video could not be scaled for inline playback.";
+pub const TOO_LONG: &str = "Videos longer than two hours are not supported.";
+/// The system has no decoder for the video track; installing one fixes playback.
+pub const MISSING_HEVC: &str = "This video uses H.265 (HEVC), and no H.265 decoder is installed. Install one for GStreamer (for example gst-libav with a full FFmpeg) to play it here.";
+pub const MISSING_DECODER: &str = "No decoder for this video's codec is installed. Install the matching GStreamer plugin to play it here.";
+
+pub trait ReadSeek: Read + Seek + Send {}
+impl<T: Read + Seek + Send> ReadSeek for T {}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Info {
+	pub width: u32,
+	pub height: u32,
+	pub duration: f64,
+	/// Zero when the attachment has no audio track.
+	pub sample_rate: u32,
+	pub channels: u16,
+}
+
+pub enum Sample {
+	Video { pts: f64, picture: Picture },
+	Audio { pts: f64, frames: Vec<[f32; 2]> },
+}
+
+// These backends read tracks independently. Linux must yield when a sibling pipeline
+// queue needs draining, so the player uses the same polling interface on every OS.
+#[cfg(not(target_os = "linux"))]
+impl Decoder {
+	pub fn poll_video(&mut self) -> Result<std::task::Poll<Option<Sample>>, &'static str> {
+		self.read_video().map(std::task::Poll::Ready)
+	}
+
+	pub fn poll_audio(&mut self) -> Result<std::task::Poll<Option<Sample>>, &'static str> {
+		self.read_audio().map(std::task::Poll::Ready)
+	}
+}
+
+/// The shared inline-player texture bound, the same as live reception: 4K worth of pixels
+/// within a 3840 px square, so portrait and ultrawide videos fit too.
+pub fn check_dimensions(width: u32, height: u32) -> Result<(), &'static str> {
+	if width == 0 || height == 0 {
+		return Err(INVALID);
+	}
+	if width > MAX_LIVE_DIMENSION
+		|| height > MAX_LIVE_DIMENSION
+		|| u64::from(width) * u64::from(height) > MAX_LIVE_PIXELS
+	{
+		return Err(TOO_LARGE);
+	}
+	Ok(())
+}
+
+/// Fit a source of any nonzero dimensions into the bounded inline playback surface.
+/// Native decoders scale before frames enter application queues; source resolution is
+/// limited by the installed codec/device rather than the texture budget.
+pub fn playback_dimensions(width: u32, height: u32) -> Result<(u32, u32), &'static str> {
+	if width == 0 || height == 0 {
+		return Err(INVALID);
+	}
+	let (w, h) = (f64::from(width), f64::from(height));
+	let scale = (f64::from(MAX_LIVE_DIMENSION) / w.max(h))
+		.min((MAX_LIVE_PIXELS as f64 / (w * h)).sqrt())
+		.min(1.0);
+	let fitted = (
+		(w * scale).floor().max(1.0) as u32,
+		(h * scale).floor().max(1.0) as u32,
+	);
+	check_dimensions(fitted.0, fitted.1)?;
+	Ok(fitted)
+}
+
+/// Rotate a packed RGBA frame clockwise by a quarter-turn multiple; returns the new dimensions.
+pub(crate) fn rotate_rgba(
+	rgba: &[u8],
+	width: u32,
+	height: u32,
+	rotation: u32,
+) -> (u32, u32, Vec<u8>) {
+	let (w, h) = (width as usize, height as usize);
+	if rotation == 0 || rgba.len() != w * h * 4 {
+		return (width, height, rgba.to_vec());
+	}
+	let (out_w, out_h) = if rotation == 90 || rotation == 270 {
+		(h, w)
+	} else {
+		(w, h)
+	};
+	let mut out = vec![0; rgba.len()];
+	for y in 0..h {
+		for x in 0..w {
+			let (dx, dy) = match rotation {
+				90 => (h - 1 - y, x),
+				180 => (w - 1 - x, h - 1 - y),
+				270 => (y, w - 1 - x),
+				_ => (x, y),
+			};
+			let source = (y * w + x) * 4;
+			let target = (dy * out_w + dx) * 4;
+			out[target..target + 4].copy_from_slice(&rgba[source..source + 4]);
+		}
+	}
+	(out_w as u32, out_h as u32, out)
+}
+
+#[cfg(all(test, not(target_os = "windows")))]
+mod tests {
+	use super::*;
+	#[test]
+	fn source_resolution_is_fitted_without_expanding_the_frame_budget() {
+		assert_eq!(playback_dimensions(1920, 1080), Ok((1920, 1080)));
+		assert_eq!(playback_dimensions(7680, 4320), Ok((3840, 2160)));
+		assert_eq!(playback_dimensions(4320, 7680), Ok((2160, 3840)));
+		assert_eq!(playback_dimensions(4096, 4096), Ok((2880, 2880)));
+		// Extremely wide metadata must neither overflow nor round the short side to zero.
+		assert_eq!(playback_dimensions(u32::MAX, 1), Ok((3840, 1)));
+		assert_eq!(playback_dimensions(0, 1080), Err(INVALID));
+	}
+
+	#[cfg(target_os = "macos")]
+	#[test]
+	fn attachment_larger_than_the_texture_edge_decodes_to_a_bounded_picture() {
+		let bytes = include_bytes!("../../../../apps/desktop/tests/fixtures/video-wide.mov");
+		let mut decoder = Decoder::open(Box::new(std::io::Cursor::new(bytes.as_slice()))).unwrap();
+		assert_eq!((decoder.info().width, decoder.info().height), (3840, 60));
+		let Sample::Video { picture, .. } = decoder.read_video().unwrap().unwrap() else {
+			panic!("missing video picture");
+		};
+		assert_eq!((picture.width, picture.height), (3840, 60));
+		assert!(picture.is_valid());
+	}
+
+	#[test]
+	fn rotation_and_bounds() {
+		assert!(check_dimensions(3840, 2160).is_ok());
+		assert!(check_dimensions(2160, 3840).is_ok());
+		assert!(check_dimensions(3841, 1).is_err());
+		assert!(check_dimensions(3840, 3840).is_err());
+		assert!(check_dimensions(0, 1).is_err());
+		// A 2x1 frame with distinct pixels rotates into a 1x2 column.
+		let frame = [1, 1, 1, 255, 2, 2, 2, 255];
+		assert_eq!(
+			rotate_rgba(&frame, 2, 1, 90),
+			(1, 2, vec![1, 1, 1, 255, 2, 2, 2, 255])
+		);
+		assert_eq!(
+			rotate_rgba(&frame, 2, 1, 180),
+			(2, 1, vec![2, 2, 2, 255, 1, 1, 1, 255])
+		);
+		assert_eq!(
+			rotate_rgba(&frame, 2, 1, 270),
+			(1, 2, vec![2, 2, 2, 255, 1, 1, 1, 255])
+		);
+	}
+}
