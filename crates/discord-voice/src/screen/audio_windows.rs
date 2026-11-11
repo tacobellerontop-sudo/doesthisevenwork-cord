@@ -5,12 +5,10 @@ use std::sync::{
 };
 use tokio::sync::mpsc::Sender;
 
-#[cfg(target_os = "windows")]
 use std::borrow::Cow;
 
 /// The worker that captures system audio for one screen share. Dropping it stops and joins
 /// the worker.
-#[cfg(target_os = "windows")]
 pub(super) struct Audio {
 	thread: Option<std::thread::JoinHandle<()>>,
 	stop: Arc<AtomicBool>,
@@ -19,7 +17,6 @@ pub(super) struct Audio {
 	code: Arc<AtomicI32>,
 }
 
-#[cfg(target_os = "windows")]
 impl Audio {
 	/// Starts capture and waits for the first sign that audio can flow. Sharing a window
 	/// captures only that window's application, as Discord does; `window_process` is its
@@ -93,7 +90,6 @@ impl Audio {
 	}
 }
 
-#[cfg(target_os = "windows")]
 impl Drop for Audio {
 	/// Stops the worker and waits for it, so no capture outlives the share.
 	fn drop(&mut self) {
@@ -115,7 +111,6 @@ impl Drop for Audio {
 //
 // WASAPI owns each packet until ReleaseBuffer. COM and capture objects stay on the worker
 // that created them.
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 mod native {
 	use super::*;
@@ -1579,7 +1574,6 @@ struct Samples {
 	epoch: Arc<AtomicU64>,
 	failed: Arc<AtomicBool>,
 	/// First Windows error code that ended capture, 0 when none.
-	#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 	code: Arc<AtomicI32>,
 }
 

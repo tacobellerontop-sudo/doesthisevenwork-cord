@@ -225,24 +225,12 @@ pub fn restore_window_geometry(
 	// Linux maximizes from the viewport builder. macOS and Windows maximize only after placing the
 	// normal geometry, since moving a maximized window resets it.
 	if geometry.maximized {
-		#[cfg(target_os = "windows")]
 		egui_winit::set_maximized(window, true); // Keeps the still-hidden window from flashing.
-		#[cfg(target_os = "macos")]
-		window.set_maximized(true);
 	}
 }
 
 /// X11 window managers ignore maximize requests for a window that is not yet shown.
 pub fn maximize_after_show(window: &winit::window::Window) -> bool {
-	#[cfg(target_os = "linux")]
-	{
-		use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
-		matches!(
-			window.window_handle().map(|h| h.as_raw()),
-			Ok(RawWindowHandle::Xlib(_) | RawWindowHandle::Xcb(_))
-		)
-	}
-	#[cfg(not(target_os = "linux"))]
 	{
 		let _ = window;
 		false

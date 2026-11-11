@@ -2579,16 +2579,7 @@ impl MessagingUi {
 	fn camera_settings_content(&mut self, ui: &mut egui::Ui, demo: bool) {
 		let colors = design::palette(ui);
 		ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
-		if !cfg!(any(
-			target_os = "windows",
-			target_os = "macos",
-			target_os = "linux"
-		)) {
-			ui.label(crate::i18n::translate(
-				"voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform",
-			));
-			return;
-		}
+
 		if demo && self.voice_cameras.is_empty() {
 			self.voice_cameras = vec![
 				(
@@ -3295,12 +3286,6 @@ impl MessagingUi {
 					"Stop sharing your camera"
 				} else if state.demo {
 					"Camera is off in the offline preview"
-				} else if !cfg!(any(
-					target_os = "macos",
-					target_os = "windows",
-					target_os = "linux"
-				)) {
-					"Camera capture is unavailable on this platform"
 				} else if !self.voice_camera_available {
 					"Camera requires H264 support from the voice server"
 				} else if !state.can_camera(channel) {
@@ -5436,12 +5421,7 @@ mod tests {
 						);
 						assert_eq!(
 							messaging.voice_refresh_cameras,
-							!demo
-								&& cfg!(any(
-									target_os = "windows",
-									target_os = "macos",
-									target_os = "linux"
-								)) && width == 240.0 && frame == 0
+							!demo && width == 240.0 && frame == 0
 						);
 						assert!(messaging.voice_camera_preview.is_none());
 						messaging.voice_refresh_cameras = false;

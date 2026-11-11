@@ -25,142 +25,11 @@ const WINDOWS_FILES: &[&str] = &[
 	"setup.ps1",
 ];
 
-pub(super) fn flatpak_session() -> bool {
-	static FLATPAK: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-	*FLATPAK.get_or_init(|| {
-		cfg!(target_os = "linux")
-			&& (Path::new("/.flatpak-info").is_file() || std::env::var_os("FLATPAK_ID").is_some())
-	})
-}
-
-pub(super) fn appimage_session() -> bool {
-	static APPIMAGE: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-	*APPIMAGE.get_or_init(|| {
-		cfg!(all(target_os = "linux", target_arch = "x86_64"))
-			&& std::env::var_os("APPIMAGE").is_some_and(|p| Path::new(&p).is_absolute())
-			&& std::env::var_os("APPDIR").is_some_and(|p| Path::new(&p).is_absolute())
-	})
-}
-
-/// Nix store paths are read-only and versioned by the user's Nix configuration.
-pub(super) fn nix_session() -> bool {
-	static NIX: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-	*NIX.get_or_init(|| {
-		cfg!(unix)
-			&& std::env::current_exe()
-				.and_then(fs::canonicalize)
-				.is_ok_and(|exe| exe.starts_with("/nix/store"))
-	})
-}
-
-pub(super) fn linux_package_manager_update_command() -> Option<&'static str> {
-	if !cfg!(target_os = "linux") || flatpak_session() || appimage_session() || nix_session() {
-		return None;
-	}
-	if let Ok(content) = fs::read_to_string("/etc/os-release") {
-		let mut id = String::new();
-		let mut id_like = String::new();
-		for line in content.lines() {
-			if let Some(val) = line.strip_prefix("ID=") {
-				id = val.trim_matches('"').to_ascii_lowercase();
-			} else if let Some(val) = line.strip_prefix("ID_LIKE=") {
-				id_like = val.trim_matches('"').to_ascii_lowercase();
-			}
-		}
-		if id == "fedora"
-			|| id == "rhel"
-			|| id == "centos"
-			|| id_like.contains("fedora")
-			|| id_like.contains("rhel")
-		{
-			return Some("sudo dnf upgrade dtewcord");
-		}
-		if id == "ubuntu"
-			|| id == "debian"
-			|| id == "pop"
-			|| id == "linuxmint"
-			|| id_like.contains("debian")
-			|| id_like.contains("ubuntu")
-		{
-			return Some("sudo apt update && sudo apt install --only-upgrade dtewcord");
-		}
-		if id == "arch" || id == "manjaro" || id == "endeavouros" || id_like.contains("arch") {
-			return Some("sudo pacman -Syu dtewcord");
-		}
-		if id.contains("suse") || id_like.contains("suse") {
-			return Some("sudo zypper update dtewcord");
-		}
-	}
-	if Path::new("/usr/bin/dnf").is_file() {
-		Some("sudo dnf upgrade dtewcord")
-	} else if Path::new("/usr/bin/apt").is_file() {
-		Some("sudo apt update && sudo apt install --only-upgrade dtewcord")
-	} else if Path::new("/usr/bin/pacman").is_file() {
-		Some("sudo pacman -Syu dtewcord")
-	} else if Path::new("/usr/bin/zypper").is_file() {
-		Some("sudo zypper update dtewcord")
-	} else {
-		None
-	}
-}
-
-fn appimage_header(header: &[u8]) -> bool {
-	header.len() >= 20
-		&& header[..7] == *b"\x7fELF\x02\x01\x01"
-		&& header[8..11] == *b"AI\x02"
-		&& matches!(u16::from_le_bytes([header[16], header[17]]), 2 | 3)
-		&& header[18..20] == [62, 0]
-}
-
-fn verify_appimage(path: &Path) -> Result<(), String> {
-	let mut header = [0; 20];
-	let mut file = fs::File::open(path).map_err(|_| "Cannot read the AppImage.")?;
-	let metadata = file
-		.metadata()
-		.map_err(|_| "Cannot inspect the AppImage.")?;
-	if !metadata.is_file()
-		|| metadata.len() > super::MAX_DOWNLOAD
-		|| file.read_exact(&mut header).is_err()
-		|| !appimage_header(&header)
-	{
-		return Err("The update is not a supported x86-64 Type 2 AppImage.".into());
-	}
-	Ok(())
-}
-
 fn installation() -> Result<PathBuf, String> {
 	let exe = std::env::current_exe()
 		.and_then(fs::canonicalize)
 		.map_err(|_| "Cannot locate the installed application.".to_owned())?;
-	if nix_session() {
-		return Err("Nix installations are updated through Nix.".into());
-	}
-	if cfg!(target_os = "linux") {
-		if !appimage_session() {
-			if flatpak_session() {
-				return Err(
-					"Flatpak updates are managed through its repository or `flatpak update`."
-						.into(),
-				);
-			}
-			return Err(
-				"Use your package manager to update DTEW Cord, or run a release AppImage.".into(),
-			);
-		}
-		let appdir = PathBuf::from(std::env::var_os("APPDIR").ok_or("Missing AppImage mount.")?);
-		if fs::canonicalize(appdir.join("usr/bin/dtewcord"))
-			.ok()
-			.as_ref() != Some(&exe)
-		{
-			return Err("Run DTEW Cord from its AppImage to install updates.".into());
-		}
-		let image = PathBuf::from(std::env::var_os("APPIMAGE").ok_or("Missing AppImage path.")?);
-		let image = fs::canonicalize(image).map_err(|_| "Cannot locate the installed AppImage.")?;
-		verify_appimage(&image)?;
-		return Ok(image);
-	}
 	// canonicalize returns extended Windows paths; PowerShell 5.1 expects ordinary drive/UNC paths.
-	#[cfg(windows)]
 	let exe = {
 		let path = exe
 			.to_str()
@@ -173,52 +42,21 @@ fn installation() -> Result<PathBuf, String> {
 			exe
 		}
 	};
-	if cfg!(target_os = "macos") {
-		let app = exe
-			.parent()
-			.and_then(Path::parent)
-			.and_then(Path::parent)
-			.ok_or("Run the installed DTEW Cord.app to install updates.")?;
-		if exe.file_name().is_none_or(|name| name != "dtewcord")
-			|| exe
-				.parent()
-				.and_then(Path::file_name)
-				.is_none_or(|name| name != "MacOS")
-			|| app.extension().is_none_or(|extension| extension != "app")
-		{
-			return Err("Run the installed DTEW Cord.app to install updates; source builds cannot replace themselves.".into());
-		}
-		if app.starts_with("/Volumes") || app.to_string_lossy().contains("/AppTranslocation/") {
-			return Err(
-				"Move DTEW Cord to Applications or another writable folder before updating.".into(),
-			);
-		}
-		Ok(app.to_owned())
-	} else if cfg!(windows) {
-		let root = exe
-			.parent()
-			.ok_or("Cannot locate the installed application folder.")?;
-		if exe.file_name().is_none_or(|name| name != "dtewcord.exe")
-			|| !root.join("THIRD_PARTY_NOTICES.md").is_file()
-			|| !root.join("licenses").is_dir()
-		{
-			return Err("Run DTEW Cord from an extracted release package to install updates; source builds cannot replace themselves.".into());
-		}
-		Ok(root.to_owned())
-	} else {
-		Err("Use your package manager to update DTEW Cord on Linux.".into())
+	let root = exe
+		.parent()
+		.ok_or("Cannot locate the installed application folder.")?;
+	if exe.file_name().is_none_or(|name| name != "dtewcord.exe")
+		|| !root.join("THIRD_PARTY_NOTICES.md").is_file()
+		|| !root.join("licenses").is_dir()
+	{
+		return Err("Run DTEW Cord from an extracted release package to install updates; source builds cannot replace themselves.".into());
 	}
+	Ok(root.to_owned())
 }
 
 pub(super) fn create_stage() -> Result<Staged, String> {
 	let installation = installation()?;
-	let parent = if cfg!(any(target_os = "macos", target_os = "linux")) {
-		installation
-			.parent()
-			.ok_or("Cannot locate the application folder.")?
-	} else {
-		installation.as_path()
-	};
+	let parent = installation.as_path();
 	let lock_path = parent.join(".dtewcord-update.lock");
 	if fs::symlink_metadata(&lock_path).is_ok_and(|metadata| !metadata.is_file()) {
 		return Err("Unexpected update lock file.".into());
@@ -275,12 +113,7 @@ pub(super) fn create_stage() -> Result<Staged, String> {
 			);
 		}
 		let installed = entry.path().join("installed").is_file();
-		if !installed
-			&& (entry.path().join("previous.app").exists()
-				|| entry.path().join("previous").exists()
-				|| entry.path().join("failed.app").exists()
-				|| entry.path().join("previous.AppImage").exists())
-		{
+		if !installed && entry.path().join("previous").exists() {
 			return Err(format!(
 				"An interrupted update needs recovery before continuing. Its backup is in {}.",
 				entry.path().display()
@@ -295,13 +128,6 @@ pub(super) fn create_stage() -> Result<Staged, String> {
 	}
 	let directory = parent.join(format!(".dtewcord-update-{}", std::process::id()));
 	let builder = fs::DirBuilder::new();
-	#[cfg(unix)]
-	let mut builder = builder;
-	#[cfg(unix)]
-	{
-		use std::os::unix::fs::DirBuilderExt;
-		builder.mode(0o700);
-	}
 	builder.create(&directory).map_err(|_| "The installation folder is not writable. Move DTEW Cord to a writable folder and try again.".to_owned())?;
 	fs::write(directory.join("owner"), b"dtewcord-updater-v1")
 		.map_err(|_| "Cannot mark update storage ownership.".to_owned())?;
@@ -311,36 +137,19 @@ pub(super) fn create_stage() -> Result<Staged, String> {
 	})
 }
 fn process_alive(pid: u32) -> bool {
-	#[cfg(unix)]
-	{
-		Command::new("/bin/kill")
-			.args(["-0", &pid.to_string()])
-			.stdout(Stdio::null())
-			.stderr(Stdio::null())
-			.status()
-			.is_ok_and(|status| status.success())
-	}
-	#[cfg(windows)]
-	{
-		powershell()
-			.args([
-				"-NoProfile",
-				"-NonInteractive",
-				"-Command",
-				&format!(
-					"if (Get-Process -Id {pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"
-				),
-			])
-			.stdout(Stdio::null())
-			.stderr(Stdio::null())
-			.status()
-			.is_ok_and(|status| status.success())
-	}
-	#[cfg(not(any(unix, windows)))]
-	{
-		let _ = pid;
-		true
-	}
+	powershell()
+		.args([
+			"-NoProfile",
+			"-NonInteractive",
+			"-Command",
+			&format!(
+				"if (Get-Process -Id {pid} -ErrorAction SilentlyContinue) {{ exit 0 }} else {{ exit 1 }}"
+			),
+		])
+		.stdout(Stdio::null())
+		.stderr(Stdio::null())
+		.status()
+		.is_ok_and(|status| status.success())
 }
 pub(super) fn cleanup(directory: &Path) {
 	let Ok(entries) = fs::read_dir(directory) else {
@@ -551,27 +360,7 @@ impl<R: Seek> Seek for MetadataReader<R> {
 	}
 }
 
-pub(super) fn unpack(
-	directory: &Path,
-	installed: &Path,
-	cancel: &AtomicBool,
-) -> Result<(), String> {
-	if cfg!(target_os = "linux") {
-		if cancel.load(Ordering::Relaxed) {
-			return Err("Update cancelled.".into());
-		}
-		let download = directory.join("package.zip");
-		verify_appimage(&download)?;
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::PermissionsExt;
-			fs::set_permissions(&download, fs::Permissions::from_mode(0o755))
-				.map_err(|_| "Cannot make the AppImage executable.")?;
-		}
-		fs::rename(download, directory.join("package.AppImage"))
-			.map_err(|_| "Cannot stage the AppImage.")?;
-		return Ok(());
-	}
+pub(super) fn unpack(directory: &Path, cancel: &AtomicBool) -> Result<(), String> {
 	let mut archive = fs::File::open(directory.join("package.zip"))
 		.map_err(|_| "Cannot read the downloaded update.".to_owned())?;
 	let directory_start = preflight_zip(&mut archive)?;
@@ -626,20 +415,12 @@ pub(super) fn unpack(
 		if total > MAX_UNPACKED {
 			return Err("The update archive exceeds its extracted size limit.".into());
 		}
-		// ditto resource-fork metadata is not executable bundle content.
-		if path.starts_with("__MACOSX") {
-			continue;
-		}
 		let top = path
 			.components()
 			.next()
 			.and_then(|p| p.as_os_str().to_str())
 			.ok_or("Invalid package path.")?;
-		if cfg!(target_os = "macos") {
-			if top != "DTEW Cord.app" && !WINDOWS_FILES.contains(&top) {
-				return Err("The update contains unexpected package content.".into());
-			}
-		} else if !WINDOWS_FILES.contains(&top) {
+		if !WINDOWS_FILES.contains(&top) {
 			return Err("The update contains unexpected package content.".into());
 		}
 		let target = destination.join(&path);
@@ -653,7 +434,6 @@ pub(super) fn unpack(
 				.map_err(|_| "Cannot create update directories.".to_owned())?;
 		}
 		let expected = entry.size();
-		let mode = entry.unix_mode();
 		let mut file = fs::OpenOptions::new()
 			.write(true)
 			.create_new(true)
@@ -685,33 +465,8 @@ pub(super) fn unpack(
 		}
 		file.sync_all()
 			.map_err(|_| "Cannot save the extracted update.".to_owned())?;
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::PermissionsExt;
-			fs::set_permissions(
-				&target,
-				fs::Permissions::from_mode(if mode.is_some_and(|m| m & 0o111 != 0) {
-					0o755
-				} else {
-					0o644
-				}),
-			)
-			.map_err(|_| "Cannot set update file permissions.".to_owned())?;
-		}
-		#[cfg(not(unix))]
-		{
-			let _ = mode;
-		}
 	}
-	if cfg!(target_os = "macos") {
-		if !destination
-			.join("DTEW Cord.app/Contents/MacOS/dtewcord")
-			.is_file()
-		{
-			return Err("The update does not contain DTEW Cord.app.".into());
-		}
-		verify_mac(&destination.join("DTEW Cord.app"), installed)?;
-	} else if !destination.join("dtewcord.exe").is_file()
+	if !destination.join("dtewcord.exe").is_file()
 		|| !destination.join("licenses").is_dir()
 		|| !destination.join("THIRD_PARTY_NOTICES.md").is_file()
 	{
@@ -721,60 +476,6 @@ pub(super) fn unpack(
 		.map_err(|_| "Cannot clean the verified update archive.".to_owned())?;
 	Ok(())
 }
-fn verify_mac(candidate: &Path, installed: &Path) -> Result<(), String> {
-	if !cfg!(target_os = "macos") {
-		return Ok(());
-	}
-	let status = Command::new("/usr/bin/codesign")
-		.args(["--verify", "--deep", "--strict"])
-		.arg(candidate)
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.map_err(|_| "Cannot verify the update's code signature.".to_owned())?;
-	if !status.success() {
-		return Err("The update's macOS signature is invalid.".into());
-	}
-	fn identity(app: &Path) -> Result<(String, String), String> {
-		let output = Command::new("/usr/bin/codesign")
-			.args(["-d", "--verbose=4"])
-			.arg(app)
-			.output()
-			.map_err(|_| "Cannot inspect the application signing identity.".to_owned())?;
-		if !output.status.success() || output.stderr.len() > 64 * 1024 {
-			return Err("Cannot inspect the application signing identity.".into());
-		}
-		let text = String::from_utf8_lossy(&output.stderr);
-		let team = text
-			.lines()
-			.find_map(|line| line.strip_prefix("TeamIdentifier="))
-			.filter(|team| team.len() == 10 && team.bytes().all(|b| b.is_ascii_alphanumeric()))
-			.ok_or("In-app installation requires a Developer ID signed release of DTEW Cord.")?;
-		let identifier = text
-			.lines()
-			.find_map(|line| line.strip_prefix("Identifier="))
-			.ok_or("The update has no bundle signing identifier.")?;
-		Ok((team.into(), identifier.into()))
-	}
-	let old = identity(installed)?;
-	let new = identity(candidate)?;
-	// Apple bundle ids allow no underscore, so the bundle uses a hyphen where the app id has one.
-	if old != new || new.1 != "io.github.tacobellerontop-sudo.dtewcord" {
-		return Err("The update was not signed by this DTEW Cord publisher.".into());
-	}
-	let status = Command::new("/usr/sbin/spctl")
-		.args(["--assess", "--type", "execute"])
-		.arg(candidate)
-		.stdout(Stdio::null())
-		.stderr(Stdio::null())
-		.status()
-		.map_err(|_| "Cannot assess the update with macOS Gatekeeper.".to_owned())?;
-	if !status.success() {
-		return Err("macOS Gatekeeper did not accept the update.".into());
-	}
-	Ok(())
-}
-
 pub(super) struct Prepared {
 	pub(super) marker: PathBuf,
 	child: Child,
@@ -800,52 +501,6 @@ pub(super) fn prepare_restart(
 		Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
 		Err(_) => return Err("Cannot reset the update handoff.".into()),
 	}
-	#[cfg(target_os = "macos")]
-	let _ = version;
-	#[cfg(target_os = "macos")]
-	let mut child = {
-		verify_mac(&directory.join("package/DTEW Cord.app"), installation)?;
-		let script = directory.join("install.sh");
-		fs::write(&script, MAC_HELPER)
-			.map_err(|_| "Cannot prepare the update helper.".to_owned())?;
-		Command::new("/bin/sh")
-			.arg(&script)
-			.arg(directory)
-			.arg(installation)
-			.arg(std::process::id().to_string())
-			.arg(&marker)
-			.current_dir("/")
-			.stdin(Stdio::null())
-			.stdout(Stdio::null())
-			.stderr(Stdio::null())
-			.spawn()
-			.map_err(|_| "Cannot start the update helper.".to_owned())?
-	};
-	#[cfg(target_os = "linux")]
-	let mut child = {
-		let _ = version;
-		if self::installation()?.as_path() != installation {
-			return Err("The installed AppImage moved; restart before updating.".into());
-		}
-		verify_appimage(&directory.join("package.AppImage"))?;
-		let script = directory.join("install.sh");
-		fs::write(&script, LINUX_HELPER).map_err(|_| "Cannot prepare the update helper.")?;
-		Command::new("/bin/sh")
-			.env_remove("LD_LIBRARY_PATH")
-			.env_remove("LD_PRELOAD")
-			.arg(&script)
-			.arg(directory)
-			.arg(installation)
-			.arg(std::process::id().to_string())
-			.arg(&marker)
-			.current_dir("/")
-			.stdin(Stdio::null())
-			.stdout(Stdio::null())
-			.stderr(Stdio::null())
-			.spawn()
-			.map_err(|_| "Cannot start the update helper.")?
-	};
-	#[cfg(windows)]
 	let mut child = {
 		let script = directory.join("install.ps1");
 		fs::write(&script, WINDOWS_HELPER)
@@ -878,26 +533,17 @@ pub(super) fn prepare_restart(
 			.spawn()
 			.map_err(|_| "Cannot start the update helper.".to_owned())?
 	};
-	#[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
-	{
-		let _ = (installation, marker, version);
-		Err("In-app installation is unsupported on this platform.".into())
-	}
-	#[cfg(any(target_os = "macos", target_os = "linux", windows))]
-	{
-		for _ in 0..200 {
-			if ready.is_file() {
-				return Ok(Prepared { marker, child });
-			}
-			std::thread::sleep(std::time::Duration::from_millis(10));
+	for _ in 0..200 {
+		if ready.is_file() {
+			return Ok(Prepared { marker, child });
 		}
-		let _ = child.kill();
-		let _ = child.wait();
-		Err("The update helper did not start. DTEW Cord will remain open.".into())
+		std::thread::sleep(std::time::Duration::from_millis(10));
 	}
+	let _ = child.kill();
+	let _ = child.wait();
+	Err("The update helper did not start. DTEW Cord will remain open.".into())
 }
 
-#[cfg(windows)]
 fn powershell() -> Command {
 	use std::os::windows::process::CommandExt;
 	let root = std::env::var_os("SystemRoot")
@@ -908,50 +554,6 @@ fn powershell() -> Command {
 	command
 }
 
-#[cfg(target_os = "macos")]
-const MAC_HELPER: &str = r#"#!/bin/sh
-set -eu
-stage=$1
-installed=$2
-parent=$3
-commit=$4
-printf '%s\n' "$$" > "$stage/helper-ready"
-count=0
-while [ ! -f "$commit" ]; do
-  if ! /bin/kill -0 "$parent" 2>/dev/null; then
-    [ -f "$commit" ] && break
-    exit 0
-  fi
-  /bin/sleep 1
-done
-count=0
-while /bin/kill -0 "$parent" 2>/dev/null; do
-  count=$((count + 1)); [ "$count" -lt 120 ] || exit 0
-  /bin/sleep 1
-done
-backup="$stage/previous.app"
-if ! /bin/mv "$installed" "$backup"; then
-  /usr/bin/open "$installed" || true
-  exit 1
-fi
-if ! /bin/mv "$stage/package/DTEW Cord.app" "$installed"; then
-  /bin/mv "$backup" "$installed"
-  /usr/bin/open "$installed" || true
-  exit 1
-fi
-if ! /usr/bin/open "$installed"; then
-  /bin/mv "$installed" "$stage/failed.app"
-  /bin/mv "$backup" "$installed"
-  /usr/bin/open "$installed" || true
-  exit 1
-fi
-/bin/rm -rf "$stage"
-"#;
-
-#[cfg(target_os = "linux")]
-const LINUX_HELPER: &str = include_str!("updater_linux.sh");
-
-#[cfg(windows)]
 const WINDOWS_HELPER: &str = r#"$ErrorActionPreference = 'Stop'
 $stage = $PSScriptRoot
 $plan = Get-Content -LiteralPath (Join-Path $stage 'plan.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -1021,19 +623,6 @@ if ($remaining.Count -eq 0) {
 
 #[cfg(any(test, feature = "demo"))]
 pub(super) fn debug_check() -> Result<(), String> {
-	let mut header = [0; 20];
-	header[..7].copy_from_slice(b"\x7fELF\x02\x01\x01");
-	header[8..11].copy_from_slice(b"AI\x02");
-	header[16] = 2;
-	header[18] = 62;
-	if !appimage_header(&header) || appimage_header(&header[..19]) {
-		return Err("AppImage header validation failed.".into());
-	}
-	header[18] = 183;
-	if appimage_header(&header) {
-		return Err("Wrong AppImage architecture accepted.".into());
-	}
-
 	for path in [
 		"../escape",
 		"/absolute",
@@ -1048,15 +637,12 @@ pub(super) fn debug_check() -> Result<(), String> {
 			return Err(format!("Archive path validation accepted {path}"));
 		}
 	}
-	if safe_path("DTEW Cord.app/Contents/MacOS/dtewcord").is_err() {
+	if safe_path("docs/authentication.md").is_err() {
 		return Err("Valid archive path rejected.".into());
 	}
 	let mut writer = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
 	writer
-		.start_file(
-			"DTEW Cord.app/Contents/MacOS/dtewcord",
-			zip::write::SimpleFileOptions::default(),
-		)
+		.start_file("dtewcord.exe", zip::write::SimpleFileOptions::default())
 		.map_err(|_| "Cannot create synthetic ZIP.")?;
 	writer
 		.write_all(b"synthetic")
@@ -1096,45 +682,42 @@ pub(super) fn debug_check() -> Result<(), String> {
 		return Err("Oversized ZIP directory accepted.".into());
 	}
 
-	#[cfg(windows)]
-	{
-		use std::os::windows::fs::OpenOptionsExt;
+	use std::os::windows::fs::OpenOptionsExt;
 
-		let mut nonce = [0_u8; 8];
-		getrandom::fill(&mut nonce).map_err(|_| "Cannot create cleanup check storage.")?;
-		let directory = std::env::temp_dir().join(format!(
-			"dtewcord-update-cleanup-check-{:016x}",
-			u64::from_ne_bytes(nonce)
-		));
-		fs::create_dir(&directory).map_err(|_| "Cannot create cleanup check storage.")?;
-		fs::write(directory.join("owner"), b"dtewcord-updater-v1")
-			.map_err(|_| "Cannot create cleanup ownership marker.")?;
-		let locked = fs::OpenOptions::new()
-			.write(true)
-			.create_new(true)
-			.share_mode(0)
-			.open(directory.join("locked"))
-			.map_err(|_| "Cannot create locked cleanup fixture.")?;
-		let installed = fs::OpenOptions::new()
-			.write(true)
-			.create_new(true)
-			.share_mode(0)
-			.open(directory.join("installed"))
-			.map_err(|_| "Cannot create locked installed marker.")?;
-		cleanup(&directory);
-		if !directory.join("owner").is_file() || !directory.join("locked").is_file() {
-			return Err("Partial cleanup discarded its ownership marker.".into());
-		}
-		drop(locked);
-		cleanup(&directory);
-		if !directory.join("owner").is_file() || !directory.join("installed").is_file() {
-			return Err("Locked installed marker discarded stage ownership.".into());
-		}
-		drop(installed);
-		cleanup(&directory);
-		if directory.exists() {
-			return Err("Unlocked update storage was not cleaned.".into());
-		}
+	let mut nonce = [0_u8; 8];
+	getrandom::fill(&mut nonce).map_err(|_| "Cannot create cleanup check storage.")?;
+	let directory = std::env::temp_dir().join(format!(
+		"dtewcord-update-cleanup-check-{:016x}",
+		u64::from_ne_bytes(nonce)
+	));
+	fs::create_dir(&directory).map_err(|_| "Cannot create cleanup check storage.")?;
+	fs::write(directory.join("owner"), b"dtewcord-updater-v1")
+		.map_err(|_| "Cannot create cleanup ownership marker.")?;
+	let locked = fs::OpenOptions::new()
+		.write(true)
+		.create_new(true)
+		.share_mode(0)
+		.open(directory.join("locked"))
+		.map_err(|_| "Cannot create locked cleanup fixture.")?;
+	let installed = fs::OpenOptions::new()
+		.write(true)
+		.create_new(true)
+		.share_mode(0)
+		.open(directory.join("installed"))
+		.map_err(|_| "Cannot create locked installed marker.")?;
+	cleanup(&directory);
+	if !directory.join("owner").is_file() || !directory.join("locked").is_file() {
+		return Err("Partial cleanup discarded its ownership marker.".into());
+	}
+	drop(locked);
+	cleanup(&directory);
+	if !directory.join("owner").is_file() || !directory.join("installed").is_file() {
+		return Err("Locked installed marker discarded stage ownership.".into());
+	}
+	drop(installed);
+	cleanup(&directory);
+	if directory.exists() {
+		return Err("Unlocked update storage was not cleaned.".into());
 	}
 	Ok(())
 }

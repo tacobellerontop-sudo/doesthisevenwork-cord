@@ -3,10 +3,8 @@
 use crate::Frame;
 use crate::diagnostics::{Metrics, Scope, Stage};
 mod echo;
-use model::voice_settings::{NoiseSuppression, Processing, VoiceProcessing};
-#[cfg(target_os = "macos")]
-mod permission_macos;
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use model::voice_settings::{NoiseSuppression, Processing, VoiceProcessing};
 use std::sync::{
 	Arc,
 	atomic::{AtomicBool, AtomicU16, AtomicU64, Ordering},
@@ -666,16 +664,6 @@ impl Streams {
 			platform::audio::OutputConfigPreference::Voice,
 		)?;
 		let stream_config = output_config.config();
-		#[cfg(target_os = "linux")]
-		let stream_config = {
-			let mut config = stream_config;
-			if host.id() == cpal::HostId::PulseAudio {
-				// Server-default playback buffers add seconds of latency and
-				// desync the echo-cancellation reference from what is heard.
-				config.buffer_size = cpal::BufferSize::Fixed(config.sample_rate / 50);
-			}
-			config
-		};
 		let (output_write, output_read) = rtrb::RingBuffer::new(8);
 		let (reference_write, reference_read) = rtrb::RingBuffer::new(8);
 		let render = Playback::new(output_config.sample_rate(), output_read, reference_write);
@@ -763,22 +751,10 @@ fn open_input_stream(
 	gate: &Arc<Gate>,
 	revision: u64,
 ) -> Result<(cpal::Stream, rtrb::Consumer<Frame>, Option<String>), &'static str> {
-	#[cfg(target_os = "macos")]
-	permission_macos::authorize(gate, revision)?;
 	let input = choose(host, settings.input.as_deref(), true)?;
 	let input_id = input.id().ok().map(|id| id.to_string());
 	let input_config = input_config(&input)?;
 	let stream_config = input_config.config();
-	#[cfg(target_os = "linux")]
-	let stream_config = {
-		let mut config = stream_config;
-		if host.id() == cpal::HostId::PulseAudio {
-			// Server-default record fragments can exceed our 160 ms ring. An
-			// overrun resets and drains it, repeatedly discarding captured speech.
-			config.buffer_size = cpal::BufferSize::Fixed(config.sample_rate / 50);
-		}
-		config
-	};
 	let (input_write, input_read) = rtrb::RingBuffer::new(8);
 	let capture = Capture::new(input_config.sample_rate(), input_write);
 	let stream = match input_config.sample_format() {

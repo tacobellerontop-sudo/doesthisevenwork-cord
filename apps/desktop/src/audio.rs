@@ -264,15 +264,6 @@ pub(crate) fn playback_config(
 	host: cpal::HostId,
 	config: cpal::StreamConfig,
 ) -> cpal::StreamConfig {
-	#[cfg(target_os = "linux")]
-	if host == cpal::HostId::PulseAudio {
-		// 40 ms periods; cpal double-buffers, so about 80 ms reach the server.
-		return cpal::StreamConfig {
-			buffer_size: cpal::BufferSize::Fixed(config.sample_rate / 25),
-			..config
-		};
-	}
-	#[cfg(not(target_os = "linux"))]
 	let _ = host;
 	config
 }

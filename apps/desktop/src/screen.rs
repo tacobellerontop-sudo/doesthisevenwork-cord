@@ -333,9 +333,6 @@ impl Screen {
 						.or_else(|| ui.screen.sources.first().map(|source| source.id));
 					self.status = if ui.screen.sources.is_empty() {
 						"No shareable screens or windows were found".into()
-					} else if cfg!(target_os = "linux") {
-						"Choose the system picker or, on X11, explicitly share the entire desktop"
-							.into()
 					} else {
 						"Choose a screen or window".into()
 					};

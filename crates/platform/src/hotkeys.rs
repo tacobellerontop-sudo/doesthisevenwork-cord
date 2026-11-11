@@ -1,22 +1,15 @@
 //! Native global voice bindings, using the desktop portal on Wayland.
 use global_hotkey::{GlobalHotKeyEvent, GlobalHotKeyManager, HotKeyState, hotkey::HotKey};
 use model::{KeyChord, KeybindAction, Keybinds, keybinds::is_mouse_button};
-#[cfg(target_os = "linux")]
-use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 
 const READY: &str = "Global voice keybinds are enabled.";
 const DISABLED: &str = "Global keybinds are off. Shortcuts work while DTEW Cord is focused.";
-#[cfg(target_os = "linux")]
-const WAYLAND_PENDING: &str = "Approve the global voice keybinds in your desktop's dialog.";
-#[cfg(target_os = "linux")]
-const WAYLAND_UNAVAILABLE: &str = "Global voice keybinds were denied or the desktop GlobalShortcuts portal is unavailable; they still work while DTEW Cord is focused.";
 const UNAVAILABLE: &str =
 	"Global voice keybinds are unavailable on this system; they work while DTEW Cord is focused.";
 const INVALID: &str = "One or more voice bindings cannot be registered globally; they still work while DTEW Cord is focused.";
 const MODIFIER_REQUIRED: &str = "Add Ctrl, Alt, Shift, or Command to use a voice binding globally; it still works while DTEW Cord is focused.";
 
-#[cfg(target_os = "windows")]
 /// Mouse poller identities, kept out of the range `global-hotkey` assigns to real hotkeys.
 const MOUSE_ID: u32 = 1 << 31;
 
@@ -130,26 +123,7 @@ pub struct Hotkeys {
 	bindings: Option<Vec<(KeybindAction, KeyChord)>>,
 	native: Arc<NativeInput>,
 	status: &'static str,
-	#[cfg(target_os = "windows")]
 	mouse: Option<mouse::Poller>,
-	#[cfg(target_os = "linux")]
-	portal: Option<tokio::task::JoinHandle<()>>,
-	#[cfg(target_os = "linux")]
-	portal_pending: Arc<AtomicU8>,
-	#[cfg(target_os = "linux")]
-	portal_registered: Arc<AtomicU8>,
-	/// Chords the Wayland portal actually bound, so focused input skips only those.
-	#[cfg(target_os = "linux")]
-	portal_chords: Arc<Mutex<Vec<(KeybindAction, KeyChord)>>>,
-	/// Shortcut indices currently held down for push-to-talk and push-to-mute.
-	#[cfg(target_os = "linux")]
-	portal_ptt_held: Arc<std::sync::atomic::AtomicU64>,
-	#[cfg(target_os = "linux")]
-	portal_ptm_held: Arc<std::sync::atomic::AtomicU64>,
-	#[cfg(target_os = "linux")]
-	portal_status: Arc<AtomicU8>,
-	#[cfg(target_os = "linux")]
-	wake: Arc<dyn Fn() + Send + Sync>,
 }
 
 impl Hotkeys {
@@ -164,12 +138,7 @@ impl Hotkeys {
 			.expect("native hotkey targets poisoned")
 			.push(Arc::downgrade(&native));
 		GlobalHotKeyEvent::set_event_handler(Some(dispatch_native_event));
-		let manager = if cfg!(target_os = "linux") && std::env::var_os("WAYLAND_DISPLAY").is_some()
-		{
-			None
-		} else {
-			GlobalHotKeyManager::new().ok()
-		};
+		let manager = GlobalHotKeyManager::new().ok();
 		let status = if manager.is_some() {
 			READY
 		} else {
@@ -181,24 +150,7 @@ impl Hotkeys {
 			bindings: None,
 			native,
 			status,
-			#[cfg(target_os = "windows")]
 			mouse: None,
-			#[cfg(target_os = "linux")]
-			portal: None,
-			#[cfg(target_os = "linux")]
-			portal_pending: Arc::new(AtomicU8::new(0)),
-			#[cfg(target_os = "linux")]
-			portal_registered: Arc::new(AtomicU8::new(0)),
-			#[cfg(target_os = "linux")]
-			portal_chords: Arc::new(Mutex::new(Vec::new())),
-			#[cfg(target_os = "linux")]
-			portal_ptt_held: Arc::new(std::sync::atomic::AtomicU64::new(0)),
-			#[cfg(target_os = "linux")]
-			portal_ptm_held: Arc::new(std::sync::atomic::AtomicU64::new(0)),
-			#[cfg(target_os = "linux")]
-			portal_status: Arc::new(AtomicU8::new(0)),
-			#[cfg(target_os = "linux")]
-			wake,
 		}
 	}
 
@@ -221,57 +173,9 @@ impl Hotkeys {
 		self.bindings = next.clone();
 		self.unregister_all();
 
-		#[cfg(target_os = "linux")]
-		{
-			if let Some(task) = self.portal.take() {
-				task.abort();
-			}
-			// A cancelled portal task must not publish late input into the new configuration.
-			self.portal_pending = Arc::new(AtomicU8::new(0));
-			self.portal_registered = Arc::new(AtomicU8::new(0));
-			self.portal_chords = Arc::new(Mutex::new(Vec::new()));
-			self.portal_ptt_held = Arc::new(std::sync::atomic::AtomicU64::new(0));
-			self.portal_ptm_held = Arc::new(std::sync::atomic::AtomicU64::new(0));
-			self.portal_status = Arc::new(AtomicU8::new(1));
-		}
 		let Some(next) = next else {
 			return;
 		};
-
-		#[cfg(target_os = "linux")]
-		if std::env::var_os("WAYLAND_DISPLAY").is_some() {
-			let pending = self.portal_pending.clone();
-			let registered = self.portal_registered.clone();
-			let chords = self.portal_chords.clone();
-			let ptt_held = self.portal_ptt_held.clone();
-			let ptm_held = self.portal_ptm_held.clone();
-			let status = self.portal_status.clone();
-			let wake = self.wake.clone();
-			self.portal = Some(_runtime.spawn(async move {
-				let no_shortcuts = matches!(
-					portal(
-						next,
-						pending,
-						registered.clone(),
-						chords.clone(),
-						(ptt_held.clone(), ptm_held.clone()),
-						status.clone(),
-						wake.clone(),
-					)
-					.await,
-					Ok(true)
-				);
-				registered.store(0, Ordering::Relaxed);
-				chords.lock().expect("portal chords poisoned").clear();
-				ptt_held.store(0, Ordering::Relaxed);
-				ptm_held.store(0, Ordering::Relaxed);
-				if !no_shortcuts {
-					status.store(3, Ordering::Relaxed);
-				}
-				wake();
-			}));
-			return;
-		}
 
 		let Some(manager) = &self.manager else {
 			return;
@@ -289,7 +193,7 @@ impl Hotkeys {
 			}
 			if is_mouse_button(&chord.key) {
 				// Windows polls mouse bindings below; elsewhere they stay focused-only.
-				failed |= cfg!(not(target_os = "windows"));
+				failed |= false;
 				continue;
 			}
 			if chord.modifiers == 0 && !is_standalone_global_key(&chord.key) {
@@ -322,7 +226,6 @@ impl Hotkeys {
 				Err(_) => failed = true,
 			}
 		}
-		#[cfg(target_os = "windows")]
 		{
 			self.mouse = mouse::Poller::start(&next, self.native.clone());
 		}
@@ -337,7 +240,6 @@ impl Hotkeys {
 
 	fn unregister_all(&mut self) {
 		// Stop the poller first so it cannot publish a stale press after the clear.
-		#[cfg(target_os = "windows")]
 		drop(self.mouse.take());
 		self.native.clear();
 		if let Some(manager) = &self.manager {
@@ -350,11 +252,7 @@ impl Hotkeys {
 	}
 
 	pub fn take_toggle_pending(&mut self) -> u8 {
-		let pending = self.native.take_toggles();
-		#[cfg(target_os = "linux")]
-		return pending | self.portal_pending.swap(0, Ordering::Relaxed);
-		#[cfg(not(target_os = "linux"))]
-		pending
+		self.native.take_toggles()
 	}
 
 	/// Whether this exact chord is owned by a native global registration.
@@ -366,19 +264,8 @@ impl Hotkeys {
 		{
 			return true;
 		}
-		#[cfg(target_os = "windows")]
 		if let Some(poller) = &self.mouse
 			&& poller.registers(action, chord)
-		{
-			return true;
-		}
-		#[cfg(target_os = "linux")]
-		if self
-			.portal_chords
-			.lock()
-			.expect("portal chords poisoned")
-			.iter()
-			.any(|(registered, current)| *registered == action && current == chord)
 		{
 			return true;
 		}
@@ -387,7 +274,6 @@ impl Hotkeys {
 
 	/// Bits for mute/deafen bindings currently owned by the native global registrar.
 	pub fn global_toggle_mask(&self) -> u8 {
-		#[cfg_attr(not(target_os = "windows"), allow(unused_mut))]
 		let mut mask = self.registered.iter().fold(0, |mask, (_, action, _)| {
 			mask | match action {
 				KeybindAction::ToggleMute => 1,
@@ -395,44 +281,23 @@ impl Hotkeys {
 				_ => 0,
 			}
 		});
-		#[cfg(target_os = "windows")]
 		if let Some(poller) = &self.mouse {
 			mask |= poller.toggle_mask();
 		}
-		#[cfg(target_os = "linux")]
-		return mask | ((self.portal_registered.load(Ordering::Relaxed) >> 1) & 3);
-		#[cfg(not(target_os = "linux"))]
 		mask
 	}
 
 	pub fn push_to_talk_down(&self) -> bool {
-		let native = self.native.push_down(KeybindAction::PushToTalk);
-		#[cfg(target_os = "linux")]
-		return native || self.portal_ptt_held.load(Ordering::Relaxed) != 0;
-		#[cfg(not(target_os = "linux"))]
-		native
+		self.native.push_down(KeybindAction::PushToTalk)
 	}
 
 	pub fn push_to_mute_down(&self) -> bool {
-		let native = self.native.push_down(KeybindAction::PushToMute);
-		#[cfg(target_os = "linux")]
-		return native || self.portal_ptm_held.load(Ordering::Relaxed) != 0;
-		#[cfg(not(target_os = "linux"))]
-		native
+		self.native.push_down(KeybindAction::PushToMute)
 	}
 
 	pub fn status(&self) -> &'static str {
 		if self.bindings.is_none() {
 			return DISABLED;
-		}
-		#[cfg(target_os = "linux")]
-		if std::env::var_os("WAYLAND_DISPLAY").is_some() {
-			return match self.portal_status.load(Ordering::Relaxed) {
-				1 => WAYLAND_PENDING,
-				2 => READY,
-				4 => MODIFIER_REQUIRED,
-				_ => WAYLAND_UNAVAILABLE,
-			};
 		}
 		self.status
 	}
@@ -440,10 +305,6 @@ impl Hotkeys {
 
 impl Drop for Hotkeys {
 	fn drop(&mut self) {
-		#[cfg(target_os = "linux")]
-		if let Some(task) = self.portal.take() {
-			task.abort();
-		}
 		self.unregister_all();
 		let native = Arc::downgrade(&self.native);
 		NATIVE_INPUTS
@@ -451,267 +312,6 @@ impl Drop for Hotkeys {
 			.expect("native hotkey targets poisoned")
 			.retain(|current| !current.ptr_eq(&native));
 	}
-}
-
-#[cfg(target_os = "linux")]
-async fn portal(
-	bindings: Vec<(KeybindAction, KeyChord)>,
-	pending: Arc<AtomicU8>,
-	registered: Arc<AtomicU8>,
-	chords: Arc<Mutex<Vec<(KeybindAction, KeyChord)>>>,
-	(ptt_held, ptm_held): (
-		Arc<std::sync::atomic::AtomicU64>,
-		Arc<std::sync::atomic::AtomicU64>,
-	),
-	status: Arc<AtomicU8>,
-	wake: Arc<dyn Fn() + Send + Sync>,
-) -> Result<bool, ashpd::Error> {
-	use ashpd::desktop::global_shortcuts::{GlobalShortcuts, NewShortcut};
-	use futures_util::StreamExt;
-	// One action can own several chords, so group chords that translate to the same trigger.
-	// A same-action alias shares the bound shortcut; another action's collision stays focused.
-	let mut triggers: Vec<(String, KeybindAction, Vec<KeyChord>)> = Vec::new();
-	for (action, chord) in &bindings {
-		let Some(trigger) = portal_trigger(chord) else {
-			continue;
-		};
-		match triggers
-			.iter_mut()
-			.find(|(existing, ..)| existing == &trigger)
-		{
-			Some((_, owner, group)) => {
-				if *owner == *action {
-					group.push(chord.clone());
-				}
-			}
-			None => triggers.push((trigger, *action, vec![chord.clone()])),
-		}
-	}
-	let mut ids = Vec::with_capacity(triggers.len());
-	let mut shortcuts = Vec::with_capacity(triggers.len());
-	for (index, (trigger, action, group_chords)) in triggers.iter().enumerate() {
-		// Portals remember triggers by ID, so an ID must never move to another action when
-		// bindings change. Only an action's own extra triggers are numbered.
-		let earlier = triggers[..index]
-			.iter()
-			.filter(|(_, owner, _)| owner == action)
-			.count();
-		let id = match earlier {
-			0 => portal_id(*action).to_owned(),
-			n => format!("{}-{}", portal_id(*action), n + 1),
-		};
-		ids.push((id.clone(), *action, index as u32, group_chords.clone()));
-		shortcuts.push(
-			NewShortcut::new(id, portal_description(*action)).preferred_trigger(trigger.as_str()),
-		);
-	}
-	let modifier_required = bindings.iter().any(|(action, chord)| {
-		matches!(
-			action,
-			KeybindAction::ToggleMute | KeybindAction::ToggleDeafen
-		) && chord.is_valid()
-			&& chord.modifiers == 0
-			&& !is_mouse_button(&chord.key)
-			&& !is_standalone_global_key(&chord.key)
-	});
-	if shortcuts.is_empty() {
-		status.store(if modifier_required { 4 } else { 3 }, Ordering::Relaxed);
-		wake();
-		return Ok(true);
-	}
-	let connection = ashpd::zbus::connection::Builder::session()?
-		.max_queued(16)
-		.build()
-		.await?;
-	// A host install has no portal app ID until this connection registers one; Flatpak skips
-	// it. Portals without the Registry interface, or without an installed
-	// io.github.tacobellerontop_sudo.dtewcord.desktop entry, reject it, so the session request still proceeds.
-	if let Ok(app_id) = "io.github.tacobellerontop_sudo.dtewcord".parse() {
-		match tokio::time::timeout(
-			std::time::Duration::from_secs(5),
-			ashpd::register_host_app_with_connection(connection.clone(), app_id),
-		)
-		.await
-		{
-			Ok(Ok(())) => {}
-			Ok(Err(error)) => {
-				eprintln!("Global shortcuts: portal app ID registration failed: {error}")
-			}
-			Err(_) => eprintln!("Global shortcuts: portal app ID registration timed out"),
-		}
-	}
-	let proxy = GlobalShortcuts::with_connection(connection).await?;
-	let session = proxy.create_session(Default::default()).await?;
-	let mut activated = proxy.receive_activated().await?;
-	let mut deactivated = proxy.receive_deactivated().await?;
-	let mut closed = session.receive_closed().await?;
-	let response = proxy
-		.bind_shortcuts(&session, &shortcuts, None, Default::default())
-		.await?
-		.response()?;
-	let mask = response.shortcuts().iter().fold(0, |mask, shortcut| {
-		mask | ids
-			.iter()
-			.find(|(id, ..)| id.as_str() == shortcut.id())
-			.map_or(0, |(_, action, ..)| match action {
-				KeybindAction::PushToTalk => 1,
-				KeybindAction::ToggleMute => 2,
-				KeybindAction::ToggleDeafen => 4,
-				KeybindAction::PushToMute => 8,
-				_ => 0,
-			})
-	});
-	registered.store(mask, Ordering::Relaxed);
-	*chords.lock().expect("portal chords poisoned") = response
-		.shortcuts()
-		.iter()
-		.filter_map(|shortcut| ids.iter().find(|(id, ..)| id.as_str() == shortcut.id()))
-		.flat_map(|(_, action, _, group_chords)| {
-			group_chords
-				.iter()
-				.map(move |chord| (*action, chord.clone()))
-		})
-		.collect();
-	status.store(
-		if modifier_required {
-			4
-		} else if mask == 0 {
-			3
-		} else {
-			2
-		},
-		Ordering::Relaxed,
-	);
-	wake();
-	loop {
-		tokio::select! {
-			_ = closed.next() => return Ok(false),
-			event = activated.next() => {
-				let Some(event) = event else { return Ok(false); };
-				let Some((_, action, bit, _)) =
-					ids.iter().find(|(id, ..)| event.shortcut_id() == id.as_str())
-				else {
-					continue;
-				};
-				match action {
-					KeybindAction::PushToTalk => {
-						ptt_held.fetch_or(1u64 << *bit, Ordering::Relaxed);
-					}
-					KeybindAction::PushToMute => {
-						ptm_held.fetch_or(1u64 << *bit, Ordering::Relaxed);
-					}
-					KeybindAction::ToggleMute => {
-						pending.fetch_xor(1, Ordering::Relaxed);
-					}
-					KeybindAction::ToggleDeafen => {
-						pending.fetch_xor(2, Ordering::Relaxed);
-					}
-					_ => continue,
-				}
-				wake();
-			}
-			event = deactivated.next() => {
-				let Some(event) = event else { return Ok(false); };
-				let Some((_, action, bit, _)) =
-					ids.iter().find(|(id, ..)| event.shortcut_id() == id.as_str())
-				else {
-					continue;
-				};
-				match action {
-					KeybindAction::PushToTalk => {
-						ptt_held.fetch_and(!(1u64 << *bit), Ordering::Relaxed);
-					}
-					KeybindAction::PushToMute => {
-						ptm_held.fetch_and(!(1u64 << *bit), Ordering::Relaxed);
-					}
-					_ => continue,
-				}
-				wake();
-			}
-		}
-	}
-}
-
-#[cfg(target_os = "linux")]
-fn portal_id(action: KeybindAction) -> &'static str {
-	match action {
-		KeybindAction::PushToTalk => "push-to-talk",
-		KeybindAction::PushToMute => "push-to-mute",
-		KeybindAction::ToggleMute => "toggle-mute",
-		KeybindAction::ToggleDeafen => "toggle-deafen",
-		_ => "voice-shortcut",
-	}
-}
-
-#[cfg(target_os = "linux")]
-fn portal_description(action: KeybindAction) -> &'static str {
-	match action {
-		KeybindAction::PushToTalk => "DTEW Cord push to talk",
-		KeybindAction::PushToMute => "DTEW Cord push to mute",
-		KeybindAction::ToggleMute => "Toggle DTEW Cord microphone mute",
-		KeybindAction::ToggleDeafen => "Toggle DTEW Cord deafen",
-		_ => "DTEW Cord voice shortcut",
-	}
-}
-
-#[cfg(target_os = "linux")]
-fn portal_trigger(chord: &KeyChord) -> Option<String> {
-	if !chord.is_valid() || (chord.modifiers == 0 && !is_standalone_global_key(&chord.key)) {
-		return None;
-	}
-	let mut value = String::new();
-	if chord.modifiers & (model::keybinds::PRIMARY | model::keybinds::CTRL) != 0 {
-		value.push_str("CTRL+");
-	}
-	if chord.modifiers & model::keybinds::ALT != 0 {
-		value.push_str("ALT+");
-	}
-	if chord.modifiers & model::keybinds::SHIFT != 0 {
-		value.push_str("SHIFT+");
-	}
-	// The portal expects XKB keysyms, not global-hotkey's physical key codes.
-	let key = match chord.key.as_str() {
-		"ArrowDown" => "Down",
-		"ArrowLeft" => "Left",
-		"ArrowRight" => "Right",
-		"ArrowUp" => "Up",
-		"Backspace" => "BackSpace",
-		"Enter" => "Return",
-		"Space" => "space",
-		"PageDown" => "Next",
-		"PageUp" => "Prior",
-		"Slash" => "slash",
-		"Backtick" => "grave",
-		"Minus" => "minus",
-		"Equals" => "equal",
-		"Comma" => "comma",
-		"Period" => "period",
-		"OpenBracket" => "bracketleft",
-		"CloseBracket" => "bracketright",
-		"OpenCurlyBracket" => "braceleft",
-		"CloseCurlyBracket" => "braceright",
-		"Backslash" | "IntlBackslash" => "backslash",
-		"Semicolon" => "semicolon",
-		"Colon" => "colon",
-		"Quote" => "apostrophe",
-		"Plus" => "plus",
-		"Pipe" => "bar",
-		"Questionmark" => "question",
-		"Exclamationmark" => "exclam",
-		name if name.len() == 1 && name.as_bytes()[0].is_ascii_uppercase() => {
-			value.push(name.as_bytes()[0].to_ascii_lowercase() as char);
-			return Some(value);
-		}
-		name if name.starts_with("Num") => name
-			.strip_prefix("Num")
-			.filter(|digit| digit.len() == 1 && digit.as_bytes()[0].is_ascii_digit())?,
-		name => {
-			code_name(name)?;
-			name
-		}
-	};
-	value.push_str(key);
-	Some(value)
 }
 
 fn is_standalone_global_key(name: &str) -> bool {
@@ -741,11 +341,7 @@ fn native_hotkey(chord: &KeyChord) -> Option<HotKey> {
 	}
 	let mut value = String::new();
 	if chord.modifiers & model::keybinds::PRIMARY != 0 {
-		value.push_str(if cfg!(target_os = "macos") {
-			"super+"
-		} else {
-			"control+"
-		});
+		value.push_str("control+");
 	}
 	if chord.modifiers & model::keybinds::CTRL != 0 {
 		value.push_str("control+");
@@ -857,7 +453,6 @@ fn code_name(name: &str) -> Option<&'static str> {
 }
 
 /// Windows has no global mouse-button hotkeys, so the physical button state is polled instead.
-#[cfg(target_os = "windows")]
 mod mouse {
 	use super::{KeyChord, KeybindAction, MOUSE_ID, NativeInput};
 	use model::keybinds::{ALT, CTRL, PRIMARY, SHIFT};
@@ -1019,57 +614,6 @@ mod mouse {
 mod tests {
 	use super::*;
 	use std::sync::atomic::{AtomicBool, Ordering};
-
-	#[cfg(target_os = "linux")]
-	#[test]
-	fn portal_triggers_use_xkb_keysyms() {
-		use model::keybinds::{ALT, CTRL, PRIMARY, SHIFT};
-		for (key, keysym) in [
-			("M", "m"),
-			("D", "d"),
-			("Num1", "1"),
-			("ArrowDown", "Down"),
-			("Backspace", "BackSpace"),
-			("Enter", "Return"),
-			("Space", "space"),
-			("PageDown", "Next"),
-			("PageUp", "Prior"),
-			("Slash", "slash"),
-			("Backtick", "grave"),
-			("Minus", "minus"),
-			("Equals", "equal"),
-			("Comma", "comma"),
-			("Period", "period"),
-			("OpenBracket", "bracketleft"),
-			("CloseBracket", "bracketright"),
-			("Backslash", "backslash"),
-			("Semicolon", "semicolon"),
-			("Quote", "apostrophe"),
-			("F12", "F12"),
-			("Tab", "Tab"),
-		] {
-			assert_eq!(
-				portal_trigger(&KeyChord::new(key, PRIMARY | SHIFT)),
-				Some(format!("CTRL+SHIFT+{keysym}"))
-			);
-		}
-		assert_eq!(
-			portal_trigger(&KeyChord::new("D", CTRL | ALT)),
-			Some("CTRL+ALT+d".into())
-		);
-		assert_eq!(
-			portal_trigger(&KeyChord::new("PageDown", 0)),
-			Some("Next".into())
-		);
-		for chord in [
-			KeyChord::default(),
-			KeyChord::new("MouseExtra1", ALT),
-			KeyChord::new("Num10", ALT),
-			KeyChord::new("unknown", ALT),
-		] {
-			assert_eq!(portal_trigger(&chord), None);
-		}
-	}
 
 	#[test]
 	fn modifier_bindings_have_native_codes_and_plain_keys_stay_focused() {

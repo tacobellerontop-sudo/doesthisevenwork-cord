@@ -137,13 +137,6 @@ pub(crate) fn load(directory: &Path, name: &str) -> Result<Option<SessionSecret>
 	if !metadata.is_file() || metadata.file_type().is_symlink() || metadata.len() > MAX_BYTES {
 		return Err(CredentialError::Invalid);
 	}
-	#[cfg(unix)]
-	{
-		use std::os::unix::fs::MetadataExt;
-		if metadata.mode() & 0o077 != 0 || metadata.nlink() != 1 {
-			return Err(CredentialError::Unavailable);
-		}
-	}
 	let file = std::fs::File::open(path).map_err(|_| CredentialError::Unavailable)?;
 	let mut value = Zeroizing::new(String::new());
 	file.take(MAX_BYTES + 1)
@@ -213,15 +206,6 @@ pub(crate) fn keyring_current(directory: &Path, name: &str) -> Result<(), Creden
 	}
 }
 fn sync_directory(directory: &Path) -> Result<(), CredentialError> {
-	#[cfg(unix)]
-	{
-		match std::fs::File::open(directory).and_then(|file| file.sync_all()) {
-			Ok(()) => Ok(()),
-			Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-			Err(_) => Err(CredentialError::Unavailable),
-		}
-	}
-	#[cfg(not(unix))]
 	{
 		let _ = directory;
 		Ok(())
@@ -229,16 +213,6 @@ fn sync_directory(directory: &Path) -> Result<(), CredentialError> {
 }
 fn private_directory(directory: &Path, create: bool) -> Result<bool, CredentialError> {
 	if create {
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::DirBuilderExt;
-			std::fs::DirBuilder::new()
-				.recursive(true)
-				.mode(0o700)
-				.create(directory)
-				.map_err(|_| CredentialError::Unavailable)?;
-		}
-		#[cfg(not(unix))]
 		std::fs::create_dir_all(directory).map_err(|_| CredentialError::Unavailable)?;
 	}
 	let metadata = match std::fs::symlink_metadata(directory) {
@@ -248,13 +222,6 @@ fn private_directory(directory: &Path, create: bool) -> Result<bool, CredentialE
 	};
 	if !metadata.is_dir() || metadata.file_type().is_symlink() {
 		return Err(CredentialError::Unavailable);
-	}
-	#[cfg(unix)]
-	{
-		use std::os::unix::fs::PermissionsExt;
-		if metadata.permissions().mode() & 0o077 != 0 {
-			return Err(CredentialError::Unavailable);
-		}
 	}
 	Ok(true)
 }
@@ -310,37 +277,5 @@ mod tests {
 		);
 		keyring_current(&directory, crate::ACCOUNT).unwrap();
 		assert!(!keyring_stale(&directory, crate::ACCOUNT).unwrap());
-	}
-	#[cfg(unix)]
-	#[test]
-	fn rejects_insecure_paths_and_ignores_predictable_temporary_symlinks() {
-		use std::os::unix::fs::{PermissionsExt, symlink};
-		let root = tempfile::tempdir().unwrap();
-		let directory = root.path().join("login");
-		let secret = SessionSecret::from_owner_input("SYNTHETIC_SAVED_LOGIN".into()).unwrap();
-		save(&directory, crate::ACCOUNT, &secret).unwrap();
-		assert_eq!(
-			std::fs::metadata(directory.join(crate::ACCOUNT))
-				.unwrap()
-				.permissions()
-				.mode() & 0o077,
-			0
-		);
-		let outside = root.path().join("outside");
-		std::fs::write(&outside, b"unchanged").unwrap();
-		symlink(&outside, directory.join(format!(".{}.tmp", crate::ACCOUNT))).unwrap();
-		save(&directory, crate::ACCOUNT, &secret).unwrap();
-		assert_eq!(std::fs::read(&outside).unwrap(), b"unchanged");
-		forget(&directory, crate::ACCOUNT).unwrap();
-		symlink(&outside, directory.join(crate::ACCOUNT)).unwrap();
-		assert_eq!(
-			load(&directory, crate::ACCOUNT).err(),
-			Some(CredentialError::Invalid)
-		);
-		std::fs::set_permissions(&directory, std::fs::Permissions::from_mode(0o755)).unwrap();
-		assert_eq!(
-			save(&directory, crate::ACCOUNT, &secret),
-			Err(CredentialError::Unavailable)
-		);
 	}
 }

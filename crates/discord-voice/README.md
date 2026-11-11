@@ -71,15 +71,6 @@ history without reopening devices. New device/security revisions recreate it.
 The offline debug example uses the same AEC wrapper as the worker. Hardware
 delay, long-term clock drift and echo quality remain unverified.
 
-macOS microphone authorization uses a small isolated Objective-C boundary in
-`src/audio/permission_macos.rs`. Only that module permits unsafe code; the rest
-of this crate denies it. The two AVFoundation class calls use the framework audio
-media constant and an owned completion block with a one-item result channel.
-Authorization runs on the device worker, before input creation; no callback or
-render-thread blocking and no camera/system-audio permissions are requested.
-The completion handler cannot open devices; the worker rechecks the active
-revision after permission is granted.
-
 Outgoing capture is paced FIFO with one 20 ms lookahead frame. Callback batches
 are preserved during ordinary ticks; the previous drain-to-latest policy could
 drop valid speech. The channel stays capped at eight frames, plus one lookahead
@@ -102,17 +93,13 @@ Processing and state reset run on the audio worker, never render/audio callbacks
 
 ## Optional outgoing screen video
 
-`screen::Worker` owns native capture and encoding outside rendering. Linux uses the
-ScreenCast portal/PipeWire/GStreamer path with hardware H.264 attempts and OpenH264
-fallback. `run_stream` owns a separate Discord RTC connection, shares the parent
+`screen::Worker` owns native capture and encoding outside rendering. Windows uses
+Windows Graphics Capture with Media Foundation H.264 attempts and OpenH264 fallback. `run_stream` owns a separate Discord RTC connection, shares the parent
 call's ephemeral `Identity`, and enables outgoing media only after DAVE is ready.
 `video` handles bounded Annex-B/FU-A RTP packetization after DAVE frame encryption.
 
-Optional system audio uses macOS ScreenCaptureKit, Windows process loopback excluding
-DTEW Cord's process tree (build 20348+), or Linux PulseAudio/PipeWire per-application monitors
-excluding DTEW Cord and unknown identities. Windows/Linux still include other applications
-when sharing one window. Linux has a separate bounded audio worker so video encoding
-cannot delay its sampling. Audio reaches the existing
+Optional system audio uses Windows process loopback excluding DTEW Cord's process tree
+(build 20348+). It still includes other applications when sharing one window. Audio reaches the existing
 stereo Opus sender through four bounded chunks (up to 38,400 PCM bytes each), plus
 100 ms / 38,400 bytes pending at the sender. Buffers are tagged before queueing with
 the capture generation so a rekey rejects late old audio. Native and wire behavior,

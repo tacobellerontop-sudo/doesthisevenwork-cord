@@ -6,13 +6,7 @@ use std::sync::{
 };
 
 // Windows delivers activation through its callback; other platforms retain one cancellable future.
-#[cfg(target_os = "windows")]
 type NotificationHandle = ();
-#[cfg(not(target_os = "windows"))]
-struct NotificationHandle {
-	response: Option<std::pin::Pin<Box<dyn std::future::Future<Output = ()>>>>,
-	close: Box<dyn FnOnce()>,
-}
 
 #[derive(Clone)]
 struct Activation {
@@ -62,18 +56,7 @@ impl Status {
 				"Notification queue full; an alert was skipped. Unread indicators are retained."
 			}
 			Self::Unavailable => {
-				#[cfg(target_os = "macos")]
-				{
-					"System notifications unavailable. Run the packaged DTEW Cord.app and check System Settings > Notifications."
-				}
-				#[cfg(target_os = "windows")]
-				{
-					"System notifications unavailable. Register the packaged Start Menu shortcut with install-notifications.ps1 and check Windows notification settings."
-				}
-				#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-				{
-					"System notifications unavailable. Check your desktop notification service and settings."
-				}
+				"System notifications unavailable. Register the packaged Start Menu shortcut with install-notifications.ps1 and check Windows notification settings."
 			}
 		}
 	}
@@ -311,21 +294,6 @@ fn worker(
 	let mut outcome = Status::Disabled;
 	let mut outstanding: Option<NotificationHandle> = None;
 	loop {
-		#[cfg(not(target_os = "windows"))]
-		if let Some(handle) = &mut outstanding
-			&& let Some(response) = &mut handle.response
-			&& response
-				.as_mut()
-				.poll(&mut std::task::Context::from_waker(std::task::Waker::noop()))
-				.is_ready()
-		{
-			handle.response = None;
-		}
-		#[cfg(not(target_os = "windows"))]
-		let waiting = outstanding
-			.as_ref()
-			.is_some_and(|handle| handle.response.is_some());
-		#[cfg(target_os = "windows")]
 		let waiting = false;
 		let command = if waiting {
 			match receive.recv_timeout(std::time::Duration::from_millis(100)) {
@@ -394,19 +362,6 @@ fn publish(status: &AtomicU64, generation: u64, outcome: Status) {
 }
 
 fn authorize() -> Status {
-	#[cfg(target_os = "macos")]
-	{
-		if notify_rust::check_bundle().is_err() {
-			return Status::Unavailable;
-		}
-		request_badge_authorization();
-		match notify_rust::request_auth_blocking() {
-			Ok(true) => Status::Ready,
-			Ok(false) => Status::Denied,
-			Err(_) => Status::Unavailable,
-		}
-	}
-	#[cfg(target_os = "windows")]
 	{
 		use windows::{UI::Notifications::ToastNotificationManager, core::HSTRING};
 		let notifier = ToastNotificationManager::CreateToastNotifierWithId(&HSTRING::from(
@@ -417,34 +372,8 @@ fn authorize() -> Status {
 			Err(_) => Status::Unavailable,
 		}
 	}
-	#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-	{
-		Status::Ready
-	}
 }
 
-/// mac-usernotifications 0.3.1 requests only alerts and sounds, which leaves the Dock unread
-/// badge without a Notifications setting. Asking for all three first keeps a single prompt;
-/// the crate's request afterwards installs its delegate and reports the decided status.
-#[cfg(target_os = "macos")]
-fn request_badge_authorization() {
-	use objc2_user_notifications::{UNAuthorizationOptions, UNUserNotificationCenter};
-	let (send, decided) = std::sync::mpsc::sync_channel(1);
-	UNUserNotificationCenter::currentNotificationCenter()
-		.requestAuthorizationWithOptions_completionHandler(
-			UNAuthorizationOptions::Alert
-				| UNAuthorizationOptions::Sound
-				| UNAuthorizationOptions::Badge,
-			&block2::RcBlock::new(
-				move |_: objc2::runtime::Bool, _: *mut objc2_foundation::NSError| {
-					let _ = send.try_send(());
-				},
-			),
-		);
-	let _ = decided.recv();
-}
-
-#[cfg(target_os = "windows")]
 fn windows_setting_status(
 	setting: windows::core::Result<windows::UI::Notifications::NotificationSetting>,
 	has_shortcut: bool,
@@ -462,7 +391,6 @@ fn windows_setting_status(
 	}
 }
 
-#[cfg(target_os = "windows")]
 fn windows_shortcut_exists() -> bool {
 	std::env::var_os("APPDATA").is_some_and(|root| {
 		std::path::PathBuf::from(root)
@@ -472,50 +400,6 @@ fn windows_shortcut_exists() -> bool {
 }
 
 fn show(alert: &Alert, activation: Activation) -> Result<NotificationHandle, ()> {
-	#[cfg(target_os = "macos")]
-	{
-		// The blocking wrapper mistakes a busy AppKit run loop for a stopped one.
-		// Await the OS completion on this worker; never block the native UI thread.
-		let native = mac_usernotifications::Notification::from(&notification(alert));
-		let handle = futures_lite::future::block_on(native.send()).map_err(|_| ())?;
-		let id = handle.notification_id().to_owned();
-		Ok(NotificationHandle {
-			response: Some(Box::pin(async move {
-				if handle
-					.response()
-					.await
-					.is_ok_and(|response| response.is_default_action())
-				{
-					activation.clicked();
-				}
-			})),
-			close: Box::new(move || {
-				futures_lite::future::block_on(mac_usernotifications::close_delivered(&id))
-			}),
-		})
-	}
-	#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-	{
-		let handle = Arc::new(notification(alert).show().map_err(|_| ())?);
-		let response_handle = Arc::clone(&handle);
-		Ok(NotificationHandle {
-			response: Some(Box::pin(async move {
-				response_handle
-					.wait_for_action_async(|response| {
-						if response.is_default_action() {
-							activation.clicked();
-						}
-					})
-					.await;
-			})),
-			close: Box::new(move || {
-				if let Ok(handle) = Arc::try_unwrap(handle) {
-					handle.close();
-				}
-			}),
-		})
-	}
-	#[cfg(target_os = "windows")]
 	{
 		use tauri_winrt_notification::{IconCrop, Toast};
 		let mut toast = Toast::new("io.github.tacobellerontop_sudo.dtewcord")
@@ -539,7 +423,7 @@ fn show(alert: &Alert, activation: Activation) -> Result<NotificationHandle, ()>
 	}
 }
 
-#[cfg(any(not(target_os = "windows"), test))]
+#[cfg(test)]
 fn notification(alert: &Alert) -> notify_rust::Notification {
 	let mut notification = notify_rust::Notification::new();
 	notification
@@ -547,26 +431,16 @@ fn notification(alert: &Alert) -> notify_rust::Notification {
 		.summary(&alert.title)
 		.body(&alert.body)
 		.timeout(5_000);
-	#[cfg(not(any(target_os = "macos", target_os = "windows")))]
-	notification.action("default", "Open channel");
 	if let Some(path) = &alert.image_path
 		&& std::path::Path::new(path.as_ref()).is_file()
 	{
 		notification.image_path(path);
 	}
 	// Sound is played independently by the bounded local audio worker.
-	#[cfg(target_os = "linux")]
-	notification.hint(notify_rust::Hint::SuppressSound(true));
 	notification
 }
 
 fn close(outstanding: &mut Option<NotificationHandle>) {
-	#[cfg(not(target_os = "windows"))]
-	if let Some(handle) = outstanding.take() {
-		drop(handle.response);
-		(handle.close)();
-	}
-	#[cfg(target_os = "windows")]
 	if outstanding.take().is_some() {
 		use windows::{UI::Notifications::ToastNotificationManager, core::HSTRING};
 		let _ = ToastNotificationManager::History().and_then(|history| {
@@ -604,7 +478,6 @@ pub fn debug_activation_check(channel: model::Id) -> model::Id {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	#[cfg(target_os = "windows")]
 	#[test]
 	fn missing_windows_settings_entry_allows_delivery_but_denials_do_not() {
 		use windows::{

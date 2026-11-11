@@ -1,16 +1,6 @@
 use super::*;
 use egui::{Event as InputEvent, PointerButton, ViewportCommand};
 
-#[cfg(not(target_os = "windows"))]
-fn frame(
-	ctx: &egui::Context,
-	view: &mut MessagingUi,
-	width: f32,
-	events: Vec<InputEvent>,
-) -> Vec<ViewportCommand> {
-	frame_with_maximized(ctx, view, width, events, None)
-}
-
 fn frame_with_maximized(
 	ctx: &egui::Context,
 	view: &mut MessagingUi,
@@ -64,7 +54,6 @@ fn pointer(pos: egui::Pos2, button: PointerButton, pressed: bool) -> Vec<InputEv
 	]
 }
 
-#[cfg(target_os = "windows")]
 #[test]
 fn hidden_title_strip_does_not_start_window_drag() {
 	let ctx = egui::Context::default();
@@ -118,7 +107,6 @@ fn hidden_title_strip_does_not_start_window_drag() {
 	);
 }
 
-#[cfg(target_os = "windows")]
 #[test]
 fn restore_caption_button_emits_unmaximize_when_maximized() {
 	let ctx = egui::Context::default();
@@ -146,56 +134,4 @@ fn restore_caption_button_emits_unmaximize_when_maximized() {
 		),
 		[ViewportCommand::Maximized(false)]
 	);
-}
-
-#[cfg(not(target_os = "windows"))]
-#[test]
-fn title_strip_does_not_emit_caption_commands() {
-	for width in [760.0, 1200.0] {
-		for (x, y) in [
-			(width - 1.0, 1.0),
-			(width - 8.0, 18.0),
-			(width - 35.0, 18.0),
-			(width - 81.0, 18.0),
-			(width - 127.0, 18.0),
-		] {
-			let ctx = egui::Context::default();
-			let mut view = MessagingUi::default();
-			frame(&ctx, &mut view, width, vec![]);
-			let pos = egui::pos2(x, y);
-			for pressed in [true, false] {
-				let commands = frame(
-					&ctx,
-					&mut view,
-					width,
-					pointer(pos, PointerButton::Primary, pressed),
-				);
-				assert!(
-					!commands.iter().any(|command| matches!(
-						command,
-						ViewportCommand::Close
-							| ViewportCommand::Minimized(_)
-							| ViewportCommand::Maximized(_)
-					)),
-					"width={width} pos={pos:?} pressed={pressed} commands={commands:?}"
-				);
-			}
-		}
-	}
-	let ctx = egui::Context::default();
-	let mut view = MessagingUi::default();
-	frame(&ctx, &mut view, 760.0, vec![]);
-	let pos = egui::pos2(380.0, 18.0);
-	// The OS drag loop eats releases on macOS and Linux, so a double click is two presses.
-	for expected in [ViewportCommand::StartDrag, ViewportCommand::Maximized(true)] {
-		assert_eq!(
-			frame(
-				&ctx,
-				&mut view,
-				760.0,
-				pointer(pos, PointerButton::Primary, true)
-			),
-			[expected]
-		);
-	}
 }

@@ -884,21 +884,6 @@ impl MessagingUi {
 	/// Title bar and tray switches; shared by Settings > General and setup.
 	pub(crate) fn window_switches(&mut self, ui: &mut egui::Ui) {
 		let language = self.language;
-		#[cfg(target_os = "linux")]
-		{
-			// Hiding every decoration and drawing DTEW Cord's own bar contradict each other:
-			// whichever switch was just turned on wins. The "no title bar" switch is at the
-			// bottom of this group, since it is only for tiling window managers.
-			let label = language.text("general-custom-title-bar");
-			let description = language.text("general-custom-title-bar-description");
-			if design::switch(ui, &label, Some(&description), &mut self.custom_title_bar).changed()
-				&& self.custom_title_bar
-			{
-				self.hide_window_decorations = false;
-			}
-			design::card_divider(ui);
-		}
-		#[cfg(any(target_os = "windows", target_os = "macos"))]
 		{
 			let label = language.text("general-hide-title-bar");
 			let description = language.text("general-hide-title-bar-description");
@@ -906,40 +891,14 @@ impl MessagingUi {
 			design::card_divider(ui);
 		}
 		ui.add_enabled_ui(self.tray_available, |ui| {
-			let label = language.text(if cfg!(target_os = "macos") {
-				"general-keep-menu-bar"
-			} else {
-				"general-keep-system-tray"
-			});
-			let description = language.text(if cfg!(target_os = "macos") {
-				"general-menu-bar-description"
-			} else if cfg!(target_os = "linux") {
-				"general-linux-tray-description"
-			} else {
-				"general-windows-tray-description"
-			});
+			let label = language.text("general-keep-system-tray");
+			let description = language.text("general-windows-tray-description");
 			design::switch(ui, &label, Some(&description), &mut self.minimize_to_tray);
 		});
 		if !self.tray_available {
 			design::hint(ui, &language.text("general-tray-unavailable"));
 		} else if !self.tray_status.is_empty() {
 			design::hint(ui, self.tray_status);
-		}
-		#[cfg(target_os = "linux")]
-		{
-			design::card_divider(ui);
-			let label = language.text("general-hide-decorations");
-			let description = language.text("general-hide-decorations-description");
-			if design::switch(
-				ui,
-				&label,
-				Some(&description),
-				&mut self.hide_window_decorations,
-			)
-			.changed() && self.hide_window_decorations
-			{
-				self.custom_title_bar = false;
-			}
 		}
 	}
 

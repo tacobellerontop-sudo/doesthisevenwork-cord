@@ -1,4 +1,4 @@
-#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+#![windows_subsystem = "windows"]
 #[cfg(feature = "demo")]
 mod access_marks_demo;
 mod app_settings;
@@ -48,8 +48,6 @@ mod reading_settings;
 mod registered_games;
 #[cfg(feature = "demo")]
 mod rendering_demo;
-#[cfg(target_os = "linux")]
-mod round_corners;
 mod screen;
 #[cfg(feature = "demo")]
 mod server_settings_demo;
@@ -533,14 +531,7 @@ fn main() -> eframe::Result {
 			("arch", std::env::consts::ARCH.into()),
 		],
 	);
-	let (
-		gpu_preference,
-		graphics_api,
-		transparency_available,
-		hide_window_decorations,
-		window_geometry,
-		custom_title_bar,
-	) = {
+	let (gpu_preference, graphics_api, transparency_available, window_geometry) = {
 		// First launch has no saved preferences; use their defaults (custom title bar on).
 		let defaults = local_store::AppPreferences::default();
 		let value = preferences.as_ref().unwrap_or(&defaults);
@@ -548,55 +539,30 @@ fn main() -> eframe::Result {
 			value.gpu_preference,
 			value.graphics_api,
 			value.transparency_blur,
-			value.hide_window_decorations || value.custom_title_bar,
 			value.window_geometry,
-			cfg!(target_os = "linux") && value.custom_title_bar,
 		)
 	};
 	#[cfg(feature = "demo")]
 	let transparency_available =
 		transparency_available || demo && std::env::args().any(|arg| arg == "--demo-transparency");
 	// The packaging/ tree is not part of this source archive; use the bundled brand icon.
-	#[cfg(any(target_os = "windows", target_os = "linux"))]
 	let icon = include_bytes!("../../../assets/brand/dtewcord-256.png").as_slice();
 	let options = eframe::NativeOptions {
 		viewport: {
 			let builder = egui::ViewportBuilder::default()
-				// The custom Linux title bar needs alpha for its rounded corners.
-				.with_transparent(transparency_available || custom_title_bar)
+				.with_transparent(transparency_available)
 				.with_inner_size(
 					window_geometry
 						.map_or(app_settings::DEFAULT_WINDOW_SIZE, |geometry| geometry.size)
 						.map(|value| value as f32),
 				)
-				// Maximize before the first configure so the first frame is not painted small.
-				.with_maximized(
-					cfg!(target_os = "linux")
-						&& window_geometry.is_some_and(|geometry| geometry.maximized),
-				)
 				.with_min_inner_size(app_settings::MIN_WINDOW_SIZE.map(|size| size as f32))
 				.with_active(!start_minimized)
 				.with_app_id("io.github.tacobellerontop_sudo.dtewcord");
-			#[cfg(any(target_os = "windows", target_os = "linux"))]
 			let builder = builder
 				.with_icon(eframe::icon_data::from_png_bytes(icon).expect("bundled app icon"));
-			if cfg!(target_os = "macos") {
-				// Discord-style inline title bar: traffic lights sit over the app's own strip.
-				// eframe swaps in the egui logo when no icon is set; an empty icon keeps the
-				// bundle's DTEW Cord.icns in the Dock and app switcher.
-				builder
-					.with_icon(egui::IconData::default())
-					.with_title_shown(false)
-					.with_titlebar_shown(false)
-					.with_fullsize_content_view(true)
-			} else if cfg!(target_os = "windows") {
-				// The app paints its own caption strip and buttons; see `ui::design::window_controls`.
-				builder.with_decorations(false)
-			} else if cfg!(target_os = "linux") {
-				builder.with_decorations(!hide_window_decorations)
-			} else {
-				builder
-			}
+			// The app paints its own caption strip and buttons; see `ui::design::window_controls`.
+			builder.with_decorations(false)
 		},
 		renderer: eframe::Renderer::Wgpu,
 		wgpu_options: eframe::egui_wgpu::WgpuConfiguration {
@@ -1082,14 +1048,9 @@ struct Desktop {
 	startup: startup::Startup,
 	tray: Option<platform::tray::Tray>,
 	hotkeys: platform::hotkeys::Hotkeys,
-	/// Linux desktop light/dark preference; winit reports it everywhere else.
-	system_theme: platform::system_theme::SystemTheme,
 	tray_error: Option<&'static str>,
 	tray_window: tray_window::State,
-	/// Native menu bar, retitled whenever the interface language changes.
-	#[cfg(target_os = "macos")]
-	app_menu: Option<(platform::app_menu::AppMenu, ui::i18n::Language)>,
-	/// Show requests from later launches and macOS Dock reopens.
+	/// Show requests from later launches.
 	instance: platform::single_instance::Instance,
 	/// `--demo-reply`: keeps two synthetic typists active on the selected fixture channel.
 	#[cfg(feature = "demo")]
@@ -1519,7 +1480,6 @@ fn demo_members(
 	}
 }
 
-#[cfg(target_os = "windows")]
 fn align_undecorated_surface(window: &winit::window::Window) {
 	use winit::platform::windows::WindowExtWindows as _;
 	// egui-winit turns on winit's 1px restored-client shift for custom chrome.
@@ -2314,10 +2274,6 @@ impl Desktop {
 		if !demo {
 			hotkeys.sync(&messaging.keybinds, &runtime);
 		}
-		let system_theme = platform::system_theme::SystemTheme::watch(&runtime, {
-			let ctx = cc.egui_ctx.clone();
-			move || ctx.request_repaint()
-		});
 		let window = cc
 			.winit_window()
 			.ok_or("Native window unavailable")?
@@ -2325,7 +2281,7 @@ impl Desktop {
 		// The window starts undecorated for either "hide decorations" or the custom title bar;
 		// the saved preferences, not the live window, say which of the two it was.
 		// The custom bar wins if a hand-edited file enables both.
-		let undecorated = cfg!(target_os = "linux") && !window.is_decorated();
+		let undecorated = false;
 		messaging.custom_title_bar = undecorated && app_settings.current.custom_title_bar;
 		messaging.hide_window_decorations = undecorated
 			&& app_settings.current.hide_window_decorations
@@ -2333,7 +2289,6 @@ impl Desktop {
 		let custom_title_bar = messaging.custom_title_bar;
 		app_settings.current.hide_window_decorations = messaging.hide_window_decorations;
 		app_settings.current.custom_title_bar = messaging.custom_title_bar;
-		#[cfg(target_os = "windows")]
 		{
 			use winit::platform::windows::{CornerPreference, WindowExtWindows as _};
 			window.set_corner_preference(CornerPreference::Round);
@@ -2345,17 +2300,6 @@ impl Desktop {
 		let tray_window = {
 			let _runtime = runtime.enter();
 			tray_window::State::default()
-		};
-		#[cfg(target_os = "macos")]
-		let app_menu = {
-			let wake = cc.egui_ctx.clone();
-			platform::app_menu::AppMenu::new(
-				window.clone(),
-				move || wake.request_repaint(),
-				ui::i18n::translate,
-			)
-			.ok()
-			.map(|menu| (menu, ui::i18n::Language::System))
 		};
 		Ok(Self {
 			proxy_auth: proxy_auth::Authentication::default(),
@@ -2445,11 +2389,8 @@ impl Desktop {
 			startup,
 			tray: None,
 			tray_window,
-			#[cfg(target_os = "macos")]
-			app_menu,
 			instance: Default::default(),
 			hotkeys,
-			system_theme,
 			tray_error: None,
 			#[cfg(feature = "demo")]
 			demo_typing,
@@ -2903,16 +2844,8 @@ impl Desktop {
 			self.tray = None;
 		} else if self.tray.is_none() {
 			let wake = ctx.clone();
-			#[cfg(target_os = "linux")]
-			let tray = {
-				let _runtime = self.runtime.enter();
-				platform::tray::Tray::new(
-					move || wake.request_repaint(),
-					self.tray_window.restorer(),
-				)
-			};
-			#[cfg(not(target_os = "linux"))]
-			let tray = platform::tray::Tray::new(self.window.clone(), move || wake.request_repaint());
+			let tray =
+				platform::tray::Tray::new(self.window.clone(), move || wake.request_repaint());
 			match tray {
 				Ok(tray) => self.tray = Some(tray),
 				Err(error) => self.tray_error = Some(error),
@@ -2960,112 +2893,16 @@ impl Desktop {
 			ctx.request_repaint();
 		}
 	}
-	/// Native menu bar commands. Editing commands arrive as the events their shortcuts send.
-	#[cfg(target_os = "macos")]
-	fn app_menu(&mut self, ctx: &egui::Context) {
-		use platform::app_menu::Command;
-		let Some((menu, language)) = &mut self.app_menu else {
-			return;
-		};
-		if *language != self.messaging.language {
-			*language = self.messaging.language;
-			let language = *language;
-			menu.translate(|key| language.text(key));
-		}
-		let key = |key, modifiers, pressed| egui::Event::Key {
-			key,
-			physical_key: Some(key),
-			pressed,
-			repeat: false,
-			modifiers: egui::Modifiers::MAC_CMD | egui::Modifiers::COMMAND | modifiers,
-		};
-		while let Some(command) = menu.take_command() {
-			let event = match command {
-				Command::Settings | Command::Updates => {
-					self.tray_window.show(ctx);
-					if self.state.user.is_some() {
-						if command == Command::Settings {
-							self.messaging.open_settings();
-						} else {
-							self.messaging.open_update_settings();
-						}
-					}
-					None
-				}
-				Command::Quit => {
-					self.tray_window.quit(ctx);
-					None
-				}
-				// Never quits, tray or not; that is Quit's job.
-				Command::CloseWindow => {
-					self.tray_window.hide(ctx);
-					None
-				}
-				Command::Undo => Some(key(egui::Key::Z, egui::Modifiers::NONE, true)),
-				Command::Redo => Some(key(egui::Key::Z, egui::Modifiers::SHIFT, true)),
-				Command::SelectAll => Some(key(egui::Key::A, egui::Modifiers::NONE, true)),
-				Command::Cut => Some(egui::Event::Cut),
-				Command::Copy => Some(egui::Event::Copy),
-				Command::Paste => {
-					// Like eframe's Cmd+V: the text, then the key release the composer also
-					// reads to paste files and images.
-					if let Ok(text) = arboard::Clipboard::new().and_then(|mut c| c.get_text())
-						&& !text.is_empty()
-					{
-						let text = text.replace("\r\n", "\n");
-						ctx.input_mut(|input| input.events.push(egui::Event::Paste(text)));
-					}
-					Some(key(egui::Key::V, egui::Modifiers::NONE, false))
-				}
-				Command::ZoomIn => {
-					egui::gui_zoom::zoom_in(ctx);
-					None
-				}
-				Command::ZoomOut => {
-					egui::gui_zoom::zoom_out(ctx);
-					None
-				}
-				Command::ActualSize => {
-					ctx.set_zoom_factor(1.0);
-					None
-				}
-				Command::Website => {
-					ctx.open_url(egui::OpenUrl::new_tab(
-						"https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
-					));
-					None
-				}
-				Command::ReportIssue => {
-					ctx.open_url(egui::OpenUrl::new_tab(
-						"https://github.com/tacobellerontop-sudo/doesthisevenwork-cord/issues/new/choose",
-					));
-					None
-				}
-			};
-			if let Some(event) = event {
-				ctx.input_mut(|input| input.events.push(event));
-			}
-		}
-	}
 	/// Whether closing may keep DTEW Cord running without a window. macOS apps stay in the Dock
 	/// until quit, and the Dock icon reopens the window.
 	fn background_available(&self) -> bool {
-		cfg!(target_os = "macos") || self.tray_available()
+		false || self.tray_available()
 	}
 	fn tray_available(&self) -> bool {
 		if !self.tray_setting.enabled || self.tray_error.is_some() {
 			return false;
 		}
-		#[cfg(target_os = "linux")]
-		{
-			self.tray
-				.as_ref()
-				.is_some_and(platform::tray::Tray::is_available)
-		}
-		#[cfg(not(target_os = "linux"))]
-		{
-			self.tray.is_some()
-		}
+		self.tray.is_some()
 	}
 	fn presence_snapshot(&self) -> model::OwnPresence {
 		model::OwnPresence {
@@ -3089,21 +2926,6 @@ impl Desktop {
 		}
 		self.messaging.adopt_account_presence(remote);
 		self.presence_authoritative = true;
-	}
-	/// egui resolves System through `fallback_theme` when winit reports no system theme, as on
-	/// Wayland and X11. A reported system theme still takes precedence on Windows and macOS.
-	fn sync_system_theme(&self, ctx: &egui::Context) {
-		let Some(dark) = self.system_theme.dark() else {
-			return;
-		};
-		let theme = if dark {
-			egui::Theme::Dark
-		} else {
-			egui::Theme::Light
-		};
-		if ctx.options(|options| options.fallback_theme) != theme {
-			ctx.options_mut(|options| options.fallback_theme = theme);
-		}
 	}
 	fn persist_account_presence(&mut self) {
 		if !self.presence_authoritative || self.state.demo || self.fixture_only {
@@ -5448,10 +5270,6 @@ impl Desktop {
 			self.command(command);
 		}
 
-		#[cfg(target_os = "linux")]
-		if self.login.is_some() {
-			ctx.request_repaint_after(self.frame_period().unwrap_or(Duration::from_millis(16)));
-		}
 		if self.login.is_some() {
 			ctx.request_repaint_after(Duration::from_secs(1));
 		}
@@ -5475,32 +5293,6 @@ impl Desktop {
 			ctx.request_repaint();
 		}
 	}
-	/// Clip the finished frame to a rounded window shape for the custom Linux title bar.
-	#[cfg(target_os = "linux")]
-	fn round_window_corners(&self, ctx: &egui::Context, frame: &eframe::Frame) {
-		let square = ctx.input(|i| {
-			i.viewport().maximized.unwrap_or(false) || i.viewport().fullscreen.unwrap_or(false)
-		});
-		if !self.messaging.uses_custom_title_bar() || square || !self.window_transparent {
-			return;
-		}
-		let Some(state) = frame.wgpu_render_state() else {
-			return;
-		};
-		// Debug is the topmost order, above popups and tooltips; a bare layer there is also
-		// drained after the Debug areas. The radius is in native pixels so it ignores the UI
-		// zoom, like the blur region, which is in surface (logical) pixels.
-		let radius = round_corners::RADIUS * self.window.scale_factor() as f32;
-		ctx.layer_painter(egui::LayerId::new(
-			egui::Order::Debug,
-			egui::Id::unique("dtewcord-round-corners"),
-		))
-		.add(round_corners::Mask::callback(
-			ctx.viewport_rect(),
-			state.target_format,
-			radius,
-		));
-	}
 	fn sync_window_effects(&mut self) {
 		if !self.transparency_available {
 			return;
@@ -5513,22 +5305,6 @@ impl Desktop {
 			self.window_transparent = transparent;
 		}
 		if let Some(window_blur) = &mut self.window_blur {
-			#[cfg(target_os = "linux")]
-			{
-				let square = self.window.is_maximized() || self.window.fullscreen().is_some();
-				let shape = (self.messaging.uses_custom_title_bar() && !square).then(|| {
-					let size = self
-						.window
-						.inner_size()
-						.to_logical::<f64>(self.window.scale_factor());
-					[
-						size.width.round() as i32,
-						size.height.round() as i32,
-						round_corners::RADIUS as i32,
-					]
-				});
-				window_blur.set_rounded_shape(shape);
-			}
 			// Only the user's own effect settings enable blur, not the custom title bar's alpha.
 			window_blur.set_enabled(effects_transparent() && effects.2 > 0);
 		}
@@ -5570,8 +5346,6 @@ impl eframe::App for Desktop {
 		matches!(event, winit::event::DeviceEvent::MouseMotion { .. }).then_some(false)
 	}
 	fn raw_input_hook(&mut self, ctx: &egui::Context, raw_input: &mut egui::RawInput) {
-		// Before the pass begins, so the whole frame resolves System to the same theme.
-		self.sync_system_theme(ctx);
 		if self.maximize_after_show && self.window.is_visible() == Some(true) {
 			self.maximize_after_show = false;
 			self.window.set_maximized(true);
@@ -5854,27 +5628,15 @@ impl eframe::App for Desktop {
 				tray_events.push(event);
 			}
 		}
-		#[cfg(target_os = "linux")]
-		let quitting = tray_events.contains(&platform::tray::Event::Quit);
 		for event in tray_events {
 			match event {
 				platform::tray::Event::Quit => {
 					self.tray_window.quit(ctx);
 				}
 				platform::tray::Event::Show => self.tray_window.show(ctx),
-				#[cfg(target_os = "linux")]
-				platform::tray::Event::Minimize => {
-					if !quitting {
-						self.tray_window.minimize(ctx);
-					}
-				}
 				platform::tray::Event::Unavailable => {
 					self.tray = None;
-					self.tray_error = Some(if cfg!(target_os = "linux") {
-						"Tray unavailable. Start a StatusNotifier host, then toggle the tray off/on."
-					} else {
-						"Tray unavailable. The window will stay visible."
-					});
+					self.tray_error = Some("Tray unavailable. The window will stay visible.");
 					self.tray_window.show(ctx);
 				}
 			}
@@ -5882,10 +5644,7 @@ impl eframe::App for Desktop {
 		if self.instance.take_show_request() {
 			self.tray_window.show(ctx);
 		}
-		#[cfg(target_os = "macos")]
-		self.app_menu(ctx);
 		// Like Discord, Ctrl+Q exits even when closing the window only hides it to the tray.
-		#[cfg(not(target_os = "macos"))]
 		if ctx.input_mut(|input| input.consume_key(egui::Modifiers::COMMAND, egui::Key::Q)) {
 			self.tray_window.quit(ctx);
 		}
@@ -6870,25 +6629,9 @@ impl eframe::App for Desktop {
 			diagnostic.show(&ctx, &self.window);
 		}
 		let appearance = ctx.options(|options| options.theme_preference);
-		#[cfg(target_os = "linux")]
-		{
-			let undecorated =
-				self.messaging.hide_window_decorations || self.messaging.custom_title_bar;
-			if self.window.is_decorated() == undecorated {
-				self.window.set_decorations(!undecorated);
-			}
-		}
-		#[cfg(target_os = "windows")]
 		if self.window.is_decorated() != self.messaging.hide_title_bar {
 			self.window.set_decorations(self.messaging.hide_title_bar);
 			align_undecorated_surface(&self.window);
-		}
-		#[cfg(target_os = "macos")]
-		if let Err(error) =
-			platform::window::set_native_title_bar(&self.window, self.messaging.hide_title_bar)
-		{
-			self.messaging.hide_title_bar = false;
-			self.state.status = error;
 		}
 		if !self.messaging.hide_title_bar {
 			frame.set_traffic_lights_position(&ctx, egui::Rangef::new(0.0, title_bar_height), 12.0);
@@ -7062,12 +6805,7 @@ impl eframe::App for Desktop {
 				None => {}
 			}
 		}
-		ui::design::window_resize_if(
-			&ctx,
-			cfg!(target_os = "windows") || self.messaging.uses_custom_title_bar(),
-		);
-		#[cfg(target_os = "linux")]
-		self.round_window_corners(&ctx, frame);
+		ui::design::window_resize_if(&ctx, true || self.messaging.uses_custom_title_bar());
 		self.frame_metrics.reflows = self.messaging.timeline_reflows();
 		self.frame_metrics.finish();
 	}

@@ -1,21 +1,9 @@
 //! Browser TLS/HTTP2 handshake and WebSocket dialing for the advertised identity.
 //! Gated so offline consumers such as the fuzz targets do not build BoringSSL.
 
-/// wreq-util profile of [`super::browser`] at `CHROME_MAJOR`/`SAFARI_VERSION`; bump them
-/// together.
+/// wreq-util profile of [`super::browser`] at `CHROME_MAJOR`; bump them together.
 fn profile() -> (wreq_util::Profile, wreq_util::Platform) {
-	use wreq_util::{Platform, Profile};
-	let platform = match std::env::consts::OS {
-		"macos" => Platform::MacOS,
-		"windows" => Platform::Windows,
-		_ => Platform::Linux,
-	};
-	let profile = if super::WEBKIT {
-		Profile::Safari26_4
-	} else {
-		Profile::Chrome149
-	};
-	(profile, platform)
+	(wreq_util::Profile::Chrome149, wreq_util::Platform::Windows)
 }
 
 /// TLS and HTTP/2 handshake of [`super::browser`], so every transport agrees with
@@ -140,9 +128,7 @@ mod tests {
 				.map(str::to_owned)
 		};
 		let agent = header("user-agent").unwrap();
-		// Safari profiles carry only the macOS user agent, so compare from the engine on.
-		let engine = |agent: &str| agent[agent.find("AppleWebKit").unwrap()..].to_owned();
-		assert_eq!(engine(&agent), engine(&crate::fingerprint::user_agent()));
+		assert_eq!(agent, crate::fingerprint::user_agent());
 		assert_eq!(
 			header("sec-ch-ua"),
 			crate::fingerprint::client_hints().map(|[(_, brands), ..]| brands)

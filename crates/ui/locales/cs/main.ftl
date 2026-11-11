@@ -51,16 +51,9 @@ general-start-minimized = Spustit minimalizovaně
 general-start-minimized-description = Spustí se na pozadí, aby vám nepřekážel.
 general-startup-unavailable = Automatické spuštění je dostupné ve Windows a macOS.
 general-window = Okno
-general-hide-decorations = Bez záhlaví okna
-general-hide-decorations-description = Pro dlaždicové správce oken: odebere všechna záhlaví a okraje včetně záhlaví DTEW Cord. K přesunu, změně velikosti nebo zavření použijte správce oken.
-general-custom-title-bar = Vlastní záhlaví okna
-general-custom-title-bar-description = Nahradí systémový titulní pruh záhlavím DTEW Cord ve stylu GTK 4.
 general-hide-title-bar = Skrýt titulní pruh DTEW Cordu
 general-hide-title-bar-description = Místo něj použije systémový titulní pruh a tlačítka okna.
-general-keep-menu-bar = Ponechat DTEW Cord v řádku nabídek
 general-keep-system-tray = Ponechat DTEW Cord v oznamovací oblasti
-general-menu-bar-description = Zavřením okna zůstane DTEW Cord v řádku nabídek. Ukončíte ho z jeho nabídky.
-general-linux-tray-description = Po zavření zůstane DTEW Cord spuštěný. Pomocí ikony ho zobrazíte, minimalizujete nebo ukončíte.
 general-windows-tray-description = Zavřením okna zůstane DTEW Cord v oznamovací oblasti. Ukončíte ho z její nabídky.
 general-tray-unavailable = Oznamovací oblast není na této platformě dostupná.
 general-graphics = Grafika
@@ -2297,10 +2290,6 @@ screen-body-refresh = Obnovit
 # Context: body
 screen-body-screen-or-window = Obrazovka nebo okno
 # Context: body
-screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord = Odesílejte, co váš Mac hraje, spolu s obrazovkou. DTEW Cord vlastní zvuk hovoru je vynechán.
-# Context: body
-screen-body-share-sound-from-other-apps-even-when-sharing-one-window = Sdílejte zvuk z jiných aplikací, i když sdílíte jedno okno. DTEW Cord vlastní zvuk je vynechán.
-# Context: body
 screen-body-share-system-audio = Sdílejte systémový zvuk
 # Context: body
 screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen = Sdílejte zvuk sdílené aplikace, nebo při sdílení obrazovky zvuk všech ostatních aplikací. DTEW Cord vlastní zvuk je vynechán.
@@ -4005,11 +3994,7 @@ updates-update-settings-auto-update = Automatická aktualizace
 # Context: update_settings
 updates-update-settings-check-for-updates = Zkontrolujte aktualizace
 # Context: update_settings
-updates-update-settings-copied = Zkopírováno
-# Context: update_settings
 updates-update-settings-copy = Kopírovat
-# Context: update_settings
-updates-update-settings-copy-command = Kopírovat příkaz
 # Context: update_settings
 updates-update-settings-copy-system-and-client-environment-details-formatted-for-github-issue = Zkopírujte podrobnosti o systému a prostředí klienta ve formátu pro hlášení problémů GitHubu.
 # Context: update_settings
@@ -4023,15 +4008,11 @@ updates-update-settings-early-builds-with-the-newest-changes-nightly-releases-ca
 # Context: update_settings
 updates-update-settings-finish-the-current-update-before-checking-again = Před další kontrolou dokončete aktuální aktualizaci.
 # Context: update_settings
-updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or = Flatpak spravuje aktualizace prostřednictvím svého úložiště. Spusťte `flatpak update` nebo použijte GNOME Software / KDE Discover k instalaci nových vydání.
-# Context: update_settings
-updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package = Instalace v aplikaci vyžaduje balíček vydání pro macOS nebo Windows nebo Linux x86-64 AppImage. Ostatní instalace Linuxu používají svého správce balíčků.
+updates-update-settings-in-app-installation-requires-an-x64-release-package = Instalace v aplikaci vyžaduje balíček vydání pro Windows x64.
 # Context: update_settings
 updates-update-settings-issue-diagnostics = Diagnostika problému
 # Context: update_settings
 updates-update-settings-nightly = Noční
-# Context: update_settings
-updates-update-settings-package-manager-updates = Aktualizace správce balíčků
 # Context: update_settings
 updates-update-settings-preferences = Předvolby
 # Context: update_settings
@@ -4042,8 +4023,6 @@ updates-update-settings-published-stable-releases-switching-channels-never-insta
 updates-update-settings-release-channel = Uvolněte kanál
 # Context: update_settings
 updates-update-settings-restart-to-update = Pro aktualizaci restartujte
-# Context: update_settings
-updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a = DTEW Cord byl nainstalován prostřednictvím vaší distribuce. Spusťte to v terminálu pro aktualizaci.
 # Context: update_settings
 updates-update-settings-save-diagnostics = Uložit diagnostiku
 # Context: update_settings
@@ -4174,8 +4153,6 @@ voice-call-controls-dismiss-call = Zrušit hovor
 voice-call-controls-leaving-is-unavailable-in-the-offline-preview = Opuštění není v offline náhledu dostupné.
 # Context: call_failure
 voice-call-failure-copy-failure-reason = Důvod selhání kopírování
-# Context: camera_settings_content
-voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform = Snímání fotoaparátem není na této platformě dostupné.
 # Context: camera_settings_content
 voice-camera-settings-content-camera-device = Zařízení fotoaparátu
 # Context: camera_settings_content
@@ -4721,68 +4698,6 @@ profiles-activity-empty = Žádná sdílená aktivita.
 profiles-mutuals-empty = Nothing to show here.
 
 reading-double-click-reaction = Double-click reaction
-
-## crates/platform/src/app_menu.rs
-# Context: macos_menu_bar
-app-menu-about = O aplikaci DTEW Cord
-# Context: macos_menu_bar
-app-menu-updates = Vyhledat aktualizace…
-# Context: macos_menu_bar
-app-menu-settings = Nastavení…
-# Context: macos_menu_bar
-app-menu-services = Služby
-# Context: macos_menu_bar
-app-menu-hide = Skrýt DTEW Cord
-# Context: macos_menu_bar
-app-menu-hide-others = Skrýt ostatní
-# Context: macos_menu_bar
-app-menu-show-all = Zobrazit vše
-# Context: macos_menu_bar
-app-menu-quit = Ukončit DTEW Cord
-# Context: macos_menu_bar
-app-menu-file = Soubor
-# Context: macos_menu_bar
-app-menu-close-window = Zavřít okno
-# Context: macos_menu_bar
-app-menu-edit = Úpravy
-# Context: macos_menu_bar
-app-menu-undo = Odvolat
-# Context: macos_menu_bar
-app-menu-redo = Zopakovat
-# Context: macos_menu_bar
-app-menu-cut = Vyjmout
-# Context: macos_menu_bar
-app-menu-copy = Kopírovat
-# Context: macos_menu_bar
-app-menu-paste = Vložit
-# Context: macos_menu_bar
-app-menu-select-all = Vybrat vše
-# Context: macos_menu_bar
-app-menu-emoji = Emoji a symboly
-# Context: macos_menu_bar
-app-menu-view = Zobrazení
-# Context: macos_menu_bar
-app-menu-actual-size = Skutečná velikost
-# Context: macos_menu_bar
-app-menu-zoom-in = Zvětšit
-# Context: macos_menu_bar
-app-menu-zoom-out = Zmenšit
-# Context: macos_menu_bar
-app-menu-full-screen = Přejít na celou obrazovku
-# Context: macos_menu_bar
-app-menu-window = Okno
-# Context: macos_menu_bar
-app-menu-minimize = Minimalizovat
-# Context: macos_menu_bar
-app-menu-zoom = Zvětšit/zmenšit
-# Context: macos_menu_bar
-app-menu-bring-all-to-front = Převést vše do popředí
-# Context: macos_menu_bar
-app-menu-help = Nápověda
-# Context: macos_menu_bar
-app-menu-github = DTEW Cord na GitHubu
-# Context: macos_menu_bar
-app-menu-report-issue = Nahlásit problém…
 
 ## crates/model/src/system_messages.rs
 # Context: system_message

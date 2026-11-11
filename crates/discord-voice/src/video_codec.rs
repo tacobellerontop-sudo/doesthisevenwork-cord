@@ -28,15 +28,9 @@ impl Codec {
 		}
 	}
 	pub fn available_h265() -> bool {
-		#[cfg(target_os = "linux")]
-		return platform::video::live::H264Decoder::new_h265_timed(Box::new(|_, _| {})).is_ok();
-		#[cfg(not(target_os = "linux"))]
 		false
 	}
 	pub fn available_av1() -> bool {
-		#[cfg(target_os = "linux")]
-		return platform::video::live::H264Decoder::new_av1_timed(Box::new(|_, _| {})).is_ok();
-		#[cfg(not(target_os = "linux"))]
 		false
 	}
 	pub fn is_keyframe(self, frame: &[u8]) -> bool {

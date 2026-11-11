@@ -10,15 +10,12 @@
 use std::future::Future;
 
 pub(crate) struct Resolution {
-	#[cfg(target_os = "windows")]
 	raised: bool,
 }
 
-#[cfg(target_os = "windows")]
 static THROTTLING_OPT_OUTS: std::sync::Mutex<usize> = std::sync::Mutex::new(0);
 
 /// Opts the process out of (`true`) or back into (`false`) Windows power throttling.
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn exempt_from_power_throttling(exempt: bool) {
 	use windows::Win32::System::Threading::{
@@ -51,27 +48,21 @@ fn exempt_from_power_throttling(exempt: bool) {
 
 impl Resolution {
 	pub(crate) fn acquire() -> Self {
-		#[cfg(target_os = "windows")]
 		if let Ok(mut count) = THROTTLING_OPT_OUTS.lock() {
 			if *count == 0 {
 				exempt_from_power_throttling(true);
 			}
 			*count += 1;
 		}
-		#[cfg(target_os = "windows")]
 		#[allow(unsafe_code)]
 		// SAFETY: A process-scoped request, balanced by timeEndPeriod in Drop on success.
 		let raised = unsafe { windows::Win32::Media::timeBeginPeriod(1) } == 0;
-		Self {
-			#[cfg(target_os = "windows")]
-			raised,
-		}
+		Self { raised }
 	}
 }
 
 impl Drop for Resolution {
 	fn drop(&mut self) {
-		#[cfg(target_os = "windows")]
 		if self.raised {
 			#[allow(unsafe_code)]
 			// SAFETY: Balances the successful timeBeginPeriod(1) in acquire.
@@ -79,7 +70,6 @@ impl Drop for Resolution {
 				windows::Win32::Media::timeEndPeriod(1);
 			}
 		}
-		#[cfg(target_os = "windows")]
 		if let Ok(mut count) = THROTTLING_OPT_OUTS.lock() {
 			*count = count.saturating_sub(1);
 			if *count == 0 {

@@ -164,11 +164,9 @@ fn programs(paths: Vec<String>, own: Option<PathBuf>) -> Vec<String> {
 			let Some(key) = games::normalize(path) else {
 				return false;
 			};
-			// Unix lists bare argv[0] words next to the real image path; Windows has only names.
-			(cfg!(windows) || path.contains(['/', '\\']))
-				&& !SYSTEM
-					.iter()
-					.any(|prefix| format!("/{key}").starts_with(prefix))
+			!SYSTEM
+				.iter()
+				.any(|prefix| format!("/{key}").starts_with(prefix))
 				&& Some(&key) != own.as_ref()
 				&& seen.insert(key)
 		})
@@ -196,11 +194,7 @@ mod tests {
 		.map(str::to_owned)
 		.to_vec();
 		let list = programs(paths, Some("/opt/dtewcord/dtewcord".into()));
-		if cfg!(windows) {
-			assert!(list.contains(&"bash".to_owned()));
-		} else {
-			assert_eq!(list, ["/usr/bin/alpha", "/opt/Game/game.x86_64"]);
-		}
+		assert!(list.contains(&"bash".to_owned()));
 	}
 
 	#[test]

@@ -7,8 +7,6 @@ pub enum Event {
 	Show = 1,
 	Unavailable = 2,
 	Quit = 4,
-	#[cfg(target_os = "linux")]
-	Minimize = 8,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -23,7 +21,6 @@ pub enum VoiceState {
 
 // Keep the desired state for Explorer recovery, and only remember a successful
 // presentation. A rejected native update is retried on the next background tick.
-#[cfg(any(target_os = "windows", test))]
 fn update_voice_state(
 	desired: &std::cell::Cell<VoiceState>,
 	applied: &std::cell::Cell<Option<VoiceState>>,
@@ -37,18 +34,12 @@ fn update_voice_state(
 }
 
 pub const fn supported() -> bool {
-	cfg!(any(
-		target_os = "windows",
-		target_os = "macos",
-		target_os = "linux"
-	))
+	true
 }
 
-#[cfg(any(target_os = "windows", target_os = "macos", test))]
 #[derive(Default)]
 struct Events(std::cell::Cell<u8>);
 
-#[cfg(any(target_os = "windows", target_os = "macos", test))]
 impl Events {
 	fn push(&self, event: Event) {
 		self.0.set(self.0.get() | event as u8);
@@ -62,40 +53,8 @@ impl Events {
 	}
 }
 
-#[cfg(target_os = "linux")]
-#[path = "tray/linux.rs"]
-mod linux;
-#[cfg(target_os = "linux")]
-pub use linux::Tray;
-
-#[cfg(target_os = "windows")]
 pub use native::Tray;
 
-#[cfg(target_os = "macos")]
-#[allow(unsafe_code)]
-#[path = "tray/macos.rs"]
-mod macos;
-#[cfg(target_os = "macos")]
-pub use macos::Tray;
-
-#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-pub struct Tray;
-
-#[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
-impl Tray {
-	pub fn new(
-		_window: std::sync::Arc<winit::window::Window>,
-		_wake: impl Fn() + 'static,
-	) -> Result<Self, &'static str> {
-		Err("The tray icon is unavailable on this platform.")
-	}
-	pub fn take_event(&self) -> Option<Event> {
-		None
-	}
-	pub fn set_voice_state(&self, _state: VoiceState) {}
-}
-
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 mod native {
 	use super::{Event, Events};

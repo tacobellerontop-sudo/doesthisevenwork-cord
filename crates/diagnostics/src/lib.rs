@@ -355,46 +355,6 @@ fn refused() -> std::io::Error {
 	)
 }
 
-/// Check ownership and type on the opened descriptors. NOFOLLOW and NONBLOCK prevent a
-/// swapped symlink or FIFO from redirecting a write or blocking startup. Permissions are
-/// applied to the handles, never to a path that could have been replaced.
-#[cfg(unix)]
-fn open_log(directory: &Path) -> std::io::Result<File> {
-	use rustix::fs::{self, FileType, Mode, OFlags};
-	create_private(directory)?;
-	let dir = fs::open(
-		directory,
-		OFlags::RDONLY | OFlags::DIRECTORY | OFlags::NOFOLLOW | OFlags::CLOEXEC,
-		Mode::empty(),
-	)?;
-	let uid = rustix::process::geteuid().as_raw();
-	if fs::fstat(&dir)?.st_uid != uid {
-		return Err(refused());
-	}
-	fs::fchmod(&dir, Mode::from_raw_mode(0o700))?;
-	let fd = fs::openat(
-		&dir,
-		LOG_FILE,
-		OFlags::CREATE
-			| OFlags::APPEND
-			| OFlags::WRONLY
-			| OFlags::NOFOLLOW
-			| OFlags::NONBLOCK
-			| OFlags::CLOEXEC,
-		Mode::from_raw_mode(0o600),
-	)?;
-	let stat = fs::fstat(&fd)?;
-	if stat.st_uid != uid
-		|| stat.st_nlink != 1
-		|| FileType::from_raw_mode(stat.st_mode) != FileType::RegularFile
-	{
-		return Err(refused());
-	}
-	fs::fchmod(&fd, Mode::from_raw_mode(0o600))?;
-	Ok(File::from(fd))
-}
-
-#[cfg(not(unix))]
 fn open_log(directory: &Path) -> std::io::Result<File> {
 	create_private(directory)?;
 	let path = directory.join(LOG_FILE);
@@ -403,7 +363,6 @@ fn open_log(directory: &Path) -> std::io::Result<File> {
 	}
 	let mut options = std::fs::OpenOptions::new();
 	options.create(true).append(true);
-	#[cfg(windows)]
 	{
 		use std::os::windows::fs::OpenOptionsExt;
 		// FILE_FLAG_OPEN_REPARSE_POINT: inspect the link itself instead of its target.
@@ -416,22 +375,15 @@ fn open_log(directory: &Path) -> std::io::Result<File> {
 	Ok(file)
 }
 
-#[cfg(not(unix))]
 fn shared(path: &Path) -> bool {
 	std::fs::symlink_metadata(path)
 		.is_ok_and(|meta| meta.file_type().is_symlink() || reparse(&meta))
 }
 
-#[cfg(not(unix))]
 fn reparse(meta: &std::fs::Metadata) -> bool {
-	#[cfg(windows)]
 	{
 		use std::os::windows::fs::MetadataExt;
 		meta.file_attributes() & 0x400 != 0 // FILE_ATTRIBUTE_REPARSE_POINT, including junctions.
-	}
-	#[cfg(not(windows))]
-	{
-		meta.file_type().is_symlink()
 	}
 }
 
@@ -807,18 +759,7 @@ impl FileSink {
 
 /// Creates only missing folders, privately, so a log stays as restricted as the data folder.
 fn create_private(directory: &Path) -> std::io::Result<()> {
-	#[cfg(unix)]
-	{
-		use std::os::unix::fs::DirBuilderExt;
-		std::fs::DirBuilder::new()
-			.recursive(true)
-			.mode(0o700)
-			.create(directory)
-	}
-	#[cfg(not(unix))]
-	{
-		std::fs::create_dir_all(directory)
-	}
+	std::fs::create_dir_all(directory)
 }
 
 /// The wall clock of the machine, read once per run; a log line correlates an action with a time.
@@ -1059,18 +1000,6 @@ mod tests {
 		let directory = tempfile::tempdir().unwrap();
 		let logs = directory.path().join("logs");
 		std::fs::create_dir_all(&logs).unwrap();
-		#[cfg(unix)]
-		{
-			let planted = directory.path().join("planted");
-			std::fs::create_dir_all(&planted).unwrap();
-			std::os::unix::fs::symlink(&planted, logs.join(LOG_FILE)).unwrap();
-			assert!(prepare(&logs).is_some(), "a linked log file is refused");
-			assert!(
-				!planted.join(LOG_FILE).exists(),
-				"nothing is written through the link"
-			);
-		}
-		#[cfg(not(unix))]
 		{
 			assert!(prepare(&logs).is_none());
 		}
@@ -1107,31 +1036,6 @@ mod tests {
 		assert_eq!(std::fs::read(path).unwrap(), b"abc\n");
 	}
 
-	#[cfg(unix)]
-	#[test]
-	fn every_reopen_refuses_symlinks_and_fifos() {
-		let directory = tempfile::tempdir().unwrap();
-		let target = directory.path().join("target");
-		std::fs::write(&target, b"unchanged").unwrap();
-		let logs = directory.path().join("logs");
-		std::fs::create_dir(&logs).unwrap();
-		let path = logs.join(LOG_FILE);
-		std::os::unix::fs::symlink(&target, &path).unwrap();
-		assert!(prepare(&logs).is_some());
-		assert_eq!(
-			FileSink::new(path.clone(), 0).write(&["private\n".into()]),
-			0
-		);
-		assert_eq!(std::fs::read(&target).unwrap(), b"unchanged");
-		#[cfg(all(unix, not(target_os = "macos")))]
-		{
-			use rustix::fs::{CWD, Mode, mkfifoat};
-			std::fs::remove_file(&path).unwrap();
-			mkfifoat(CWD, &path, Mode::from_raw_mode(0o600)).unwrap();
-			assert!(prepare(&logs).is_some());
-			assert_eq!(FileSink::new(path, 0).write(&["private\n".into()]), 0);
-		}
-	}
 	#[test]
 	fn the_writer_installs_flushes_and_changes_destination_without_ui_io() {
 		let directory = tempfile::tempdir().unwrap();

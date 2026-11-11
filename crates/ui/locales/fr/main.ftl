@@ -51,16 +51,9 @@ general-start-minimized = Démarrer réduit
 general-start-minimized-description = Commencez en arrière-plan, hors de votre chemin.
 general-startup-unavailable = Le démarrage automatique est disponible sur Windows et macOS.
 general-window = Fenêtre
-general-hide-decorations = Pas de barre de titre
-general-hide-decorations-description = Pour les gestionnaires de fenêtres en mosaïque : supprime toutes les barres de titre et bordures, y compris celle de DTEW Cord. Déplacez, redimensionnez ou fermez DTEW Cord avec votre gestionnaire de fenêtres.
-general-custom-title-bar = Barre de titre personnalisée
-general-custom-title-bar-description = Remplace la barre de titre du système par la barre d'en-tête propre à DTEW Cord, dans le style de GTK 4.
 general-hide-title-bar = Masquer la barre de titre DTEW Cord
 general-hide-title-bar-description = Utilisez plutôt la barre de titre du système et les boutons de la fenêtre.
-general-keep-menu-bar = Gardez DTEW Cord dans la barre de menu
 general-keep-system-tray = Gardez DTEW Cord dans la barre d'état système
-general-menu-bar-description = La fermeture de la fenêtre maintient DTEW Cord dans la barre de menu. Quittez son menu pour quitter.
-general-linux-tray-description = La fermeture permet à DTEW Cord de continuer à fonctionner. Utilisez le plateau pour afficher, minimiser ou quitter.
 general-windows-tray-description = La fermeture de la fenêtre maintient DTEW Cord dans la zone de notification. Quittez son menu pour quitter.
 general-tray-unavailable = Le plateau n'est pas disponible sur cette plateforme.
 general-graphics = Graphique
@@ -2269,10 +2262,6 @@ screen-body-refresh = Rafraîchir
 # Context: body
 screen-body-screen-or-window = Écran ou fenêtre
 # Context: body
-screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord = Envoyez ce que votre Mac joue avec l'écran. L'audio de l'appel de DTEW Cord est laissé de côté.
-# Context: body
-screen-body-share-sound-from-other-apps-even-when-sharing-one-window = Partagez le son d'autres applications, même lorsque vous partagez une seule fenêtre. Le propre audio de DTEW Cord est laissé de côté.
-# Context: body
 screen-body-share-system-audio = Partager l'audio du système
 # Context: body
 screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen = Partagez le son de l'application partagée, ou celui de toutes les autres applications lors du partage d'un écran. Le son de DTEW Cord est exclu.
@@ -3970,11 +3959,7 @@ updates-update-settings-auto-update = Mise à jour automatique
 # Context: update_settings
 updates-update-settings-check-for-updates = Vérifier les mises à jour
 # Context: update_settings
-updates-update-settings-copied = Copié
-# Context: update_settings
 updates-update-settings-copy = Copier
-# Context: update_settings
-updates-update-settings-copy-command = Commande Copier
 # Context: update_settings
 updates-update-settings-copy-system-and-client-environment-details-formatted-for-github-issue = Copiez les détails du système et de l'environnement client formatés pour les rapports de problèmes GitHub.
 # Context: update_settings
@@ -3988,15 +3973,11 @@ updates-update-settings-early-builds-with-the-newest-changes-nightly-releases-ca
 # Context: update_settings
 updates-update-settings-finish-the-current-update-before-checking-again = Terminez la mise à jour en cours avant de vérifier à nouveau.
 # Context: update_settings
-updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or = Flatpak gère les mises à jour via son référentiel. Exécutez `flatpak update` ou utilisez le logiciel GNOME / KDE Discover pour installer les nouvelles versions.
-# Context: update_settings
-updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package = L'installation dans l'application nécessite un package de version macOS ou Windows, ou une AppImage Linux x86-64. D'autres installations Linux utilisent leur gestionnaire de packages.
+updates-update-settings-in-app-installation-requires-an-x64-release-package = L'installation dans l'application nécessite le package de version Windows x64.
 # Context: update_settings
 updates-update-settings-issue-diagnostics = Diagnostic des problèmes
 # Context: update_settings
 updates-update-settings-nightly = Chaque nuit
-# Context: update_settings
-updates-update-settings-package-manager-updates = Mises à jour du gestionnaire de packages
 # Context: update_settings
 updates-update-settings-preferences = Préférences
 # Context: update_settings
@@ -4007,8 +3988,6 @@ updates-update-settings-published-stable-releases-switching-channels-never-insta
 updates-update-settings-release-channel = Canal de sortie
 # Context: update_settings
 updates-update-settings-restart-to-update = Redémarrer pour mettre à jour
-# Context: update_settings
-updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a = DTEW Cord a été installé via votre distribution. Exécutez ceci dans un terminal pour mettre à jour.
 # Context: update_settings
 updates-update-settings-save-diagnostics = Enregistrer le diagnostic
 # Context: update_settings
@@ -4139,8 +4118,6 @@ voice-call-controls-dismiss-call = Rejeter l'appel
 voice-call-controls-leaving-is-unavailable-in-the-offline-preview = Quitter n'est pas disponible dans l'aperçu hors ligne.
 # Context: call_failure
 voice-call-failure-copy-failure-reason = Raison de l'échec de la copie
-# Context: camera_settings_content
-voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform = La capture par caméra n'est pas disponible sur cette plateforme.
 # Context: camera_settings_content
 voice-camera-settings-content-camera-device = Appareil photo
 # Context: camera_settings_content
@@ -4613,68 +4590,6 @@ profiles-activity-empty = Aucune activité partagée.
 profiles-mutuals-empty = Nothing to show here.
 
 reading-double-click-reaction = Double-click reaction
-
-## crates/platform/src/app_menu.rs
-# Context: macos_menu_bar
-app-menu-about = À propos de DTEW Cord
-# Context: macos_menu_bar
-app-menu-updates = Rechercher les mises à jour…
-# Context: macos_menu_bar
-app-menu-settings = Réglages…
-# Context: macos_menu_bar
-app-menu-services = Services
-# Context: macos_menu_bar
-app-menu-hide = Masquer DTEW Cord
-# Context: macos_menu_bar
-app-menu-hide-others = Masquer les autres
-# Context: macos_menu_bar
-app-menu-show-all = Tout afficher
-# Context: macos_menu_bar
-app-menu-quit = Quitter DTEW Cord
-# Context: macos_menu_bar
-app-menu-file = Fichier
-# Context: macos_menu_bar
-app-menu-close-window = Fermer la fenêtre
-# Context: macos_menu_bar
-app-menu-edit = Édition
-# Context: macos_menu_bar
-app-menu-undo = Annuler
-# Context: macos_menu_bar
-app-menu-redo = Rétablir
-# Context: macos_menu_bar
-app-menu-cut = Couper
-# Context: macos_menu_bar
-app-menu-copy = Copier
-# Context: macos_menu_bar
-app-menu-paste = Coller
-# Context: macos_menu_bar
-app-menu-select-all = Tout sélectionner
-# Context: macos_menu_bar
-app-menu-emoji = Emoji et symboles
-# Context: macos_menu_bar
-app-menu-view = Présentation
-# Context: macos_menu_bar
-app-menu-actual-size = Taille réelle
-# Context: macos_menu_bar
-app-menu-zoom-in = Zoom avant
-# Context: macos_menu_bar
-app-menu-zoom-out = Zoom arrière
-# Context: macos_menu_bar
-app-menu-full-screen = Passer en plein écran
-# Context: macos_menu_bar
-app-menu-window = Fenêtre
-# Context: macos_menu_bar
-app-menu-minimize = Placer dans le Dock
-# Context: macos_menu_bar
-app-menu-zoom = Réduire/agrandir
-# Context: macos_menu_bar
-app-menu-bring-all-to-front = Tout ramener au premier plan
-# Context: macos_menu_bar
-app-menu-help = Aide
-# Context: macos_menu_bar
-app-menu-github = DTEW Cord sur GitHub
-# Context: macos_menu_bar
-app-menu-report-issue = Signaler un problème…
 
 ## crates/model/src/system_messages.rs
 # Context: system_message

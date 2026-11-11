@@ -22,7 +22,7 @@ pub fn output_config(
 ) -> Result<SupportedStreamConfig, &'static str> {
 	select_output_config(
 		preference,
-		cfg!(target_os = "windows"),
+		true,
 		|| {
 			device
 				.default_output_config()

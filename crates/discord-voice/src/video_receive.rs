@@ -916,24 +916,6 @@ enum Backend {
 	Software(openh264::decoder::Decoder),
 }
 impl Backend {
-	#[cfg(all(test, target_os = "macos"))]
-	fn new(
-		prefer_hardware: bool,
-		user: u64,
-		sink: &VideoSink,
-		counters: &Arc<DecoderCounters>,
-		lifetime: &Arc<AtomicBool>,
-	) -> Option<Self> {
-		Self::new_timed(
-			Codec::H264,
-			prefer_hardware,
-			user,
-			sink,
-			counters,
-			lifetime,
-			Arc::default(),
-		)
-	}
 	fn new_timed(
 		codec: Codec,
 		prefer_hardware: bool,
@@ -970,15 +952,6 @@ impl Backend {
 				}
 			});
 			if codec != Codec::H264 {
-				#[cfg(target_os = "linux")]
-				return (if codec == Codec::Av1 {
-					platform::video::live::H264Decoder::new_av1_timed(deliver)
-				} else {
-					platform::video::live::H264Decoder::new_h265_timed(deliver)
-				})
-				.ok()
-				.map(Self::Hardware);
-				#[cfg(not(target_os = "linux"))]
 				return None;
 			}
 			if let Ok(decoder) = platform::video::live::H264Decoder::new_timed(deliver) {
@@ -1066,12 +1039,6 @@ impl Backend {
 					.ok_or(DecodeError::Failed)?;
 				Ok(Some((w, h)))
 			}
-		}
-	}
-	#[cfg(all(test, target_os = "macos"))]
-	fn flush(&self) {
-		if let Self::Hardware(decoder) = self {
-			decoder.flush();
 		}
 	}
 }
@@ -2319,129 +2286,6 @@ mod tests {
 		}
 	}
 
-	#[cfg(target_os = "macos")]
-	#[test]
-	fn hardware_decoder_round_trips_an_openh264_keyframe() {
-		use openh264::{
-			OpenH264API,
-			encoder::{Encoder, EncoderConfig},
-			formats::YUVBuffer,
-		};
-		let mut encoder =
-			Encoder::with_api_config(OpenH264API::from_source(), EncoderConfig::new()).unwrap();
-		let yuv = YUVBuffer::new(320, 240);
-		let pictures = Arc::new(std::sync::Mutex::new(Vec::new()));
-		let seen = pictures.clone();
-		let sink: VideoSink = Arc::new(move |frame: RemoteFrame| {
-			seen.lock().unwrap().push((
-				frame.user,
-				frame.picture.width,
-				frame.picture.height,
-				frame.picture.to_rgba().unwrap().2,
-			));
-		});
-		let counters = Arc::new(DecoderCounters::default());
-		let lifetime = Arc::new(AtomicBool::new(true));
-		let mut decoder =
-			Backend::new(true, 9, &sink, &counters, &lifetime).expect("hardware backend");
-		assert!(matches!(decoder, Backend::Hardware(_)));
-		let mut scratch = Vec::new();
-		for _ in 0..3 {
-			let encoded = encoder.encode(&yuv).unwrap();
-			let mut data = Vec::new();
-			encoded.write_vec(&mut data);
-			assert!(!data.is_empty());
-			assert!(decoder.decode(&data, &mut scratch).unwrap().is_none());
-		}
-		decoder.flush();
-		let delivered = {
-			let pictures = pictures.lock().unwrap();
-			assert!(!pictures.is_empty(), "VideoToolbox produced pictures");
-			let frame = &pictures[0];
-			assert_eq!((frame.0, frame.1, frame.2), (9, 320, 240));
-			assert_eq!(frame.3.len(), 320 * 240 * 4);
-			assert!(frame.3.as_chunks::<4>().0.iter().all(|px| px[3] == 255));
-			pictures.len() as u64
-		};
-		assert_eq!(counters.pictures.load(Ordering::Relaxed), delivered);
-		lifetime.store(false, Ordering::Release);
-		let mut data = Vec::new();
-		encoder.encode(&yuv).unwrap().write_vec(&mut data);
-		decoder.decode(&data, &mut scratch).unwrap();
-		decoder.flush();
-		assert_eq!(pictures.lock().unwrap().len() as u64, delivered);
-		assert_eq!(
-			counters.pictures.load(Ordering::Relaxed),
-			delivered,
-			"cancelled hardware callbacks must not reset the stall detector"
-		);
-	}
-	/// `cargo test -p discord-voice compare_decoder_backends -- --ignored --nocapture`
-	#[cfg(target_os = "macos")]
-	#[test]
-	#[ignore]
-	fn compare_decoder_backends() {
-		use openh264::{
-			OpenH264API,
-			encoder::{BitRate, Encoder, EncoderConfig},
-			formats::YUVBuffer,
-		};
-		let mut encoder = Encoder::with_api_config(
-			OpenH264API::from_source(),
-			EncoderConfig::new().bitrate(BitRate::from_bps(6_000_000)),
-		)
-		.unwrap();
-		let (width, height) = (1280usize, 720usize);
-		let frames: Vec<Vec<u8>> = (0..60u8)
-			.map(|i| {
-				let mut yuv = vec![0u8; width * height * 3 / 2];
-				for (n, byte) in yuv[..width * height].iter_mut().enumerate() {
-					*byte = ((n / width) as u8).wrapping_add(i.wrapping_mul(3));
-				}
-				let mut data = Vec::new();
-				encoder
-					.encode(&YUVBuffer::from_vec(yuv, width, height))
-					.unwrap()
-					.write_vec(&mut data);
-				data
-			})
-			.collect();
-		for hardware in [true, false] {
-			let count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
-			let seen = count.clone();
-			let sink: VideoSink = Arc::new(move |_| {
-				seen.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-			});
-			let mut decoder = Backend::new(
-				hardware,
-				1,
-				&sink,
-				&Arc::default(),
-				&Arc::new(AtomicBool::new(true)),
-			)
-			.unwrap();
-			let mut scratch = Vec::new();
-			// Session start-up (IOSurface, Metal) is a one-time cost; time steady state only.
-			let _ = decoder.decode(&frames[0], &mut scratch);
-			decoder.flush();
-			count.store(0, std::sync::atomic::Ordering::Relaxed);
-			let start = std::time::Instant::now();
-			let mut pictures = 0;
-			for frame in &frames[1..] {
-				if let Ok(Some(_)) = decoder.decode(frame, &mut scratch) {
-					pictures += 1;
-				}
-			}
-			decoder.flush();
-			let pictures = pictures + count.load(std::sync::atomic::Ordering::Relaxed);
-			println!(
-				"{} decoder: {pictures} pictures of 720p in {:?} ({:.2} ms per frame)",
-				if hardware { "VideoToolbox" } else { "openh264" },
-				start.elapsed(),
-				start.elapsed().as_secs_f64() * 1000.0 / pictures.max(1) as f64
-			);
-		}
-	}
 	#[test]
 	fn decoder_thread_rejects_garbage_and_ends_with_its_sender() {
 		let frames = Arc::new(std::sync::Mutex::new(0usize));

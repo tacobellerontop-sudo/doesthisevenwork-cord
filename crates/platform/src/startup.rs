@@ -8,28 +8,11 @@ pub struct Settings {
 }
 
 pub const fn available() -> bool {
-	cfg!(any(target_os = "windows", target_os = "macos"))
+	true
 }
 
-#[cfg(target_os = "windows")]
 pub use native::{load, save};
 
-#[cfg(target_os = "macos")]
-mod macos;
-#[cfg(target_os = "macos")]
-pub use macos::{load, save};
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-pub fn load() -> Result<Settings, &'static str> {
-	Err("Automatic startup is currently available on Windows and macOS only.")
-}
-
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-pub fn save(_settings: Settings) -> Result<(), &'static str> {
-	Err("Automatic startup is currently available on Windows and macOS only.")
-}
-
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 mod native {
 	use super::Settings;

@@ -1,12 +1,8 @@
 //! Sign-in UI and account-session lifecycle for the desktop client.
 use super::*;
 
-/// Sign-in header strip doubles as the window drag region, clearing the traffic lights.
-pub(super) const SIGN_IN_HEADER_HEIGHT: f32 = if cfg!(target_os = "windows") {
-	44.0
-} else {
-	60.0
-};
+/// Sign-in header strip doubles as the window drag region.
+pub(super) const SIGN_IN_HEADER_HEIGHT: f32 = 44.0;
 
 impl Desktop {
 	pub(super) fn connect(&mut self, secret: SessionSecret, save: bool, ctx: &egui::Context) {
@@ -159,7 +155,6 @@ impl Desktop {
 		let _ = ui::emoji::install(ctx);
 		ui::design::apply(ctx);
 		ctx.set_theme(self.appearance);
-		self.sync_system_theme(ctx);
 		self.messaging
 			.apply_reading_preferences(ctx, self.reading.current);
 		ctx.clear_animations();

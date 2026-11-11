@@ -1,6 +1,4 @@
 //! Credential persistence and temporary owner-operated login/verification surfaces.
-#[cfg(target_os = "macos")]
-pub mod app_menu;
 pub mod audio;
 pub mod badge;
 pub mod captcha;
@@ -19,15 +17,11 @@ pub mod proxy_credentials;
 pub mod save;
 pub mod single_instance;
 pub mod startup;
-pub mod system_theme;
 pub mod tray;
 pub mod video;
-#[cfg(target_os = "macos")]
-pub mod window;
 pub mod window_effects;
 use client_core::auth::{Failure, SessionSecret};
 pub use pointer::cursor_position;
-#[cfg(not(target_os = "linux"))]
 use std::{
 	sync::{
 		Arc,
@@ -35,12 +29,7 @@ use std::{
 	},
 	time::{Duration, Instant},
 };
-#[cfg(not(target_os = "linux"))]
 use wry::{WebView, WebViewBuilder};
-#[cfg(target_os = "linux")]
-mod login_linux;
-#[cfg(target_os = "linux")]
-pub use login_linux::LoginView;
 
 /// Logical height of the native header the desktop app draws above the login webview.
 pub const LOGIN_HEADER_HEIGHT: f32 = 56.0;
@@ -54,7 +43,6 @@ const ACCOUNT: &str = "discord-session.development";
 /// for an unknown binary usually refuses process creation too, and the difference is what a report
 /// needs; `Err` carries the operating system's code. The probe writes nothing and opens no window.
 pub fn spawn_probe() -> Result<(), i64> {
-	#[cfg(target_os = "windows")]
 	{
 		const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 		use std::os::windows::process::CommandExt;
@@ -65,36 +53,13 @@ pub fn spawn_probe() -> Result<(), i64> {
 			.map(drop)
 			.map_err(|error| i64::from(error.raw_os_error().unwrap_or(-1)))
 	}
-	#[cfg(not(target_os = "windows"))]
-	{
-		Ok(())
-	}
 }
 
 /// Opens a folder in the owner's file manager. The caller passes a path it already owns, so this
 /// crosses no service or privilege boundary. `Err` carries the platform's failure code, which the
 /// caller records instead of leaving a button that appears to do nothing.
 pub fn open_folder(path: &std::path::Path) -> Result<(), i64> {
-	#[cfg(target_os = "windows")]
-	{
-		open_with_shell(path)
-	}
-	#[cfg(not(target_os = "windows"))]
-	{
-		#[cfg(target_os = "macos")]
-		const OPENER: &str = "open";
-		#[cfg(all(unix, not(target_os = "macos")))]
-		const OPENER: &str = "xdg-open";
-		let mut child = std::process::Command::new(OPENER)
-			.arg(path)
-			.spawn()
-			.map_err(|error| i64::from(error.raw_os_error().unwrap_or(-1)))?;
-		// The opener exits on its own; reaping it keeps finished children from piling up.
-		std::thread::spawn(move || {
-			let _ = child.wait();
-		});
-		Ok(())
-	}
+	open_with_shell(path)
 }
 
 /// Windows cannot simply start `explorer.exe` (a fresh one fails to initialize its DLLs,
@@ -102,7 +67,6 @@ pub fn open_folder(path: &std::path::Path) -> Result<(), i64> {
 /// (SE_ERR_ACCESSDENIED), so two quiet routes are tried before the caller hands the path over.
 /// `ShellExecuteW` is deliberately absent: on a machine that refuses it, it puts a system dialog
 /// on screen instead of failing quietly.
-#[cfg(target_os = "windows")]
 fn open_with_shell(path: &std::path::Path) -> Result<(), i64> {
 	// The running shell browses the folder through COM; this never starts explorer.exe.
 	let selected = select_in_shell(path);
@@ -120,7 +84,6 @@ fn open_with_shell(path: &std::path::Path) -> Result<(), i64> {
 /// Initializes an apartment for the shell calls. A render thread usually has none and the shell
 /// then reports SE_ERR_ACCESSDENIED. An existing different apartment is fine: the thread keeps
 /// whichever apartment it already had, so nothing is uninitialized here.
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn prepare_shell() {
 	use windows::Win32::System::Com::{COINIT_APARTMENTTHREADED, CoInitializeEx};
@@ -131,7 +94,6 @@ fn prepare_shell() {
 }
 
 /// A NUL-terminated absolute path the shell calls can read, or `None` for an unrepresentable one.
-#[cfg(target_os = "windows")]
 fn wide_path(path: &std::path::Path) -> Option<Vec<u16>> {
 	use std::os::windows::ffi::OsStrExt;
 	let absolute = std::path::absolute(path).unwrap_or_else(|_| path.to_path_buf());
@@ -145,7 +107,6 @@ fn wide_path(path: &std::path::Path) -> Option<Vec<u16>> {
 
 /// Asks the running shell to browse the folder: no new process, and the shell that already owns
 /// the desktop is the one that answers.
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn select_in_shell(path: &std::path::Path) -> Result<(), i64> {
 	use windows::Win32::UI::Shell::{ILCreateFromPathW, ILFree, SHOpenFolderAndSelectItems};
@@ -168,7 +129,6 @@ fn select_in_shell(path: &std::path::Path) -> Result<(), i64> {
 
 /// Last resort: `start` runs inside a trusted command interpreter, which the shell is more likely
 /// to accept than this process.
-#[cfg(target_os = "windows")]
 fn start_via_cmd(path: &std::path::Path) -> Result<(), i64> {
 	const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 	use std::os::windows::process::CommandExt;
@@ -190,98 +150,6 @@ pub enum CredentialError {
 	Unavailable,
 	Invalid,
 	TimedOut,
-}
-
-#[cfg(target_os = "linux")]
-pub(crate) fn ensure_gtk_application_id() {
-	static INIT: std::sync::Once = std::sync::Once::new();
-	INIT.call_once(|| {
-		use gtk4::gio::prelude::ApplicationExt;
-		let app = gtk4::gio::Application::new(Some(SERVICE), gtk4::gio::ApplicationFlags::empty());
-		if let Err(error) = app.register(gtk4::gio::Cancellable::NONE) {
-			eprintln!("Linux login/verification: GApplication registration failed: {error}");
-		}
-		std::mem::forget(app);
-	});
-}
-
-/// Check GTK's effective encoding before WebKit starts Flatpak subprocesses.
-#[cfg(target_os = "linux")]
-pub(crate) fn ensure_webkit_locale() -> Result<(), &'static str> {
-	let flatpak = std::path::Path::new("/.flatpak-info").is_file()
-		|| std::env::var_os("FLATPAK_ID").is_some();
-	if flatpak && !gtk4::glib::charset().0 {
-		return Err(
-			"DTEW Cord Flatpak login/verification requires a UTF-8 locale. Repair runtime languages and restart DTEW Cord; see Flatpak troubleshooting.",
-		);
-	}
-	Ok(())
-}
-
-#[cfg(all(test, target_os = "linux"))]
-mod flatpak_locale_tests {
-	#[test]
-	fn non_utf8_webkit_preflight_is_local_to_flatpak() {
-		const CHILD: &str = "DTEWCORD_TEST_WEBKIT_LOCALE_CHILD";
-		if let Some(mode) = std::env::var_os(CHILD) {
-			// Fresh processes avoid GLib's cached encoding. Only the explicitly display-backed
-			// regression initializes GTK; neither test constructs WebKit or authenticates.
-			if std::env::var_os("DTEWCORD_TEST_WEBKIT_INITIALIZE_GTK").is_some() {
-				gtk4::init().expect("display-backed GTK initialization");
-			}
-			assert_eq!(gtk4::glib::charset().0, mode == "utf8");
-			assert_eq!(super::ensure_webkit_locale().is_err(), mode == "flatpak");
-			assert_eq!(
-				std::env::var_os("LC_ALL").as_deref(),
-				Some(std::ffi::OsStr::new("C"))
-			);
-			return;
-		}
-		check_encoding_cases(false);
-	}
-
-	#[test]
-	#[ignore = "requires a Linux display; explicitly exercised under Xvfb in native CI"]
-	fn post_gtk_flatpak_encoding_preflight() {
-		check_encoding_cases(true);
-	}
-
-	fn check_encoding_cases(initialize_gtk: bool) {
-		const CHILD: &str = "DTEWCORD_TEST_WEBKIT_LOCALE_CHILD";
-		for mode in ["native", "flatpak", "utf8"] {
-			if mode == "native" && std::path::Path::new("/.flatpak-info").is_file() {
-				continue; // A real sandbox marker cannot be removed to simulate a native app.
-			}
-			let mut child = std::process::Command::new(std::env::current_exe().unwrap());
-			child
-				.args([
-					"--exact",
-					"flatpak_locale_tests::non_utf8_webkit_preflight_is_local_to_flatpak",
-				])
-				.env(CHILD, mode)
-				.env("LC_ALL", "C")
-				.env("CHARSET", if mode == "utf8" { "UTF-8" } else { "US-ASCII" })
-				.env_remove("FLATPAK_ID")
-				.env_remove("DTEWCORD_TEST_WEBKIT_INITIALIZE_GTK");
-			if initialize_gtk {
-				child.env("DTEWCORD_TEST_WEBKIT_INITIALIZE_GTK", "1");
-			}
-			if mode != "native" {
-				child.env("FLATPAK_ID", "io.github.tacobellerontop_sudo.dtewcord");
-			}
-			let output = child.output().unwrap();
-			assert!(
-				output.status.success(),
-				"{mode}: {}",
-				String::from_utf8_lossy(&output.stderr)
-			);
-			assert!(
-				String::from_utf8(output.stdout)
-					.unwrap()
-					.contains("running 1 test")
-			);
-		}
-	}
 }
 
 /// Where a saved login ended up.
@@ -388,72 +256,11 @@ fn entry(name: &str) -> Result<keyring_core::Entry, CredentialError> {
 		_ => CredentialError::Unavailable,
 	})
 }
-#[cfg(not(target_os = "linux"))]
 fn credential_store() -> Result<(), CredentialError> {
 	keyring::Entry::store_status()
 		.as_ref()
 		.copied()
 		.map_err(|_| CredentialError::NoStore)
-}
-/// Unlike keyring's one-shot default, a missing Secret Service is retried, so a provider that
-/// starts after DTEW Cord (or KWallet, which may need activating) is still found.
-#[cfg(target_os = "linux")]
-fn credential_store() -> Result<(), CredentialError> {
-	const RETRY: std::time::Duration = std::time::Duration::from_secs(15);
-	static LAST_FAILURE: std::sync::Mutex<Option<std::time::Instant>> = std::sync::Mutex::new(None);
-	let mut last_failure = LAST_FAILURE
-		.lock()
-		.unwrap_or_else(std::sync::PoisonError::into_inner);
-	if keyring_core::get_default_store().is_some() {
-		return Ok(());
-	}
-	if last_failure.is_some_and(|at| at.elapsed() < RETRY) {
-		return Err(CredentialError::NoStore);
-	}
-	let store = zbus_secret_service_keyring_store::Store::new().or_else(|_| {
-		activate_kwallet();
-		zbus_secret_service_keyring_store::Store::new()
-	});
-	match store {
-		Ok(store) => {
-			keyring_core::set_default_store(store);
-			*last_failure = None;
-			Ok(())
-		}
-		Err(_) => {
-			*last_failure = Some(std::time::Instant::now());
-			Err(CredentialError::NoStore)
-		}
-	}
-}
-/// KWallet serves the Secret Service API but, unlike GNOME Keyring, often is not D-Bus
-/// activatable under that name, so outside a Plasma session nothing starts it. Start the
-/// wallet daemon itself, then wait briefly for it to claim the Secret Service name.
-#[cfg(target_os = "linux")]
-fn activate_kwallet() {
-	use zbus::names::WellKnownName;
-	let Ok(connection) = zbus::blocking::Connection::session() else {
-		return;
-	};
-	let Ok(bus) = zbus::blocking::fdo::DBusProxy::new(&connection) else {
-		return;
-	};
-	let started = ["org.kde.kwalletd6", "org.kde.kwalletd5"]
-		.into_iter()
-		.any(|daemon| {
-			bus.start_service_by_name(WellKnownName::from_static_str_unchecked(daemon), 0)
-				.is_ok()
-		});
-	if !started {
-		return;
-	}
-	let secrets = WellKnownName::from_static_str_unchecked("org.freedesktop.secrets");
-	for _ in 0..20 {
-		if bus.name_has_owner(secrets.clone().into()).unwrap_or(false) {
-			return;
-		}
-		std::thread::sleep(std::time::Duration::from_millis(100));
-	}
 }
 fn load_entry(name: &str) -> Result<Option<SessionSecret>, CredentialError> {
 	match entry(name)?.get_password() {
@@ -484,19 +291,16 @@ fn discord_origin(value: &str) -> bool {
 			&& url.password().is_none()
 	})
 }
-#[cfg(any(not(target_os = "linux"), test))]
 fn login_navigation(value: &str) -> bool {
 	discord_origin(value) || captcha::hcaptcha_origin(value)
 }
 /// Receives only the account token used by THIS ephemeral, owner-operated login page.
 /// No browser-profile reads, password interception, console instructions, or QR exchange implementation.
-#[cfg(not(target_os = "linux"))]
 pub struct LoginView {
 	view: WebView,
 	tokens: Receiver<SessionSecret>,
 	opened: Instant,
 }
-#[cfg(not(target_os = "linux"))]
 impl LoginView {
 	pub fn open(
 		parent: Arc<winit::window::Window>,
@@ -557,7 +361,6 @@ impl LoginView {
 	}
 	pub fn pump(&self) {}
 }
-#[cfg(not(target_os = "linux"))]
 fn bounds(parent: &winit::window::Window) -> wry::Rect {
 	let size = parent.inner_size();
 	let header = (LOGIN_HEADER_HEIGHT as f64 * parent.scale_factor()).round() as u32;

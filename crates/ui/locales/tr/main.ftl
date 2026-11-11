@@ -51,16 +51,9 @@ general-start-minimized = Küçültülmüş başlangıç
 general-start-minimized-description = Arka planda başlayın, yolunuzdan çekilin.
 general-startup-unavailable = Otomatik başlatma Windows ve macOS'ta mevcuttur.
 general-window = Pencere
-general-hide-decorations = Başlık çubuğu yok
-general-hide-decorations-description = Döşemeli pencere yöneticileri için: DTEW Cord'in kendi başlık çubuğu dahil tüm başlık çubuklarını ve kenarlıkları kaldırır. DTEW Cord'i taşımak, yeniden boyutlandırmak veya kapatmak için pencere yöneticinizi kullanın.
-general-custom-title-bar = Özel başlık çubuğu
-general-custom-title-bar-description = Sistem başlık çubuğunu DTEW Cord'in GTK 4 tarzındaki kendi başlık çubuğuyla değiştirir.
 general-hide-title-bar = DTEW Cord başlık çubuğunu gizle
 general-hide-title-bar-description = Bunun yerine sistem başlık çubuğunu ve pencere düğmelerini kullanın.
-general-keep-menu-bar = DTEW Cord'i menü çubuğunda tutun
 general-keep-system-tray = DTEW Cord'i sistem tepsisinde tutun
-general-menu-bar-description = Pencereyi kapatmak DTEW Cord'i menü çubuğunda tutar. Çıkmak için menüsünden çıkın.
-general-linux-tray-description = Kapanış DTEW Cord'in çalışmasını sağlar. Göstermek, simge durumuna küçültmek veya çıkmak için tepsiyi kullanın.
 general-windows-tray-description = Pencereyi kapatmak DTEW Cord'i bildirim alanında tutar. Çıkmak için menüsünden çıkın.
 general-tray-unavailable = Tepsi bu platformda kullanılamıyor.
 general-graphics = Grafik
@@ -2270,10 +2263,6 @@ screen-body-refresh = Yenile
 # Context: body
 screen-body-screen-or-window = Ekran veya pencere
 # Context: body
-screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord = Mac'inizin oynattıklarını ekranla birlikte gönderin. DTEW Cord'in kendi çağrı sesi dışarıda bırakıldı.
-# Context: body
-screen-body-share-sound-from-other-apps-even-when-sharing-one-window = Bir pencereyi paylaşırken bile diğer uygulamalardaki sesi paylaşın. DTEW Cord'in kendi sesi dışarıda bırakıldı.
-# Context: body
 screen-body-share-system-audio = Sistem sesini paylaş
 # Context: body
 screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen = Paylaşılan uygulamanın sesini veya ekran paylaşırken diğer tüm uygulamaların sesini paylaşın. DTEW Cord'in kendi sesi dahil edilmez.
@@ -3964,11 +3953,7 @@ updates-update-settings-auto-update = Otomatik güncelleme
 # Context: update_settings
 updates-update-settings-check-for-updates = Güncellemeleri kontrol edin
 # Context: update_settings
-updates-update-settings-copied = Kopyalandı
-# Context: update_settings
 updates-update-settings-copy = Kopyala
-# Context: update_settings
-updates-update-settings-copy-command = Komutu kopyala
 # Context: update_settings
 updates-update-settings-copy-system-and-client-environment-details-formatted-for-github-issue = GitHub sorun raporları için biçimlendirilmiş sistem ve istemci ortamı ayrıntılarını kopyalayın.
 # Context: update_settings
@@ -3982,15 +3967,11 @@ updates-update-settings-early-builds-with-the-newest-changes-nightly-releases-ca
 # Context: update_settings
 updates-update-settings-finish-the-current-update-before-checking-again = Tekrar kontrol etmeden önce mevcut güncellemeyi tamamlayın.
 # Context: update_settings
-updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or = Flatpak, güncellemeleri deposu aracılığıyla yönetir. Yeni sürümleri yüklemek için 'flatpak update'i çalıştırın veya GNOME Yazılımını / KDE Discover'ı kullanın.
-# Context: update_settings
-updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package = Uygulama içi kurulum, bir macOS veya Windows sürüm paketi ya da Linux x86-64 AppImage gerektirir. Diğer Linux kurulumları paket yöneticilerini kullanır.
+updates-update-settings-in-app-installation-requires-an-x64-release-package = Uygulama içi kurulum, Windows x64 sürüm paketini gerektirir.
 # Context: update_settings
 updates-update-settings-issue-diagnostics = Sorun teşhisi
 # Context: update_settings
 updates-update-settings-nightly = her gece
-# Context: update_settings
-updates-update-settings-package-manager-updates = Paket yöneticisi güncellemeleri
 # Context: update_settings
 updates-update-settings-preferences = Tercihler
 # Context: update_settings
@@ -4001,8 +3982,6 @@ updates-update-settings-published-stable-releases-switching-channels-never-insta
 updates-update-settings-release-channel = Yayın kanalı
 # Context: update_settings
 updates-update-settings-restart-to-update = Güncellemek için yeniden başlatın
-# Context: update_settings
-updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a = DTEW Cord dağıtımınız aracılığıyla kuruldu. Güncellemek için bunu bir terminalde çalıştırın.
 # Context: update_settings
 updates-update-settings-save-diagnostics = Tanılamayı kaydet
 # Context: update_settings
@@ -4133,8 +4112,6 @@ voice-call-controls-dismiss-call = Aramayı reddet
 voice-call-controls-leaving-is-unavailable-in-the-offline-preview = Çevrimdışı önizlemede ayrılmak mümkün değildir.
 # Context: call_failure
 voice-call-failure-copy-failure-reason = Kopyalama hatası nedeni
-# Context: camera_settings_content
-voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform = Bu platformda kamera çekimi kullanılamıyor.
 # Context: camera_settings_content
 voice-camera-settings-content-camera-device = Kamera cihazı
 # Context: camera_settings_content
@@ -4499,7 +4476,6 @@ voice-recipient-stop-ringing = Çalmayı durdur
 voice-recipient-ringing = Çalıyor…
 voice-recipient-not-in-call = Aramada değil
 
-
 reconnect-now = Şimdi yeniden bağlan
 
 message-preview-limit = Bu mesaj, yerel metin düzeni sınırını aşıyor.
@@ -4586,7 +4562,6 @@ server-emoji-empty-detail = Eklemek için bir görsel yükleyin. GIF'ler hareket
 
 server-stickers-empty-detail = İlk çıkartmanızı eklemek için bir görsel yükleyin.
 
-
 screen-macos-system-picker = macOS sistem seçicisiyle seç
 
 screen-macos-system-picker-kind = Sistem içerik seçicisi
@@ -4602,68 +4577,6 @@ profiles-activity-empty = Paylaşılan etkinlik yok.
 profiles-mutuals-empty = Nothing to show here.
 
 reading-double-click-reaction = Double-click reaction
-
-## crates/platform/src/app_menu.rs
-# Context: macos_menu_bar
-app-menu-about = DTEW Cord Hakkında
-# Context: macos_menu_bar
-app-menu-updates = Güncellemeleri Denetle…
-# Context: macos_menu_bar
-app-menu-settings = Ayarlar…
-# Context: macos_menu_bar
-app-menu-services = Servisler
-# Context: macos_menu_bar
-app-menu-hide = DTEW Cord'i Gizle
-# Context: macos_menu_bar
-app-menu-hide-others = Diğerlerini Gizle
-# Context: macos_menu_bar
-app-menu-show-all = Tümünü Göster
-# Context: macos_menu_bar
-app-menu-quit = DTEW Cord'den Çık
-# Context: macos_menu_bar
-app-menu-file = Dosya
-# Context: macos_menu_bar
-app-menu-close-window = Pencereyi Kapat
-# Context: macos_menu_bar
-app-menu-edit = Düzen
-# Context: macos_menu_bar
-app-menu-undo = Geri Al
-# Context: macos_menu_bar
-app-menu-redo = Yinele
-# Context: macos_menu_bar
-app-menu-cut = Kes
-# Context: macos_menu_bar
-app-menu-copy = Kopyala
-# Context: macos_menu_bar
-app-menu-paste = Yapıştır
-# Context: macos_menu_bar
-app-menu-select-all = Tümünü Seç
-# Context: macos_menu_bar
-app-menu-emoji = Emoji ve Simgeler
-# Context: macos_menu_bar
-app-menu-view = Görüntü
-# Context: macos_menu_bar
-app-menu-actual-size = Gerçek Boyut
-# Context: macos_menu_bar
-app-menu-zoom-in = Yakınlaştır
-# Context: macos_menu_bar
-app-menu-zoom-out = Uzaklaştır
-# Context: macos_menu_bar
-app-menu-full-screen = Tam Ekrana Geç
-# Context: macos_menu_bar
-app-menu-window = Pencere
-# Context: macos_menu_bar
-app-menu-minimize = Simge Durumuna Küçült
-# Context: macos_menu_bar
-app-menu-zoom = Büyüt/Küçült
-# Context: macos_menu_bar
-app-menu-bring-all-to-front = Tümünü Öne Getir
-# Context: macos_menu_bar
-app-menu-help = Yardım
-# Context: macos_menu_bar
-app-menu-github = GitHub'da DTEW Cord
-# Context: macos_menu_bar
-app-menu-report-issue = Sorun Bildir…
 
 ## crates/model/src/system_messages.rs
 # Context: system_message

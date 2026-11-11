@@ -1,27 +1,7 @@
 //! Native taskbar/Dock unread indicator; no message text or account identity leaves the app.
 pub const fn supported() -> bool {
-	cfg!(any(target_os = "windows", target_os = "macos"))
+	true
 }
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-pub fn set(_window: &winit::window::Window, _count: u32) -> Result<(), &'static str> {
-	Err("App icon badges are currently available on Windows and macOS.")
-}
-#[cfg(target_os = "macos")]
-pub fn set(_window: &winit::window::Window, count: u32) -> Result<(), &'static str> {
-	use objc2_app_kit::NSApplication;
-	use objc2_foundation::{MainThreadMarker, NSString};
-	let mtm = MainThreadMarker::new().ok_or("The Dock badge requires the main thread.")?;
-	let label = match count {
-		0 => None,
-		1..=99 => Some(NSString::from_str(&count.to_string())),
-		_ => Some(NSString::from_str("99+")),
-	};
-	NSApplication::sharedApplication(mtm)
-		.dockTile()
-		.setBadgeLabel(label.as_deref());
-	Ok(())
-}
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 pub fn set(window: &winit::window::Window, count: u32) -> Result<(), &'static str> {
 	use windows::{
@@ -74,7 +54,6 @@ pub fn set(window: &winit::window::Window, count: u32) -> Result<(), &'static st
 	}
 	result
 }
-#[cfg(target_os = "windows")]
 fn count_icon(count: u32) -> ([u8; 32], [u8; 1024]) {
 	const DIGITS: [[u8; 7]; 10] = [
 		[14, 17, 19, 21, 25, 17, 14],

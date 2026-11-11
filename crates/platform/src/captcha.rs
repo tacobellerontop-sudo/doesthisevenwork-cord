@@ -1,33 +1,21 @@
 //! A temporary, human-operated verification widget. Never receives the account token.
 use client_core::captcha::{Challenge, Solution};
-#[cfg(not(target_os = "linux"))]
 use std::sync::Arc;
 
-#[cfg(not(target_os = "linux"))]
 use std::{
 	borrow::Cow,
 	sync::mpsc::{self, Receiver},
 	time::{Duration, Instant},
 };
-#[cfg(target_os = "windows")]
 use wry::WebViewBuilderExtWindows;
-#[cfg(not(target_os = "linux"))]
 use wry::{WebView, WebViewBuilder};
 
-#[cfg(target_os = "linux")]
-#[path = "captcha_linux.rs"]
-mod linux;
-#[cfg(target_os = "linux")]
-pub use linux::CaptchaView;
-
-#[cfg(not(target_os = "linux"))]
 pub struct CaptchaView {
 	view: WebView,
 	results: Receiver<Result<Solution, &'static str>>,
 	opened: Instant,
 }
 
-#[cfg(not(target_os = "linux"))]
 impl CaptchaView {
 	pub fn open(
 		parent: Arc<winit::window::Window>,
@@ -77,7 +65,6 @@ impl CaptchaView {
 				let Some(result) = parse_result(&body, &capability) else { return; };
 				if send.try_send(result).is_ok() {wake();}
 			});
-		#[cfg(target_os = "windows")]
 		let builder = builder.with_https_scheme(true);
 		let view = builder
 			.build_as_child(parent.as_ref())
@@ -150,13 +137,12 @@ pub(super) fn parse_result(body: &str, capability: &str) -> Option<Result<Soluti
 	})
 }
 
-#[cfg(any(not(target_os = "linux"), test))]
 fn own_origin(value: &str) -> bool {
 	url::Url::parse(value).is_ok_and(|url| {
 		((url.scheme() == "https"
 			&& url.host_str() == Some("dtewcord-captcha.verification.invalid")
 			&& url.port_or_known_default() == Some(443))
-			|| (cfg!(target_os = "macos")
+			|| (false
 				&& url.scheme() == "dtewcord-captcha"
 				&& url.host_str() == Some("verification.invalid")
 				&& url.port().is_none()))
@@ -179,7 +165,7 @@ pub(crate) fn hcaptcha_origin(value: &str) -> bool {
 	})
 }
 
-#[cfg(any(target_os = "linux", test))]
+#[cfg(test)]
 pub(crate) fn verification_storage_domains(
 	expected: &str,
 	current: Option<&str>,
@@ -245,7 +231,6 @@ mod tests {
 			assert!(!super::own_origin(url));
 		}
 	}
-	#[cfg(target_os = "windows")]
 	#[test]
 	#[ignore = "opens an offline native WebView2 window; never contacts hCaptcha"]
 	fn native_local_page_and_ipc() {

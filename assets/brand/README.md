@@ -19,8 +19,7 @@ other vendor's branding, and no third-party font is embedded in them.
     rsvg-convert -w 72 -h 72 -o assets/brand/dtewcord-tray.png
   ```
 
-The packaged platform icons built from the same artwork live in `packaging/` (`macos/DTEW Cord.icns`
-and `DTEW Cord.icon`, `windows/DTEW Cord.ico`, `linux/hicolor/*`).
+The packaged Windows icon built from the same artwork lives at `packaging/windows/DTEW Cord.ico`.
 
 Brand palette: `#8BBEFF` → `#506DDC` → `#2D247C` plate gradient, `#F5FAFF` and `#D1E0FF` waves.
 The interface accent (`design::DEFAULT_PRIMARY_RGB`, `#1a72e8`) is drawn from the same family and

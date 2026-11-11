@@ -55,7 +55,7 @@ impl Default for ScreenUi {
 			quality_for: None,
 			fps: 30,
 			cursor: true,
-			audio: cfg!(target_os = "macos"),
+			audio: false,
 		}
 	}
 }
@@ -74,32 +74,22 @@ impl ScreenUi {
 		self.quality_for = None;
 		self.sources.clear();
 		if state.demo {
-			self.sources = if cfg!(target_os = "macos") {
-				vec![Source {
-					id: SourceId::SystemPicker,
-					name: "Choose with the macOS system picker".into(),
-					width: 0,
-					height: 0,
-					refresh_hz: 0,
-				}]
-			} else {
-				vec![
-					Source {
-						id: SourceId::Display(1),
-						name: "Display 1 · Synthetic preview".into(),
-						width: 2560,
-						height: 1440,
-						refresh_hz: 165,
-					},
-					Source {
-						id: SourceId::Window(2),
-						name: "Project notes · Synthetic window".into(),
-						width: 1280,
-						height: 720,
-						refresh_hz: 60,
-					},
-				]
-			};
+			self.sources = vec![
+				Source {
+					id: SourceId::Display(1),
+					name: "Display 1 · Synthetic preview".into(),
+					width: 2560,
+					height: 1440,
+					refresh_hz: 165,
+				},
+				Source {
+					id: SourceId::Window(2),
+					name: "Project notes · Synthetic window".into(),
+					width: 1280,
+					height: 720,
+					refresh_hz: 60,
+				},
+			];
 			self.selected = self.sources.first().map(|source| source.id);
 			self.status = "Offline preview · no screen is captured".into();
 		} else {
@@ -238,7 +228,7 @@ impl ScreenUi {
 			));
 			ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 				if ui
-					.add_enabled_ui(!state.demo && !cfg!(target_os = "linux"), |ui| {
+					.add_enabled_ui(!state.demo, |ui| {
 						crate::design::text_action(
 							ui,
 							&crate::i18n::translate("screen-body-refresh"),
@@ -319,13 +309,7 @@ impl ScreenUi {
 			crate::design::switch(
 				ui,
 				"screen-body-share-system-audio",
-				Some(if cfg!(target_os = "macos") {
-					"screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord"
-				} else if cfg!(target_os = "windows") {
-					"screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen"
-				} else {
-					"screen-body-share-sound-from-other-apps-even-when-sharing-one-window"
-				}),
+				Some("screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen"),
 				&mut self.audio,
 			);
 		}
@@ -476,16 +460,8 @@ impl ScreenUi {
 }
 
 fn preferred_resolution(offered: &[Resolution]) -> Resolution {
-	if cfg!(target_os = "linux") {
-		offered
-			.iter()
-			.copied()
-			.find(|item| matches!(item, Resolution::Preset { height: 720, .. }))
-			.unwrap_or(offered[offered.len() - 1])
-	} else {
-		// Source when the size is known, otherwise the largest preset (listed last).
-		offered[offered.len() - 1]
-	}
+	// Source when the size is known, otherwise the largest preset (listed last).
+	offered[offered.len() - 1]
 }
 
 /// Compact segmented choice used by the quality and frame-rate rows.
@@ -565,17 +541,7 @@ mod tests {
 		// Like Discord, every choice is offered even for a smaller source.
 		let offered: Vec<_> = offered_resolutions(1280, 720, false).collect();
 		assert_eq!(heights(&offered), [480, 720, 1080, 1440, 2160, 0]);
-		assert_eq!(
-			preferred_resolution(&offered),
-			if cfg!(target_os = "linux") {
-				Resolution::Preset {
-					width: 1280,
-					height: 720,
-				}
-			} else {
-				Resolution::Source
-			}
-		);
+		assert_eq!(preferred_resolution(&offered), Resolution::Source);
 		// The Linux portal is sized after the pick, so it offers them all too.
 		let portal: Vec<_> = offered_resolutions(0, 0, true).collect();
 		assert_eq!(heights(&portal), [480, 720, 1080, 1440, 2160, 0]);

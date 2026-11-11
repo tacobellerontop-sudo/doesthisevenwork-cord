@@ -1,6 +1,5 @@
 //! Offline decoder check: rotate only the synthetic MOV's track matrix, never its pixels.
 //! Run: cargo run --locked -p dtewcord --example video_orientation
-#[cfg(target_os = "windows")]
 fn main() {
 	use platform::video::{Decoder, Sample};
 	let original = include_bytes!("../tests/fixtures/video.mov");
@@ -87,9 +86,4 @@ fn main() {
 		);
 	}
 	println!("Native Windows MOV orientation passed: upright rows and 0, 90, 180 and 270 degrees.");
-}
-
-#[cfg(not(target_os = "windows"))]
-fn main() {
-	eprintln!("This check exercises the Windows Media Foundation rotation convention.");
 }

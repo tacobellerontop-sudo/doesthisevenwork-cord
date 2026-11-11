@@ -10,7 +10,6 @@ use super::{RawFrame, validate_frame};
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Chroma {
 	/// NV12: one interleaved UV plane (Media Foundation input).
-	#[cfg_attr(target_os = "macos", allow(dead_code))]
 	Interleaved,
 	/// I420: separate U then V planes (openh264 input).
 	Planar,

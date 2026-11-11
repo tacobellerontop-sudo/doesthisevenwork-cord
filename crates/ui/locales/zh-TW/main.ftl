@@ -51,16 +51,9 @@ general-start-minimized = 最小化啟動
 general-start-minimized-description = 在背景啟動，不佔用你的畫面。
 general-startup-unavailable = 自動啟動僅支援 Windows 和 macOS。
 general-window = 視窗
-general-hide-decorations = 無標題列
-general-hide-decorations-description = 適用於平鋪式視窗管理員：移除所有標題列與邊框，包括 DTEW Cord 自己的標題列。請用視窗管理員移動、調整大小或關閉 DTEW Cord。
-general-custom-title-bar = 自訂標題列
-general-custom-title-bar-description = 以 DTEW Cord 自己的 GTK 4 風格標題列取代系統標題列。
 general-hide-title-bar = 隱藏 DTEW Cord 標題列
 general-hide-title-bar-description = 改用系統標題列與視窗按鈕。
-general-keep-menu-bar = 讓 DTEW Cord 留在選單列
 general-keep-system-tray = 讓 DTEW Cord 留在系統匣
-general-menu-bar-description = 關閉視窗後 DTEW Cord 留在選單列。要結束請從選單中選離開。
-general-linux-tray-description = 關閉後 DTEW Cord 繼續執行。可用系統匣顯示、最小化或結束。
 general-windows-tray-description = 關閉視窗後 DTEW Cord 留在通知區域。要結束請從選單中選離開。
 general-tray-unavailable = 此平台沒有系統匣可用。
 general-graphics = 圖形
@@ -2300,10 +2293,6 @@ screen-body-refresh = 重新整理
 # Context: body
 screen-body-screen-or-window = 螢幕或視窗
 # Context: body
-screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord = 連同畫面一起送出你的 Mac 播放的聲音。不含 DTEW Cord 本身的通話音訊。
-# Context: body
-screen-body-share-sound-from-other-apps-even-when-sharing-one-window = 即使只分享一個視窗，也能送出其他應用程式的聲音。不含 DTEW Cord 本身的音訊。
-# Context: body
 screen-body-share-system-audio = 分享系統音訊
 # Context: body
 screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen = 分享所分享應用程式的聲音；分享螢幕時則分享其他所有應用程式的聲音。DTEW Cord 本身的音訊不會包含在內。
@@ -4002,11 +3991,7 @@ updates-update-settings-auto-update = 自動更新
 # Context: update_settings
 updates-update-settings-check-for-updates = 檢查更新
 # Context: update_settings
-updates-update-settings-copied = 已複製
-# Context: update_settings
 updates-update-settings-copy = 複製
-# Context: update_settings
-updates-update-settings-copy-command = 複製指令
 # Context: update_settings
 updates-update-settings-copy-system-and-client-environment-details-formatted-for-github-issue = 以 GitHub issue 格式複製系統與用戶端環境資訊。
 # Context: update_settings
@@ -4020,15 +4005,11 @@ updates-update-settings-early-builds-with-the-newest-changes-nightly-releases-ca
 # Context: update_settings
 updates-update-settings-finish-the-current-update-before-checking-again = 請先完成目前的更新，再重新檢查。
 # Context: update_settings
-updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or = Flatpak 透過自身來源管理更新。請執行 `flatpak update`，或用 GNOME Software / KDE Discover 安裝新版。
-# Context: update_settings
-updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package = 應用內安裝需要 macOS 或 Windows 發行套件，或 Linux x86-64 AppImage。其他 Linux 安裝請用套件管理器。
+updates-update-settings-in-app-installation-requires-an-x64-release-package = 應用內安裝需要 Windows x64 發行套件。
 # Context: update_settings
 updates-update-settings-issue-diagnostics = 問題診斷
 # Context: update_settings
 updates-update-settings-nightly = Nightly
-# Context: update_settings
-updates-update-settings-package-manager-updates = 套件管理器更新
 # Context: update_settings
 updates-update-settings-preferences = 偏好設定
 # Context: update_settings
@@ -4039,8 +4020,6 @@ updates-update-settings-published-stable-releases-switching-channels-never-insta
 updates-update-settings-release-channel = 發布通道
 # Context: update_settings
 updates-update-settings-restart-to-update = 重啟以更新
-# Context: update_settings
-updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a = DTEW Cord 是用發行版安裝的。請在終端機執行此指令更新。
 # Context: update_settings
 updates-update-settings-save-diagnostics = 儲存診斷資訊
 # Context: update_settings
@@ -4171,8 +4150,6 @@ voice-call-controls-dismiss-call = 關閉通話
 voice-call-controls-leaving-is-unavailable-in-the-offline-preview = 離線預覽中無法離開通話。
 # Context: call_failure
 voice-call-failure-copy-failure-reason = 複製失敗原因
-# Context: camera_settings_content
-voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform = 這個平台無法使用攝影機。
 # Context: camera_settings_content
 voice-camera-settings-content-camera-device = 攝影機裝置
 # Context: camera_settings_content
@@ -4713,68 +4690,6 @@ profiles-mutuals-empty = 這裡沒有可顯示的內容。
 
 reading-double-click-reaction = 雙擊回應
 message-preview-limit = 此訊息超過原生文字排版的限制。
-
-## crates/platform/src/app_menu.rs
-# Context: macos_menu_bar
-app-menu-about = 關於 DTEW Cord
-# Context: macos_menu_bar
-app-menu-updates = 檢查更新項目…
-# Context: macos_menu_bar
-app-menu-settings = 設定…
-# Context: macos_menu_bar
-app-menu-services = 服務
-# Context: macos_menu_bar
-app-menu-hide = 隱藏 DTEW Cord
-# Context: macos_menu_bar
-app-menu-hide-others = 隱藏其他
-# Context: macos_menu_bar
-app-menu-show-all = 顯示全部
-# Context: macos_menu_bar
-app-menu-quit = 結束 DTEW Cord
-# Context: macos_menu_bar
-app-menu-file = 檔案
-# Context: macos_menu_bar
-app-menu-close-window = 關閉視窗
-# Context: macos_menu_bar
-app-menu-edit = 編輯
-# Context: macos_menu_bar
-app-menu-undo = 還原
-# Context: macos_menu_bar
-app-menu-redo = 重做
-# Context: macos_menu_bar
-app-menu-cut = 剪下
-# Context: macos_menu_bar
-app-menu-copy = 拷貝
-# Context: macos_menu_bar
-app-menu-paste = 貼上
-# Context: macos_menu_bar
-app-menu-select-all = 全選
-# Context: macos_menu_bar
-app-menu-emoji = 表情符號與符號
-# Context: macos_menu_bar
-app-menu-view = 顯示方式
-# Context: macos_menu_bar
-app-menu-actual-size = 實際大小
-# Context: macos_menu_bar
-app-menu-zoom-in = 放大
-# Context: macos_menu_bar
-app-menu-zoom-out = 縮小
-# Context: macos_menu_bar
-app-menu-full-screen = 進入全螢幕
-# Context: macos_menu_bar
-app-menu-window = 視窗
-# Context: macos_menu_bar
-app-menu-minimize = 縮到最小
-# Context: macos_menu_bar
-app-menu-zoom = 縮放
-# Context: macos_menu_bar
-app-menu-bring-all-to-front = 將此程式所有視窗移至最前
-# Context: macos_menu_bar
-app-menu-help = 輔助說明
-# Context: macos_menu_bar
-app-menu-github = GitHub 上的 DTEW Cord
-# Context: macos_menu_bar
-app-menu-report-issue = 回報問題…
 
 ## crates/model/src/system_messages.rs
 # Context: system_message

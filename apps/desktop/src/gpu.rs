@@ -29,7 +29,6 @@ pub fn setup(
 		);
 	}
 	setup.instance_descriptor.backends = backends;
-	#[cfg(target_os = "windows")]
 	if _transparency && wgpu::Dx12SwapchainKind::from_env().is_none() {
 		// Only DirectComposition swapchains carry alpha to the Windows desktop.
 		setup
@@ -77,12 +76,8 @@ fn backend_policy(
 	if let Some(backends) = environment {
 		return (backends, None);
 	}
-	// Preserve automatic startup policy; Vulkan on Windows requires an explicit opt-in.
-	let defaults = if cfg!(target_os = "windows") {
-		wgpu::Backends::DX12 | wgpu::Backends::GL
-	} else {
-		wgpu::Backends::PRIMARY | wgpu::Backends::GL
-	} & enabled;
+	// Preserve automatic startup policy; Vulkan requires an explicit opt-in.
+	let defaults = (wgpu::Backends::DX12 | wgpu::Backends::GL) & enabled;
 	let preferred = backend(api).filter(|backend| enabled.contains((*backend).into()));
 	// Keep the normal candidates as a recovery path if a saved API loses its driver or surface.
 	(
@@ -228,10 +223,7 @@ mod tests {
 			backend_policy(GraphicsApi::Automatic, None, enabled)
 		);
 		let (automatic, _) = backend_policy(GraphicsApi::Automatic, None, enabled);
-		assert_eq!(
-			automatic.contains(wgpu::Backends::VULKAN),
-			!cfg!(target_os = "windows")
-		);
+		assert!(!automatic.contains(wgpu::Backends::VULKAN));
 		assert!(
 			backend_policy(GraphicsApi::Vulkan, None, enabled)
 				.0

@@ -252,19 +252,7 @@ fn default_data_dir() -> Option<PathBuf> {
 
 /// Creates only missing directories privately on Unix and preserves existing permissions.
 fn create_data_dir(root: &Path) -> Result<()> {
-	#[cfg(unix)]
-	{
-		use std::os::unix::fs::DirBuilderExt;
-		std::fs::DirBuilder::new()
-			.recursive(true)
-			.mode(0o700)
-			.create(root)
-			.map_err(|_| StoreError::Unavailable)
-	}
-	#[cfg(not(unix))]
-	{
-		std::fs::create_dir_all(root).map_err(|_| StoreError::Unavailable)
-	}
+	std::fs::create_dir_all(root).map_err(|_| StoreError::Unavailable)
 }
 
 /// Shared root for local application data. Developers may select an isolated absolute path.
@@ -1716,29 +1704,6 @@ mod tests {
 			resolve_data_dir(Some(OsString::from("relative")), Some(default)),
 			Err(StoreError::Unavailable)
 		);
-	}
-
-	#[cfg(feature = "development-data")]
-	#[cfg(unix)]
-	#[test]
-	fn existing_data_directory_permissions_are_preserved() {
-		use std::os::unix::fs::PermissionsExt;
-		let root = std::env::temp_dir().join(format!(
-			"dtewcord-existing-permissions-{}-{}",
-			std::process::id(),
-			std::time::SystemTime::now()
-				.duration_since(std::time::UNIX_EPOCH)
-				.unwrap()
-				.as_nanos()
-		));
-		std::fs::create_dir(&root).unwrap();
-		std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o755)).unwrap();
-		create_data_dir(&root).unwrap();
-		assert_eq!(
-			std::fs::metadata(&root).unwrap().permissions().mode() & 0o777,
-			0o755
-		);
-		std::fs::remove_dir(root).unwrap();
 	}
 
 	#[cfg(not(feature = "development-data"))]

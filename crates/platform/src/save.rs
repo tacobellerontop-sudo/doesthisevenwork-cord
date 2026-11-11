@@ -130,7 +130,6 @@ pub fn attachment_destination(
 		.set_title("Save attachment");
 	// Windows hides known extensions in the name box and only restores them from a
 	// default extension, which rfd derives from the first filter.
-	#[cfg(target_os = "windows")]
 	let dialog = match attachment_extension(&filename) {
 		Some(extension) => dialog
 			.add_filter(
@@ -172,41 +171,6 @@ pub fn text_destination(
 /// Native exclusive rename also works on volumes that do not support hard links.
 #[allow(unsafe_code)]
 pub fn publish_new(source: &std::path::Path, destination: &std::path::Path) -> std::io::Result<()> {
-	#[cfg(any(target_os = "macos", target_os = "linux"))]
-	{
-		use std::{ffi::CString, os::unix::ffi::OsStrExt};
-		let source = CString::new(source.as_os_str().as_bytes())?;
-		let destination = CString::new(destination.as_os_str().as_bytes())?;
-		#[cfg(target_os = "macos")]
-		unsafe extern "C" {
-			fn renamex_np(
-				from: *const std::ffi::c_char,
-				to: *const std::ffi::c_char,
-				flags: u32,
-			) -> i32;
-		}
-		#[cfg(target_os = "linux")]
-		unsafe extern "C" {
-			fn renameat2(
-				from_fd: i32,
-				from: *const std::ffi::c_char,
-				to_fd: i32,
-				to: *const std::ffi::c_char,
-				flags: u32,
-			) -> i32;
-		}
-		// SAFETY: both pointers are valid NUL-terminated paths for the call.
-		#[cfg(target_os = "macos")]
-		let result = unsafe { renamex_np(source.as_ptr(), destination.as_ptr(), 4) }; // RENAME_EXCL
-		#[cfg(target_os = "linux")]
-		let result = unsafe { renameat2(-100, source.as_ptr(), -100, destination.as_ptr(), 1) }; // AT_FDCWD, RENAME_NOREPLACE
-		if result == 0 {
-			Ok(())
-		} else {
-			Err(std::io::Error::last_os_error())
-		}
-	}
-	#[cfg(target_os = "windows")]
 	{
 		use std::os::windows::ffi::OsStrExt;
 		let path = |path: &std::path::Path| -> std::io::Result<Vec<u16>> {
@@ -230,14 +194,9 @@ pub fn publish_new(source: &std::path::Path, destination: &std::path::Path) -> s
 			Err(std::io::Error::last_os_error())
 		}
 	}
-	#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-	{
-		std::fs::hard_link(source, destination)
-	}
 }
 
 /// Short alphanumeric extension of a sanitized attachment name, if it has one.
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn attachment_extension(filename: &str) -> Option<&str> {
 	let (stem, extension) = filename.rsplit_once('.')?;
 	(!stem.is_empty()
