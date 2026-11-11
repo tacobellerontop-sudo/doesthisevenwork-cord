@@ -123,28 +123,28 @@ impl Drop for Sounds {
 
 fn samples(sound: Sound, rate: u32, current: &impl Fn() -> bool) -> Result<Vec<[f32; 2]>, ()> {
 	let bytes: &[u8] = match sound {
-		Sound::Message => include_bytes!("../../../assets/sounds/discord/message.mp3"),
+		Sound::Message => include_bytes!("../../../assets/sounds/tones/message.mp3"),
 		Sound::CurrentChannel => {
-			include_bytes!("../../../assets/sounds/discord/current-channel.mp3")
+			include_bytes!("../../../assets/sounds/tones/current-channel.mp3")
 		}
-		Sound::IncomingRing => include_bytes!("../../../assets/sounds/discord/incoming-ring.mp3"),
-		Sound::OutgoingRing => include_bytes!("../../../assets/sounds/discord/outgoing-ring.mp3"),
-		Sound::Mute => include_bytes!("../../../assets/sounds/discord/mute.mp3"),
-		Sound::Unmute => include_bytes!("../../../assets/sounds/discord/unmute.mp3"),
-		Sound::Deafen => include_bytes!("../../../assets/sounds/discord/deafen.mp3"),
-		Sound::Undeafen => include_bytes!("../../../assets/sounds/discord/undeafen.mp3"),
-		Sound::CameraOn => include_bytes!("../../../assets/sounds/discord/camera-on.mp3"),
+		Sound::IncomingRing => include_bytes!("../../../assets/sounds/tones/incoming-ring.mp3"),
+		Sound::OutgoingRing => include_bytes!("../../../assets/sounds/tones/outgoing-ring.mp3"),
+		Sound::Mute => include_bytes!("../../../assets/sounds/tones/mute.mp3"),
+		Sound::Unmute => include_bytes!("../../../assets/sounds/tones/unmute.mp3"),
+		Sound::Deafen => include_bytes!("../../../assets/sounds/tones/deafen.mp3"),
+		Sound::Undeafen => include_bytes!("../../../assets/sounds/tones/undeafen.mp3"),
+		Sound::CameraOn => include_bytes!("../../../assets/sounds/tones/camera-on.mp3"),
 		Sound::ScreenShareOn => {
-			include_bytes!("../../../assets/sounds/discord/screen-share-on.mp3")
+			include_bytes!("../../../assets/sounds/tones/screen-share-on.mp3")
 		}
 		Sound::ScreenShareOff => {
-			include_bytes!("../../../assets/sounds/discord/screen-share-off.mp3")
+			include_bytes!("../../../assets/sounds/tones/screen-share-off.mp3")
 		}
-		Sound::UserJoin => include_bytes!("../../../assets/sounds/discord/user-join.mp3"),
-		Sound::UserLeave => include_bytes!("../../../assets/sounds/discord/user-leave.mp3"),
-		Sound::PttStart => include_bytes!("../../../assets/sounds/discord/ptt-start.mp3"),
-		Sound::PttStop => include_bytes!("../../../assets/sounds/discord/ptt-stop.mp3"),
-		Sound::ViewerJoin => include_bytes!("../../../assets/sounds/discord/viewer-join.mp3"),
+		Sound::UserJoin => include_bytes!("../../../assets/sounds/tones/user-join.mp3"),
+		Sound::UserLeave => include_bytes!("../../../assets/sounds/tones/user-leave.mp3"),
+		Sound::PttStart => include_bytes!("../../../assets/sounds/tones/ptt-start.mp3"),
+		Sound::PttStop => include_bytes!("../../../assets/sounds/tones/ptt-stop.mp3"),
+		Sound::ViewerJoin => include_bytes!("../../../assets/sounds/tones/viewer-join.mp3"),
 	};
 	if bytes.len() > 128 * 1024 || !(8000..=192000).contains(&rate) {
 		return Err(());
