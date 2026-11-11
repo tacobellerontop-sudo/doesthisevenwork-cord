@@ -1,6 +1,6 @@
 # Packaging
 
-Release packages are built by `.github/workflows/release.yml` when a `v*` tag is pushed. The
+Release packages are built by `.github/workflows/release.yml` when a `v*` tag or a `release/v*` branch is pushed. The
 tag must match the workspace version in `Cargo.toml`.
 
 | Path | Used for |
