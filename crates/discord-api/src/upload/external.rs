@@ -60,7 +60,7 @@ pub async fn upload(
 		return Err(Error::Cancelled);
 	}
 	let client = wreq::Client::builder()
-		.user_agent(concat!("Serein/", env!("CARGO_PKG_VERSION")))
+		.user_agent(concat!("DTEW Cord/", env!("CARGO_PKG_VERSION")))
 		.https_only(true)
 		.no_proxy()
 		.redirect(wreq::redirect::Policy::none())
@@ -115,7 +115,7 @@ async fn transfer(
 		};
 	// Local filenames never form paths or headers without escaping quotes; controls were rejected at selection.
 	let boundary = format!(
-		"serein-{}-{}",
+		"dtewcord-{}-{}",
 		std::process::id(),
 		std::time::SystemTime::now()
 			.duration_since(std::time::SystemTime::UNIX_EPOCH)
@@ -436,7 +436,7 @@ mod tests {
 	#[tokio::test]
 	async fn changed_local_source_is_rejected_before_networking() {
 		let path = std::env::temp_dir().join(format!(
-			"serein-public-upload-{}-{}.txt",
+			"dtewcord-public-upload-{}-{}.txt",
 			std::process::id(),
 			std::time::SystemTime::now()
 				.duration_since(std::time::SystemTime::UNIX_EPOCH)
@@ -464,7 +464,7 @@ mod tests {
 	#[tokio::test]
 	async fn local_source_changed_after_streaming_does_not_return_a_link() {
 		let path = std::env::temp_dir().join(format!(
-			"serein-public-upload-late-{}-{}.txt",
+			"dtewcord-public-upload-late-{}-{}.txt",
 			std::process::id(),
 			std::time::SystemTime::now()
 				.duration_since(std::time::SystemTime::UNIX_EPOCH)

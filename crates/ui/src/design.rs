@@ -1,7 +1,7 @@
-//! Serein theme tokens, presets and typography shared by every native view.
+//! DTEW Cord theme tokens, presets and typography shared by every native view.
 //!
 //! The palette is resolved from egui's light/dark mode plus a process-wide [`Variant`]
-//! (the cool Serein neutrals, deep black, blue-grey, or a gradient recolour). Gradient
+//! (the cool DTEW Cord neutrals, deep black, blue-grey, or a gradient recolour). Gradient
 //! variants paint a backdrop under translucent surfaces; see [`paint_backdrop`].
 use egui::{Color32, FontFamily, FontId, RichText, Stroke, epaint::FontColorTransferFunction};
 use std::sync::atomic::{AtomicU8, AtomicU32, Ordering};
@@ -104,7 +104,7 @@ impl Variant {
 	];
 	pub fn label(self) -> &'static str {
 		match self {
-			Variant::Standard => "Serein",
+			Variant::Standard => "DTEW Cord",
 			Variant::Eclipse => "Eclipse",
 			Variant::Slate => "Slate",
 			Variant::Nightfall => "Nightfall",
@@ -267,7 +267,7 @@ const fn rgba(value: u32, alpha: u8) -> Color32 {
 		alpha,
 	)
 }
-/// Serein azure: the house accent, packed for call sites that speak in integer colours.
+/// DTEW Cord azure: the house accent, packed for call sites that speak in integer colours.
 pub const DEFAULT_PRIMARY_RGB: u32 = 0x1a72e8;
 pub const DEFAULT_PRIMARY_COLOR: [u8; 3] = [
 	(DEFAULT_PRIMARY_RGB >> 16) as u8,
@@ -995,7 +995,7 @@ pub fn paint_backdrop(ctx: &egui::Context) {
 
 pub const SEMIBOLD: &str = "semibold";
 pub const MEDIUM: &str = "medium";
-const WEIGHTS_KEY: &str = "serein-font-weights";
+const WEIGHTS_KEY: &str = "dtewcord-font-weights";
 // Called by `fonts::install` for one context; until then the weight families resolve to
 // the default face so headless contexts (tests) never reference an unknown family.
 thread_local! {
@@ -1692,7 +1692,7 @@ fn wide_button(
 	}
 	response
 }
-/// Deterministic fallback avatar colours drawn from the Serein palette, keyed by the display name.
+/// Deterministic fallback avatar colours drawn from the DTEW Cord palette, keyed by the display name.
 fn fallback_avatar_color(name: &str) -> Color32 {
 	const COLORS: [u32; 5] = [DEFAULT_PRIMARY_RGB, 0x6b7a94, 0x2fb87a, 0xe8a33d, 0xef5561];
 	let hash = name
@@ -2139,7 +2139,7 @@ pub fn build_badge(ui: &mut egui::Ui, build: Build) -> Option<egui::Response> {
 
 /// Discord-style settings row with a pill switch on the right. Clicking anywhere on the row
 /// toggles `enabled`; the accessible label is `label`.
-/// Blur control. Every compositor Serein targets (macOS, DWM acrylic, KDE and Wayland blur)
+/// Blur control. Every compositor DTEW Cord targets (macOS, DWM acrylic, KDE and Wayland blur)
 /// only turns its own fixed blur on or off, so a strength slider would promise control that
 /// does not exist. The stored percentage stays for themes: zero is off, anything else on.
 pub fn blur_control(ui: &mut egui::Ui, label: &str, hint: &str, blur: &mut u8) -> egui::Response {
@@ -2913,10 +2913,17 @@ pub fn row<R>(
 	let title = crate::i18n::translate_if_key(title);
 	let detail = detail.map(crate::i18n::translate_if_key);
 	let p = palette(ui);
+	const GAP: f32 = 12.0;
 	let width = ui.available_width();
-	let text_width = (width * 0.55).max(120.0);
+	// The text column takes what the controls leave. A fixed 55% share let wide controls (a
+	// colour well, hex code and "Use default") spill left over the description, so the
+	// controls' width from the previous frame is remembered and the frame is redone on change.
+	let key = ui.make_persistent_id(("settings-row-controls", &title));
+	let remembered: Option<f32> = ui.data(|data| data.get_temp(key));
+	let control_width = remembered.unwrap_or(width * 0.45 - GAP);
+	let text_width = (width - control_width - GAP).max(width.min(120.0));
 	ui.horizontal(|ui| {
-		ui.spacing_mut().item_spacing.x = 12.0;
+		ui.spacing_mut().item_spacing.x = GAP;
 		ui.allocate_ui_with_layout(
 			egui::vec2(text_width, 0.0),
 			egui::Layout::top_down(egui::Align::Min),
@@ -2930,8 +2937,13 @@ pub fn row<R>(
 				}
 			},
 		);
-		ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control)
-			.inner
+		let controls = ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control);
+		let used = controls.response.rect.width().min(width);
+		if remembered.is_none_or(|old| (old - used).abs() > 0.5) {
+			ui.data_mut(|data| data.insert_temp(key, used));
+			ui.ctx().request_discard("settings row controls resized");
+		}
+		controls.inner
 	})
 	.inner
 }

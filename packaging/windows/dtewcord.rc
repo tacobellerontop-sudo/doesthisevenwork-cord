@@ -1,0 +1,28 @@
+// Application icon and version resource for dtewcord.exe.
+1 ICON "DTEW Cord.ico"
+
+1 VERSIONINFO
+FILEVERSION 0,1,0,0
+PRODUCTVERSION 0,1,0,0
+FILEOS 0x40004
+FILETYPE 0x1
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904B0"
+		BEGIN
+			VALUE "CompanyName", "DTEW Cord contributors"
+			VALUE "FileDescription", "DTEW Cord"
+			VALUE "FileVersion", "0.1.0"
+			VALUE "InternalName", "dtewcord"
+			VALUE "LegalCopyright", "MIT OR Apache-2.0"
+			VALUE "OriginalFilename", "dtewcord.exe"
+			VALUE "ProductName", "DTEW Cord"
+			VALUE "ProductVersion", "0.1.0"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1200
+	END
+END

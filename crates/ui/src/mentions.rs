@@ -2163,8 +2163,8 @@ pub(crate) fn debug_image_completion(state: &mut State) -> String {
 		state.premium_type = entitlement;
 		for target in [channel, Id(22)] {
 			for (query, id, name, animated) in [
-				(":serein_pa", Id(9002), "serein_party", true),
-				(":serein_wa", Id(9001), "serein_wave", false),
+				(":dtewcord_pa", Id(9002), "dtewcord_party", true),
+				(":dtewcord_wa", Id(9001), "dtewcord_wave", false),
 			] {
 				let mut menu = Menu::default();
 				menu.refresh(state, target, query, Some(query.chars().count()), &[]);

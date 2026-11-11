@@ -6,7 +6,7 @@ version = 4
 name = "api-proxy"
 version = "1.0.0"
 dependencies = [
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
 ]
 
 [[package]]
@@ -15,7 +15,7 @@ version = "1.0.0"
 dependencies = [
  "serde",
  "serde_json",
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
 ]
 
 [[package]]
@@ -35,7 +35,7 @@ version = "1.0.3"
 dependencies = [
  "serde",
  "serde_json",
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
  "url",
 ]
 
@@ -174,14 +174,14 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 name = "message-delete-protector"
 version = "1.0.0"
 dependencies = [
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
 ]
 
 [[package]]
 name = "offline-composer-tools"
 version = "1.0.2"
 dependencies = [
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
  "url",
 ]
 
@@ -262,7 +262,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "serein-extension-sdk"
+name = "dtewcord-extension-sdk"
 version = "0.1.0"
 dependencies = [
  "serde",
@@ -310,7 +310,7 @@ version = "1.0.1"
 dependencies = [
  "serde",
  "serde_json",
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
 ]
 
 [[package]]
@@ -351,7 +351,7 @@ checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
 name = "view-raw-message"
 version = "1.0.1"
 dependencies = [
- "serein-extension-sdk",
+ "dtewcord-extension-sdk",
 ]
 
 [[package]]

@@ -1,4 +1,4 @@
-# Serein extensions
+# DTEW Cord extensions
 
 This directory contains the extension SDK, bundled plugin source and packages, declarative themes, and the extension catalog. Host-side validation and integration live in `crates/extensions`.
 

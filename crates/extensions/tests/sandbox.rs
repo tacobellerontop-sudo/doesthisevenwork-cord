@@ -7,7 +7,7 @@ fn plugin(wasm: &str) -> Package {
 			id: "test-plugin".into(),
 			name: "Test plugin".into(),
 			version: "1.0.0".into(),
-			author: "Serein".into(),
+			author: "DTEW Cord".into(),
 			license: "MIT".into(),
 			source: "https://github.com/example/plugin".into(),
 			kind: ExtensionKind::Plugin,
@@ -425,7 +425,7 @@ fn image_sharing_plugin_requires_activation_and_capability() {
 
 	{
 		let protector = parse_package(include_bytes!(
-			"../../../extensions/plugins/packages/message-delete-protector.serein-extension"
+			"../../../extensions/plugins/packages/message-delete-protector.dtewcord-extension"
 		))
 		.unwrap();
 		let input = Invocation {
@@ -442,7 +442,7 @@ fn image_sharing_plugin_requires_activation_and_capability() {
 #[test]
 fn rgb_cycle_package_executes_through_the_real_abi() {
 	let package = parse_package(include_bytes!(
-		"../../../examples/extensions/packages/rgb-cycle.serein-extension"
+		"../../../examples/extensions/packages/rgb-cycle.dtewcord-extension"
 	))
 	.unwrap();
 	let output = invoke(
@@ -611,7 +611,8 @@ fn event_effects_allow_granted_storage_and_appearance_without_unsolicited_ui() {
 /// The published Custom RPC package through the real offline sandbox.
 #[test]
 fn custom_rpc_package_preserves_drafts_and_controls_presence() {
-	let bytes = include_bytes!("../../../extensions/plugins/packages/custom-rpc.serein-extension");
+	let bytes =
+		include_bytes!("../../../extensions/plugins/packages/custom-rpc.dtewcord-extension");
 	let package = parse_package(bytes).expect("package validates");
 	let mut input = Invocation {
 		action: "open".into(),

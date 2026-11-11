@@ -34,7 +34,7 @@ pub fn tune_allocator() {
 			prctl(PR_SET_THP_DISABLE, 1usize, 0usize, 0usize, 0usize);
 		}
 		let _ = std::thread::Builder::new()
-			.name("serein-memory".into())
+			.name("dtewcord-memory".into())
 			.spawn(|| {
 				loop {
 					std::thread::sleep(TRIM_INTERVAL);

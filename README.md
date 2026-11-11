@@ -1,11 +1,11 @@
-# Serein — Discord client backend and desktop reference
+# DTEW Cord — Discord client backend and desktop reference
 
-Serein is an unofficial Discord client written in Rust. This trimmed source archive keeps the Rust workspace, Discord protocol/networking crates, client state and storage layers, extension SDK/catalog, native voice implementation, vendored dependency patches, assets, and the existing desktop GUI.
+DTEW Cord (short for *doesthisevenwork-cord*) is an unofficial Discord client written in Rust. It is a fork of [Serein](https://github.com/ViceVerse-cz/Serein); the Serein contributors' copyright notices are kept in `LICENSE-MIT`, `LICENSE-APACHE` and the extension packages. This trimmed source archive keeps the Rust workspace, Discord protocol/networking crates, client state and storage layers, extension SDK/catalog, native voice implementation, vendored dependency patches, assets, and the existing desktop GUI.
 
 **This archive is not a finished Discord TUI.** It is a backend-rich starting point for building a separate terminal frontend (for example, with Ratatui) while retaining the current GUI as a working reference implementation.
 
 > [!WARNING]
-> Serein is not endorsed by Discord. Connecting a normal user account through an unofficial client may violate Discord's Terms of Service and can result in account enforcement. Review `docs/discord-compatibility.md`, `docs/authentication.md`, and `docs/threat-model.md` before use. No client can guarantee account safety.
+> DTEW Cord is not endorsed by Discord. Connecting a normal user account through an unofficial client may violate Discord's Terms of Service and can result in account enforcement. Review `docs/discord-compatibility.md`, `docs/authentication.md`, and `docs/threat-model.md` before use. No client can guarantee account safety.
 
 ## Workspace map
 
@@ -25,6 +25,7 @@ Serein is an unofficial Discord client written in Rust. This trimmed source arch
 | `crates/ui` | Existing egui desktop presentation layer |
 | `crates/test-support` | Test fixtures and synthetic support utilities |
 | `apps/desktop` | Existing desktop executable and composition root |
+| `apps/slint` | Slint client on the same login and backend crates (see `apps/slint/README.md`) |
 | `extensions/` | Extension SDK, plugins, themes and catalog |
 | `vendor/` | Patched dependencies referenced by the workspace manifest |
 | `assets/` | Fonts, icons, sounds, emoji and license/provenance notices |
@@ -65,7 +66,7 @@ Install the Rust toolchain specified by `rust-toolchain.toml` and the native sys
 
 ```sh
 cargo check --workspace
-cargo run -p serein
+cargo run -p dtewcord
 ```
 
 The workspace retains the original dependency lockfile and vendored patches. Removing dot-prefixed repository metadata means Git hosting workflows, ignore rules, and local Cargo configuration are not included in this archive. Cargo's project manifests and lockfile remain.
@@ -76,4 +77,4 @@ The extension SDK, bundled plugins, themes, catalog and authoring documentation 
 
 ## License and third-party code
 
-Serein's own code is dual-licensed under MIT or Apache-2.0; see `LICENSE-MIT` and `LICENSE-APACHE`. Vendored dependencies and bundled assets retain their upstream license and provenance files. See `THIRD_PARTY_NOTICES.md` and the relevant `assets/licenses/` directories.
+DTEW Cord's own code is dual-licensed under MIT or Apache-2.0; see `LICENSE-MIT` and `LICENSE-APACHE`. Vendored dependencies and bundled assets retain their upstream license and provenance files. See `THIRD_PARTY_NOTICES.md` and the relevant `assets/licenses/` directories.

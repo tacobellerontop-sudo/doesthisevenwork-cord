@@ -6,15 +6,15 @@ use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 
 const READY: &str = "Global voice keybinds are enabled.";
-const DISABLED: &str = "Global keybinds are off. Shortcuts work while Serein is focused.";
+const DISABLED: &str = "Global keybinds are off. Shortcuts work while DTEW Cord is focused.";
 #[cfg(target_os = "linux")]
 const WAYLAND_PENDING: &str = "Approve the global voice keybinds in your desktop's dialog.";
 #[cfg(target_os = "linux")]
-const WAYLAND_UNAVAILABLE: &str = "Global voice keybinds were denied or the desktop GlobalShortcuts portal is unavailable; they still work while Serein is focused.";
+const WAYLAND_UNAVAILABLE: &str = "Global voice keybinds were denied or the desktop GlobalShortcuts portal is unavailable; they still work while DTEW Cord is focused.";
 const UNAVAILABLE: &str =
-	"Global voice keybinds are unavailable on this system; they work while Serein is focused.";
-const INVALID: &str = "One or more voice bindings cannot be registered globally; they still work while Serein is focused.";
-const MODIFIER_REQUIRED: &str = "Add Ctrl, Alt, Shift, or Command to use a voice binding globally; it still works while Serein is focused.";
+	"Global voice keybinds are unavailable on this system; they work while DTEW Cord is focused.";
+const INVALID: &str = "One or more voice bindings cannot be registered globally; they still work while DTEW Cord is focused.";
+const MODIFIER_REQUIRED: &str = "Add Ctrl, Alt, Shift, or Command to use a voice binding globally; it still works while DTEW Cord is focused.";
 
 #[cfg(target_os = "windows")]
 /// Mouse poller identities, kept out of the range `global-hotkey` assigns to real hotkeys.
@@ -525,8 +525,8 @@ async fn portal(
 		.await?;
 	// A host install has no portal app ID until this connection registers one; Flatpak skips
 	// it. Portals without the Registry interface, or without an installed
-	// cz.viceverse.serein.desktop entry, reject it, so the session request still proceeds.
-	if let Ok(app_id) = "cz.viceverse.serein".parse() {
+	// io.github.tacobellerontop_sudo.dtewcord.desktop entry, reject it, so the session request still proceeds.
+	if let Ok(app_id) = "io.github.tacobellerontop_sudo.dtewcord".parse() {
 		match tokio::time::timeout(
 			std::time::Duration::from_secs(5),
 			ashpd::register_host_app_with_connection(connection.clone(), app_id),
@@ -646,11 +646,11 @@ fn portal_id(action: KeybindAction) -> &'static str {
 #[cfg(target_os = "linux")]
 fn portal_description(action: KeybindAction) -> &'static str {
 	match action {
-		KeybindAction::PushToTalk => "Serein push to talk",
-		KeybindAction::PushToMute => "Serein push to mute",
-		KeybindAction::ToggleMute => "Toggle Serein microphone mute",
-		KeybindAction::ToggleDeafen => "Toggle Serein deafen",
-		_ => "Serein voice shortcut",
+		KeybindAction::PushToTalk => "DTEW Cord push to talk",
+		KeybindAction::PushToMute => "DTEW Cord push to mute",
+		KeybindAction::ToggleMute => "Toggle DTEW Cord microphone mute",
+		KeybindAction::ToggleDeafen => "Toggle DTEW Cord deafen",
+		_ => "DTEW Cord voice shortcut",
 	}
 }
 
@@ -922,7 +922,7 @@ mod mouse {
 			let stop = Arc::new(AtomicBool::new(false));
 			let stopped = stop.clone();
 			let thread = std::thread::Builder::new()
-				.name("serein-mouse-keybinds".into())
+				.name("dtewcord-mouse-keybinds".into())
 				.spawn(move || {
 					let mut held = vec![false; watched.len()];
 					let mut held_toggles = vec![false; toggle_groups.len()];

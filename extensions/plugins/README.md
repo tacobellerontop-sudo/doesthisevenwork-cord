@@ -3,14 +3,14 @@
 The published plugins, built against the one [SDK](../sdk) that
 the [authoring guide](../../examples/extensions/README.md) documents. Any language
 producing compatible WebAssembly can use this ABI; Rust authors can call
-`serein_extension_sdk::export!(handler)`.
+`dtewcord_extension_sdk::export!(handler)`.
 
 Build and package from `extensions/`, the workspace root (Python 3 is used only by the author):
 
 ```powershell
 rustup target add wasm32-unknown-unknown
 cargo build --locked --release --target wasm32-unknown-unknown
-python pack.py plugins/message-delete-protector/manifest.json target/wasm32-unknown-unknown/release/message_delete_protector.wasm plugins/packages/message-delete-protector.serein-extension
+python pack.py plugins/message-delete-protector/manifest.json target/wasm32-unknown-unknown/release/message_delete_protector.wasm plugins/packages/message-delete-protector.dtewcord-extension
 ```
 
 A rebuilt module is not a release by itself: committed packages are the reviewed bytes
@@ -30,7 +30,7 @@ Sticker Images plugin is retired. Native eligibility uses the account's Nitro
 entitlement. Unavailable native selections enter the composer as named artwork
 links; explicit Send uses Markdown with text, or attachments for artwork alone.
 Declarative themes are under `../themes/`.
-The author packages compiled bytes; Serein never runs a repository's build scripts.
+The author packages compiled bytes; DTEW Cord never runs a repository's build scripts.
 
 ## Equicord-derived safe tools
 
@@ -50,10 +50,10 @@ Packaging is the same as above, plus `--license` so each package carries the GPL
 `test_catalog.py` requires:
 
 ```sh
-python pack.py plugins/offline-composer-tools/manifest.json target/wasm32-unknown-unknown/release/offline_composer_tools.wasm plugins/packages/offline-composer-tools.serein-extension --license licenses/Equicord-GPL-3.0.txt
-python pack.py plugins/text-commands/manifest.json target/wasm32-unknown-unknown/release/text_commands.wasm plugins/packages/text-commands.serein-extension --license licenses/Equicord-GPL-3.0.txt
-python pack.py plugins/view-raw-message/manifest.json target/wasm32-unknown-unknown/release/view_raw_message.wasm plugins/packages/view-raw-message.serein-extension --license licenses/Equicord-GPL-3.0.txt
-python pack.py plugins/external-search-tools/manifest.json target/wasm32-unknown-unknown/release/external_search_tools.wasm plugins/packages/external-search-tools.serein-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/offline-composer-tools/manifest.json target/wasm32-unknown-unknown/release/offline_composer_tools.wasm plugins/packages/offline-composer-tools.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/text-commands/manifest.json target/wasm32-unknown-unknown/release/text_commands.wasm plugins/packages/text-commands.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/view-raw-message/manifest.json target/wasm32-unknown-unknown/release/view_raw_message.wasm plugins/packages/view-raw-message.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/external-search-tools/manifest.json target/wasm32-unknown-unknown/release/external_search_tools.wasm plugins/packages/external-search-tools.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
 ```
 
 ## ABI and limits
@@ -70,7 +70,7 @@ All versions and updates require explicit user consent.
 ## Custom Rich Presence (preview)
 
 See [Custom RPC](custom-rpc/README.md) for setup and builds. Requires the preview
-rich-presence SDK from Serein PR #465. Install through the shared catalog or import
+rich-presence SDK from DTEW Cord PR #465. Install through the shared catalog or import
 the package locally. Older clients without this capability cannot install it.
 
 ## API Proxy (preview)

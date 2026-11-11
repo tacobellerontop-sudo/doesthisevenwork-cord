@@ -1,8 +1,8 @@
 # External Search Tools
 
-A safe Serein port of Equicord/Vencord **Translate** and **ReplaceGoogleSearch**
+A safe DTEW Cord port of Equicord/Vencord **Translate** and **ReplaceGoogleSearch**
 workflows. It reads the selected message text and proposes an external public
-browser page for translation or search. Serein validates and displays that URL,
+browser page for translation or search. DTEW Cord validates and displays that URL,
 and only opens it after the user confirms **Apply**.
 
 Unlike the upstream plugins, this port performs no inline translation, no API
@@ -96,9 +96,9 @@ The plugin does not depend on `selected_message_ref`.
 ## Integration
 
 The package is a member of the `extensions` workspace. It declares the usual
-workspace dependencies (`serein-extension-sdk`, `url`, `serde`, `serde_json`)
+workspace dependencies (`dtewcord-extension-sdk`, `url`, `serde`, `serde_json`)
 and exposes `handle(MessageActionInvocation) -> AppOutput` through
-`serein_extension_sdk::export!`. Installing it requires a matching Preview host
+`dtewcord_extension_sdk::export!`. Installing it requires a matching Preview host
 with the Preview `external_navigation` API from PR #937; older hosts reject the manifest.
 This SDK change is not yet released. All
 validation in this repository is synthetic/offline and does not prove third-party

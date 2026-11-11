@@ -55,10 +55,11 @@ impl ArchivesUi {
 					if !active.is_empty() {
 						section(
 							ui,
+							// "ACTIVE THREADS — 2", like the people list's group headers.
 							&format!(
-								"{} {}",
-								shown.len(),
-								crate::i18n::translate("archives-show-archives-active-threads")
+								"{} — {}",
+								crate::i18n::translate("archives-active-threads"),
+								shown.len()
 							),
 							&colors,
 						);

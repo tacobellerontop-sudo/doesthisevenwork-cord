@@ -59,7 +59,7 @@ impl Default for Updates {
 	}
 }
 impl MessagingUi {
-	/// Whether the account card grows an update row, which it does only while Serein's own
+	/// Whether the account card grows an update row, which it does only while DTEW Cord's own
 	/// title bar is hidden: the title-bar button is the only other place the prompt appears.
 	pub(super) fn shows_update_banner(&mut self) -> bool {
 		if self.shows_title_bar() {
@@ -275,7 +275,7 @@ impl MessagingUi {
 		};
 
 		format!(
-			"- **Serein Version:** {} ({channel})\n- **Operating System:** {os} ({arch}){session_type}{package_type}{graphics}\n- **Display Scale:** {scale:.2}\n- **Theme:** {theme_mode} ({theme_variant})\n- **Update Channel:** {update_channel}\n- **Auto Update:** {}",
+			"- **DTEW Cord Version:** {} ({channel})\n- **Operating System:** {os} ({arch}){session_type}{package_type}{graphics}\n- **Display Scale:** {scale:.2}\n- **Theme:** {theme_mode} ({theme_variant})\n- **Update Channel:** {update_channel}\n- **Auto Update:** {}",
 			self.build.version,
 			if self.updates.auto_update {
 				"Enabled"
@@ -312,7 +312,7 @@ impl MessagingUi {
 					.rect_filled(badge, 12, colors.accent.gamma_multiply(0.16));
 				crate::icons::paint(
 					ui.painter(),
-					crate::icons::Icon::Serein,
+					crate::icons::Icon::DtewCord,
 					badge.shrink(10.0),
 					colors.accent,
 				);
@@ -373,7 +373,7 @@ impl MessagingUi {
 					ui.vertical(|ui| {
 						ui.spacing_mut().item_spacing.y = 2.0;
 						ui.label(
-							design::semibold(ui, format!("Serein {}", self.build.version), 17.0)
+							design::semibold(ui, format!("DTEW Cord {}", self.build.version), 17.0)
 								.color(colors.text_strong),
 						);
 						ui.add(
@@ -475,7 +475,7 @@ impl MessagingUi {
 								ui,
 								"updates-update-settings-package-manager-updates",
 								Some(
-									"updates-update-settings-serein-was-installed-via-your-distribution-run-this-in-a",
+									"updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a",
 								),
 								|ui| {
 									if design::button(
@@ -607,7 +607,7 @@ impl MessagingUi {
 					&& let Some(path) = &self.diagnostics_log_path
 				{
 					// The file is named where the owner enables the log, so a report can be found
-					// without guessing which of Serein's folders holds it; a warning colour marks
+					// without guessing which of DTEW Cord's folders holds it; a warning colour marks
 					// a folder the system refused to open, whose path the host copied instead.
 					let colors = design::palette(ui);
 					let color = if self.diagnostics_log_open_failed {
@@ -681,7 +681,7 @@ impl MessagingUi {
 				if index > 0 {
 					design::card_divider(ui);
 				}
-				let title = format!("Serein {}", entry.version);
+				let title = format!("DTEW Cord {}", entry.version);
 				egui::CollapsingHeader::new(
 					design::semibold(ui, &title, 14.0).color(colors.text_strong),
 				)

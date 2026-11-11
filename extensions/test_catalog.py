@@ -4,13 +4,13 @@ import json
 import catalog
 import pack
 
-theme = (catalog.ROOT / "themes/ocean.serein-extension").read_bytes()
-plugin = (catalog.ROOT / "plugins/packages/message-delete-protector.serein-extension").read_bytes()
+theme = (catalog.ROOT / "themes/ocean.dtewcord-extension").read_bytes()
+plugin = (catalog.ROOT / "plugins/packages/message-delete-protector.dtewcord-extension").read_bytes()
 assert catalog.validate(theme)["id"] == "serein-ocean"
 assert catalog.validate(plugin)["kind"] == "plugin"
-rpc = (catalog.ROOT / "plugins/packages/custom-rpc.serein-extension").read_bytes()
+rpc = (catalog.ROOT / "plugins/packages/custom-rpc.dtewcord-extension").read_bytes()
 assert catalog.validate(rpc)["capabilities"] == ["rich_presence", "storage"]
-proxy = (catalog.ROOT / "plugins/packages/api-proxy.serein-extension").read_bytes()
+proxy = (catalog.ROOT / "plugins/packages/api-proxy.dtewcord-extension").read_bytes()
 assert catalog.validate(proxy)["capabilities"] == ["api_proxy", "storage"]
 for data, mutate in (
     (proxy, lambda p: p["manifest"].update(capabilities=["api_proxy", "composer"])),
@@ -36,7 +36,7 @@ for data, mutate in (
 # Wasm custom section. The section does not introduce imports or executable behavior.
 expected_gpl = (catalog.ROOT / "licenses/Equicord-GPL-3.0.txt").read_bytes()
 for stem in ["offline-composer-tools", "text-commands", "view-raw-message", "external-search-tools"]:
-    packaged = json.loads((catalog.ROOT / f"plugins/packages/{stem}.serein-extension").read_bytes())
+    packaged = json.loads((catalog.ROOT / f"plugins/packages/{stem}.dtewcord-extension").read_bytes())
     wasm = bytes(packaged["wasm"])
     licenses = [payload for name, payload in pack.custom_sections(wasm) if name == pack.LICENSE_SECTION]
     assert licenses == [expected_gpl], stem
@@ -48,7 +48,7 @@ for entry in pinned["entries"]:
     commit = entry["source_commit"]
     for value in [entry] + ([entry["preview"]] if "preview" in entry else []):
         key = "release_url" if value is entry else "url"
-        value[key] = value[key].replace("ViceVerse-cz/Serein-extensions/" + commit + "/", "ViceVerse-cz/Serein/" + commit + "/extensions/")
+        value[key] = value[key].replace("ViceVerse-cz/Serein-extensions/" + commit + "/", "tacobellerontop-sudo/doesthisevenwork-cord/" + commit + "/extensions/")
 moved = json.loads(json.dumps(pinned))
 for entry in moved["entries"]:
     old = entry["source_commit"]
@@ -56,8 +56,8 @@ for entry in moved["entries"]:
     for value in [entry] + ([entry["preview"]] if "preview" in entry else []):
         key = "release_url" if value is entry else "url"
         value[key] = value[key].replace(old, "f" * 40)
-assert catalog.content(pinned, "ViceVerse-cz/Serein") == catalog.content(moved, "ViceVerse-cz/Serein") is not None
+assert catalog.content(pinned, "tacobellerontop-sudo/doesthisevenwork-cord") == catalog.content(moved, "tacobellerontop-sudo/doesthisevenwork-cord") is not None
 assert catalog.content(pinned, "ViceVerse-cz/Other") is None
 moved["entries"][0]["sha256"] = "0" * 64
-assert catalog.content(pinned, "ViceVerse-cz/Serein") != catalog.content(moved, "ViceVerse-cz/Serein")
+assert catalog.content(pinned, "tacobellerontop-sudo/doesthisevenwork-cord") != catalog.content(moved, "tacobellerontop-sudo/doesthisevenwork-cord")
 print("Theme/plugin identity, byte, capability, action and URL checks passed.")

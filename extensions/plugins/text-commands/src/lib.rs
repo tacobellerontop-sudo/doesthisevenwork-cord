@@ -19,7 +19,7 @@
  */
 
 use serde::{Deserialize, Serialize};
-use serein_extension_sdk::{Element, Invocation, MAX_IO_BYTES, Output};
+use dtewcord_extension_sdk::{Element, Invocation, MAX_IO_BYTES, Output};
 use std::collections::{BTreeMap, BTreeSet};
 
 const MAX_RULES: usize = 8;
@@ -772,7 +772,7 @@ fn handle(input: Invocation) -> Output {
 	}
 }
 
-serein_extension_sdk::export!(handle);
+dtewcord_extension_sdk::export!(handle);
 
 #[cfg(test)]
 mod tests {

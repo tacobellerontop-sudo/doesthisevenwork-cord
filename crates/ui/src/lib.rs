@@ -1032,7 +1032,7 @@ impl MessagingUi {
 					voice_channel: None,
 					channel: None,
 					embed: model::Embed {
-						title: Some("Serein community".into()),
+						title: Some("DTEW Cord community".into()),
 						..Default::default()
 					},
 				})),
@@ -1420,15 +1420,14 @@ impl MessagingUi {
 				ui.style_mut().interaction.selectable_labels = false;
 				let rect = ui.max_rect();
 				design::window_drag(ui, rect);
-				let title_rect = egui::Rect::from_center_size(
-					rect.center(),
-					egui::vec2(rect.width() * 0.3, rect.height()),
-				);
-				ui.scope_builder(
+				// Back/forward on the left and the badges and window controls on the right are laid
+				// out first; the centred title then takes only the room between them, so a long
+				// server name truncates instead of running under the badges in a narrow window.
+				let nav = ui.scope_builder(
 					egui::UiBuilder::new()
 						.max_rect(egui::Rect::from_min_max(
 							egui::pos2(rect.left() + design::TRAFFIC_LIGHT_INSET + 8.0, rect.top()),
-							egui::pos2(title_rect.left() - 10.0, rect.bottom()),
+							egui::pos2(rect.center().x, rect.bottom()),
 						))
 						.layout(egui::Layout::left_to_right(egui::Align::Center)),
 					|ui| {
@@ -1459,27 +1458,16 @@ impl MessagingUi {
 						}
 					},
 				);
-				ui.scope_builder(
-					egui::UiBuilder::new().max_rect(title_rect).layout(
-						egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
-					),
-					|ui| {
-						ui.add(
-							egui::Label::new(design::semibold(ui, title, 13.0).color(colors.text))
-								.truncate(),
-						);
-					},
-				);
-
+				let nav_right = nav.response.rect.right();
 				let right_inset = if design::WINDOW_CONTROLS_WIDTH > 0.0 {
 					0.0
 				} else {
 					12.0
 				};
-				ui.scope_builder(
+				let trailing = ui.scope_builder(
 					egui::UiBuilder::new()
 						.max_rect(egui::Rect::from_min_max(
-							egui::pos2(title_rect.right() + 10.0, rect.top()),
+							egui::pos2(nav_right + 10.0, rect.top()),
 							rect.right_bottom() - egui::vec2(right_inset, 0.0),
 						))
 						.layout(egui::Layout::right_to_left(egui::Align::Center)),
@@ -1580,6 +1568,30 @@ impl MessagingUi {
 						}
 					},
 				);
+				let trailing_left = trailing.response.rect.left();
+				let half = (rect.width() * 0.15)
+					.min(rect.center().x - nav_right - 10.0)
+					.min(trailing_left - 10.0 - rect.center().x)
+					.max(0.0);
+				let title_rect = egui::Rect::from_center_size(
+					rect.center(),
+					egui::vec2(half * 2.0, rect.height()),
+				);
+				if half > 8.0 {
+					ui.scope_builder(
+						egui::UiBuilder::new().max_rect(title_rect).layout(
+							egui::Layout::centered_and_justified(egui::Direction::LeftToRight),
+						),
+						|ui| {
+							ui.add(
+								egui::Label::new(
+									design::semibold(ui, title, 13.0).color(colors.text),
+								)
+								.truncate(),
+							);
+						},
+					);
+				}
 			});
 	}
 	fn navigate_history(&mut self, state: &mut State, commands: &mut Vec<Command>, back: bool) {
@@ -2785,8 +2797,15 @@ impl MessagingUi {
 				}
 				ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
 					// Centre the name block in the fixed-height header even without a subtitle.
+					// With no channel open inside a server, name the server rather than claiming
+					// to be in Direct Messages.
 					let name = channel.as_ref().map_or_else(
-						|| language.text("direct-messages"),
+						|| {
+							self.guild.and_then(|id| state.guild(id)).map_or_else(
+								|| language.text("direct-messages"),
+								|g| g.name.clone(),
+							)
+						},
 						|c| state.conversation_name(c).to_owned(),
 					);
 					let subtitle = channel
@@ -4286,7 +4305,7 @@ impl MessagingUi {
 			!self.hide_title_bar
 		}
 	}
-	/// Linux only: Serein draws its own GTK 4 style header bar instead of the system one.
+	/// Linux only: DTEW Cord draws its own GTK 4 style header bar instead of the system one.
 	pub fn uses_custom_title_bar(&self) -> bool {
 		cfg!(target_os = "linux") && self.custom_title_bar
 	}
@@ -4514,7 +4533,7 @@ impl MessagingUi {
 				self.profile.close();
 				if state.guild(guild).is_some() && self.server_settings.navigate_away(state) {
 					self.guild = Some(guild);
-					if let Some(command) = state.select_guild(guild) {
+					if let Some(command) = state.open_guild(guild) {
 						commands.push(command);
 					}
 				}
@@ -4914,10 +4933,17 @@ impl MessagingUi {
 			});
 			self.focus_switched_composer = state.selected.is_some() && !profile_keeps_focus;
 			self.navigation_channel = state.selected;
-			self.guild = state
-				.selected
-				.and_then(|id| state.channel(id))
-				.and_then(|channel| channel.guild);
+			// An empty server closes the open conversation but stays the server on screen.
+			let empty_server = state.selected.is_none()
+				&& self.guild.is_some_and(|guild| {
+					state.guild(guild).is_some() && state.guild_target(guild).is_none()
+				});
+			if !empty_server {
+				self.guild = state
+					.selected
+					.and_then(|id| state.channel(id))
+					.and_then(|channel| channel.guild);
+			}
 		}
 		let title = self
 			.guild
@@ -5587,7 +5613,7 @@ impl MessagingUi {
 								if state.guild(guild).is_some() =>
 							{
 								self.guild = Some(guild);
-								if let Some(command) = state.select_guild(guild) {
+								if let Some(command) = state.open_guild(guild) {
 									commands.push(command);
 								}
 							}
@@ -10652,7 +10678,7 @@ pub fn debug_pr565(mut state: State, mut user: model::User) {
 	state.own_profile.data = Some(profiles::synthetic(&own, None));
 	assert_eq!(
 		profiles::known_username(&state, own.id).as_deref(),
-		Some("serein.preview")
+		Some("dtewcord.preview")
 	);
 	click(
 		&mut view,

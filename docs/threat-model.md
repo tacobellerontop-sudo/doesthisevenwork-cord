@@ -1,6 +1,6 @@
 # Threat model — concise integration guidance
 
-Serein is an unofficial client that handles authenticated Discord sessions and private user content. This summary is intended for developers adding or adapting frontends; it is not a security audit or a guarantee of account safety.
+DTEW Cord is an unofficial client that handles authenticated Discord sessions and private user content. This summary is intended for developers adding or adapting frontends; it is not a security audit or a guarantee of account safety.
 
 ## Assets to protect
 

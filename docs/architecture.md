@@ -1,6 +1,6 @@
 # Architecture and TUI integration notes
 
-Serein is a Rust Discord client organized as a Cargo workspace. Its backend is separated from its egui desktop presentation layer, making the workspace a useful base for a second frontend. The existing desktop application remains in `apps/desktop` and `crates/ui`.
+DTEW Cord is a Rust Discord client organized as a Cargo workspace. Its backend is separated from its egui desktop presentation layer, making the workspace a useful base for a second frontend. The existing desktop application remains in `apps/desktop` and `crates/ui`.
 
 ## Core layers
 

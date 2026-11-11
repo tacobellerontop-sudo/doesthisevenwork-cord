@@ -502,7 +502,7 @@ impl MessagingUi {
 							self.preload.guild(&response, state, id);
 							if response.clicked() {
 								self.guild = Some(id);
-								if let Some(command) = state.select_guild(id) {
+								if let Some(command) = state.open_guild(id) {
 									commands.push(command);
 								}
 							}

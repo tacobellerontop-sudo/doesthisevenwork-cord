@@ -1,6 +1,6 @@
 # Authentication notes
 
-Serein's desktop application contains the existing login and credential lifecycle. Authentication is not a generic Discord OAuth2 bot flow; this project is an unofficial client that connects to Discord using a normal user account.
+DTEW Cord's desktop application contains the existing login and credential lifecycle. Authentication is not a generic Discord OAuth2 bot flow; this project is an unofficial client that connects to Discord using a normal user account.
 
 ## Important account warning
 

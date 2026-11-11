@@ -1383,6 +1383,29 @@ pub(crate) struct Theme {
 	pub(crate) card: Color32,
 }
 impl Theme {
+	/// Recolours `visuals` so text drawn inside a profile card follows the card's colours.
+	/// egui resolves strong, button and spinner colors from the widget strokes rather than the
+	/// override, so a bright or dark theme needs every stroke recolored too, or bold text keeps
+	/// the app theme's colour and can vanish against the card.
+	pub(crate) fn apply_to(&self, visuals: &mut egui::Visuals) {
+		visuals.override_text_color = Some(self.text);
+		visuals.hyperlink_color = self.link;
+		let widgets = &mut visuals.widgets;
+		for widget in [
+			&mut widgets.noninteractive,
+			&mut widgets.inactive,
+			&mut widgets.hovered,
+			&mut widgets.active,
+			&mut widgets.open,
+		] {
+			widget.fg_stroke.color = self.text;
+			widget.bg_stroke = Stroke::NONE;
+		}
+		widgets.inactive.weak_bg_fill = self.chip;
+		widgets.hovered.weak_bg_fill = self.chip_hover;
+		widgets.active.weak_bg_fill = self.chip_hover;
+	}
+
 	pub(crate) fn new(colors: &design::Palette, theme: Option<[u32; 2]>) -> Self {
 		match theme {
 			Some([top, bottom]) => {
@@ -2556,7 +2579,7 @@ fn full_panel(
 }
 
 pub(crate) fn profile_opener_id() -> egui::Id {
-	egui::Id::unique("serein-profile-opener")
+	egui::Id::unique("dtewcord-profile-opener")
 }
 
 #[derive(Default)]
@@ -3340,27 +3363,7 @@ fn card_view(
 				ui.painter().add(egui::Shape::Noop),
 			)
 		});
-		{
-			// egui resolves strong, button and spinner colors from the widget strokes rather
-			// than the override, so a bright theme needs every stroke recolored too.
-			let visuals = ui.visuals_mut();
-			visuals.override_text_color = Some(theme.text);
-			visuals.hyperlink_color = theme.link;
-			let widgets = &mut visuals.widgets;
-			for widget in [
-				&mut widgets.noninteractive,
-				&mut widgets.inactive,
-				&mut widgets.hovered,
-				&mut widgets.active,
-				&mut widgets.open,
-			] {
-				widget.fg_stroke.color = theme.text;
-				widget.bg_stroke = Stroke::NONE;
-			}
-			widgets.inactive.weak_bg_fill = theme.chip;
-			widgets.hovered.weak_bg_fill = theme.chip_hover;
-			widgets.active.weak_bg_fill = theme.chip_hover;
-		}
+		theme.apply_to(ui.visuals_mut());
 
 		// Header: banner, overlapping avatar with presence, badge pill.
 		let has_banner = data.as_ref().and_then(|d| d.banner_url()).is_some();
@@ -4647,7 +4650,7 @@ pub fn synthetic(user: &User, guild: Option<Id>) -> model::UserProfile {
 	let hash = |c: char| c.to_string().repeat(32);
 	model::UserProfile {
         user: user.clone(),
-        username: "serein.preview".into(),
+        username: "dtewcord.preview".into(),
         board: Some(vec![model::ProfileGameWidget {
             kind: model::ProfileGameWidgetKind::Favorite,
             games: vec![model::ProfileGame { id: Id(90001), name: Some("Synthetic favorite game".into()), icon: Some(hash('b')), cover: Some(hash('b')), comment: None, tags: vec![] }],

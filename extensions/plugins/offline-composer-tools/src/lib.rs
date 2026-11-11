@@ -3,10 +3,10 @@
  * Copyright (c) Vendicated and contributors
  * SPDX-License-Identifier: GPL-3.0-or-later
  *
- * Changed 2026-11-08: safe, user-invoked Rust port for Serein composer actions.
+ * Changed 2026-11-08: safe, user-invoked Rust port for DTEW Cord composer actions.
  */
 
-use serein_extension_sdk::{Element, Invocation, Output};
+use dtewcord_extension_sdk::{Element, Invocation, Output};
 use url::Url;
 
 const TRACKING_KEYS: &[&str] = &[
@@ -48,7 +48,7 @@ fn text_replacement(composer: Option<String>, transform: fn(&str) -> String) -> 
 	let transformed = transform(&original);
 	// A small expansion always remains valid after worst-case JSON escaping. For larger
 	// inputs, never return a larger allocation than the already bounded invocation.
-	let limit = original.len().max(serein_extension_sdk::MAX_IO_BYTES / 8);
+	let limit = original.len().max(dtewcord_extension_sdk::MAX_IO_BYTES / 8);
 	Output {
 		replacement: Some(if transformed.len() <= limit {
 			transformed
@@ -617,7 +617,7 @@ impl Counts {
 	}
 }
 
-serein_extension_sdk::export!(handle);
+dtewcord_extension_sdk::export!(handle);
 
 #[cfg(test)]
 mod tests {

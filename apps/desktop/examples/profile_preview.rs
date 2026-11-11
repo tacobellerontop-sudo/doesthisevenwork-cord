@@ -509,42 +509,42 @@ fn extension_fixture(
 	),
 	Box<dyn std::error::Error>,
 > {
-	let external = std::env::var_os("SEREIN_PREVIEW_PACKAGE")
+	let external = std::env::var_os("DTEWCORD_PREVIEW_PACKAGE")
 		.map(std::fs::read)
 		.transpose()?;
 	let bytes: &[u8] = match id {
 		"custom-rpc" | "api-proxy" => external
 			.as_deref()
-			.ok_or("Set SEREIN_PREVIEW_PACKAGE to the external plugin package")?,
+			.ok_or("Set DTEWCORD_PREVIEW_PACKAGE to the external plugin package")?,
 		"serein-ocean" => {
-			include_bytes!("../../../extensions/themes/ocean.serein-extension")
+			include_bytes!("../../../extensions/themes/ocean.dtewcord-extension")
 		}
 		"message-delete-protector" => include_bytes!(
-			"../../../extensions/plugins/packages/message-delete-protector.serein-extension"
+			"../../../extensions/plugins/packages/message-delete-protector.dtewcord-extension"
 		),
 		"serein-midnight" => {
-			include_bytes!("../../../extensions/themes/midnight.serein-extension")
+			include_bytes!("../../../extensions/themes/midnight.dtewcord-extension")
 		}
 		"serein-rose" => {
-			include_bytes!("../../../extensions/themes/rose.serein-extension")
+			include_bytes!("../../../extensions/themes/rose.dtewcord-extension")
 		}
 		"serein-forest" => {
-			include_bytes!("../../../extensions/themes/forest.serein-extension")
+			include_bytes!("../../../extensions/themes/forest.dtewcord-extension")
 		}
 		"serein-latte" => {
-			include_bytes!("../../../extensions/themes/latte.serein-extension")
+			include_bytes!("../../../extensions/themes/latte.dtewcord-extension")
 		}
 		"golden-theme" => {
-			include_bytes!("../../../extensions/themes/golden.serein-extension")
+			include_bytes!("../../../extensions/themes/golden.dtewcord-extension")
 		}
 		"black-theme" => {
-			include_bytes!("../../../extensions/themes/katana.serein-extension")
+			include_bytes!("../../../extensions/themes/katana.dtewcord-extension")
 		}
 		"obsidian-theme" => {
-			include_bytes!("../../../extensions/themes/obsidian.serein-extension")
+			include_bytes!("../../../extensions/themes/obsidian.dtewcord-extension")
 		}
 		"teal-theme" => {
-			include_bytes!("../../../extensions/themes/teal.serein-extension")
+			include_bytes!("../../../extensions/themes/teal.dtewcord-extension")
 		}
 		_ => return Err("Unknown fixture extension".into()),
 	};
@@ -589,27 +589,27 @@ fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
 	if themes {
 		let packages: [(&[u8], &str); 6] = [
 			(
-				include_bytes!("../../../extensions/themes/ocean.serein-extension"),
+				include_bytes!("../../../extensions/themes/ocean.dtewcord-extension"),
 				"",
 			),
 			(
-				include_bytes!("../../../extensions/themes/obsidian.serein-extension"),
+				include_bytes!("../../../extensions/themes/obsidian.dtewcord-extension"),
 				"Obsidian violet surfaces and lavender accents.",
 			),
 			(
-				include_bytes!("../../../extensions/themes/forest.serein-extension"),
+				include_bytes!("../../../extensions/themes/forest.dtewcord-extension"),
 				"Calm forest greens and fresh leafy accents.",
 			),
 			(
-				include_bytes!("../../../extensions/themes/latte.serein-extension"),
+				include_bytes!("../../../extensions/themes/latte.dtewcord-extension"),
 				"Warm coffee tones and a creamy caramel accent.",
 			),
 			(
-				include_bytes!("../../../extensions/themes/rose.serein-extension"),
+				include_bytes!("../../../extensions/themes/rose.dtewcord-extension"),
 				"Soft rose accents.",
 			),
 			(
-				include_bytes!("../../../extensions/themes/midnight.serein-extension"),
+				include_bytes!("../../../extensions/themes/midnight.dtewcord-extension"),
 				"Deep, quiet surfaces.",
 			),
 		];
@@ -840,7 +840,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let saved = Arc::new(AtomicBool::new(false));
 	let completed = saved.clone();
 	eframe::run_native(
-		"Serein · offline profile preview",
+		"DTEW Cord · offline profile preview",
 		eframe::NativeOptions {
 			viewport: egui::ViewportBuilder::default()
 				.with_inner_size([width, height])
@@ -1326,7 +1326,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					if theme_preview {
 						prime_extension_chat(&mut state);
 						let package = extensions::parse_package(include_bytes!(
-							"../../../extensions/themes/katana.serein-extension"
+							"../../../extensions/themes/katana.dtewcord-extension"
 						))?;
 						messaging.extensions.receive_theme_edit(
 							Box::new(package),
@@ -1338,7 +1338,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					}
 					if let Some(tab) = &theme_editor {
 						let mut package = extensions::parse_package(include_bytes!(
-							"../../../extensions/themes/ocean.serein-extension"
+							"../../../extensions/themes/ocean.dtewcord-extension"
 						))
 						.expect("valid theme fixture");
 						package.manifest.name = "My ocean".into();

@@ -8,5 +8,5 @@ license = "GPL-3.0-or-later"
 crate-type = ["cdylib"]
 
 [dependencies]
-serein-extension-sdk.workspace = true
+dtewcord-extension-sdk.workspace = true
 url.workspace = true

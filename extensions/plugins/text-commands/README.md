@@ -1,6 +1,6 @@
 # Text Commands
 
-A bounded, local-only Serein port of safe workflows from Equicord's **TextReplace** and
+A bounded, local-only DTEW Cord port of safe workflows from Equicord's **TextReplace** and
 **CustomCommands** plugins. Upstream source is pinned to Equicord/Equicord commit
 [`200dba124066146a8f043fde7fc8b05e3dc5e68e`](https://github.com/Equicord/Equicord/tree/200dba124066146a8f043fde7fc8b05e3dc5e68e):
 `src/plugins/textReplace/index.tsx` and `src/plugins/customCommands/index.ts`.
@@ -87,7 +87,7 @@ handler tests are not Wasm sandbox or live-service compatibility evidence.
 Package from `extensions/` with the license text embedded as an inert Wasm custom section:
 
 ```sh
-python pack.py plugins/text-commands/manifest.json target/wasm32-unknown-unknown/release/text_commands.wasm plugins/packages/text-commands.serein-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/text-commands/manifest.json target/wasm32-unknown-unknown/release/text_commands.wasm plugins/packages/text-commands.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
 ```
 
 The host ignores custom sections, so this does not change the executable ABI.

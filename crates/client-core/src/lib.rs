@@ -1284,6 +1284,26 @@ impl State {
 		let channel = self.guild_target(guild)?;
 		self.select(channel)
 	}
+	/// Opens a server the user picked, closing the current conversation when the server has
+	/// nothing this account can open, so another server's or a DM's messages are not left on
+	/// screen under this server's name. [`Self::select_guild`] keeps the conversation instead,
+	/// for automatic navigation such as waiting for a joined server's channels.
+	pub fn open_guild(&mut self, guild: Id) -> Option<Command> {
+		if self.guild_target(guild).is_some() || self.guild(guild).is_none() {
+			return self.select_guild(guild);
+		}
+		if self.selected.is_some() {
+			self.park_reply();
+			self.application_commands.clear();
+			self.selected = None;
+			self.link_resolution.clear();
+			self.history_navigation.clear();
+			self.search_target = None;
+			self.restore_scroll = false;
+			self.record(Place::Home);
+		}
+		None
+	}
 	/// The channel a server icon opens: the current one, the last viewed, or the first text one.
 	pub fn guild_target(&self, guild: Id) -> Option<Id> {
 		self.guild(guild)?;
@@ -5350,6 +5370,14 @@ mod tests {
 				Some(Id(20)),
 				"no accessible channel leaves the conversation intact"
 			);
+			// Clicking that server closes the conversation, and Back returns to it.
+			assert!(state.open_guild(Id(1)).is_none());
+			assert_eq!(
+				state.selected, None,
+				"a picked empty server shows no other conversation"
+			);
+			assert!(state.navigate_back().is_some());
+			assert_eq!(state.selected, Some(Id(20)));
 			state.last_viewed_channels = (100..100 + MAX_VIEWED_SERVERS as u64)
 				.map(|id| (Id(id), Id(id)))
 				.collect();

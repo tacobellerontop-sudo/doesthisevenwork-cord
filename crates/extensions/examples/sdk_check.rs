@@ -523,16 +523,16 @@ fn check_safe_ports(catalog_wasm_dir: &Path) -> Result<(), Box<dyn std::error::E
 		&catalog_wasm_dir.join("external_search_tools.wasm"),
 	)?;
 	let offline_committed = parse_package(include_bytes!(
-		"../../../extensions/plugins/packages/offline-composer-tools.serein-extension"
+		"../../../extensions/plugins/packages/offline-composer-tools.dtewcord-extension"
 	))?;
 	let text_committed = parse_package(include_bytes!(
-		"../../../extensions/plugins/packages/text-commands.serein-extension"
+		"../../../extensions/plugins/packages/text-commands.dtewcord-extension"
 	))?;
 	let raw_committed = parse_package(include_bytes!(
-		"../../../extensions/plugins/packages/view-raw-message.serein-extension"
+		"../../../extensions/plugins/packages/view-raw-message.dtewcord-extension"
 	))?;
 	let external_committed = parse_package(include_bytes!(
-		"../../../extensions/plugins/packages/external-search-tools.serein-extension"
+		"../../../extensions/plugins/packages/external-search-tools.dtewcord-extension"
 	))?;
 	for (name, package, committed, input, check) in [
 		(
@@ -679,7 +679,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	check(
 		"message-delete-protector/committed",
 		include_bytes!(
-			"../../../extensions/plugins/packages/message-delete-protector.serein-extension"
+			"../../../extensions/plugins/packages/message-delete-protector.dtewcord-extension"
 		),
 		&expected,
 	);
@@ -726,7 +726,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	check_message_counter(
 		"message-counter/committed",
 		&parse_package(include_bytes!(
-			"../../../examples/extensions/packages/message-counter.serein-extension"
+			"../../../examples/extensions/packages/message-counter.dtewcord-extension"
 		))?,
 	);
 	check_message_counter(
@@ -739,7 +739,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	check_app_toolbox(
 		"app-toolbox/committed",
 		&parse_package(include_bytes!(
-			"../../../examples/extensions/packages/app-toolbox.serein-extension"
+			"../../../examples/extensions/packages/app-toolbox.dtewcord-extension"
 		))?,
 	);
 	check_app_toolbox(
@@ -752,7 +752,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	check_guild_inspector(
 		"guild-inspector/committed",
 		&parse_package(include_bytes!(
-			"../../../examples/extensions/packages/guild-inspector.serein-extension"
+			"../../../examples/extensions/packages/guild-inspector.dtewcord-extension"
 		))?,
 	);
 	check_guild_inspector(
@@ -765,7 +765,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	check_conversation_inspector(
 		"conversation-inspector/committed",
 		&parse_package(include_bytes!(
-			"../../../examples/extensions/packages/conversation-inspector.serein-extension"
+			"../../../examples/extensions/packages/conversation-inspector.dtewcord-extension"
 		))?,
 	);
 	check_conversation_inspector(

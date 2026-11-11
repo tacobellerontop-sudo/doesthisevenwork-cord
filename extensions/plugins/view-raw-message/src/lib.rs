@@ -2,14 +2,14 @@
  * Vencord, a modification for Discord's desktop app
  * Copyright (c) 2022 Vendicated and contributors
  *
- * Serein adaptation copyright (c) 2026 Serein contributors.
+ * DTEW Cord adaptation copyright (c) 2026 Serein contributors.
  * Changed November 8, 2026: only explicitly granted message text and public IDs cross the ABI.
  *
  * This program is free software: you can redistribute it and/or modify it under
  * the terms of the GNU General Public License version 3 or (at your option) any
  * later version. See https://www.gnu.org/licenses/gpl-3.0.html.
  */
-use serein_extension_sdk::{
+use dtewcord_extension_sdk::{
 	AppOutput, Element, MAX_IO_BYTES, MessageActionInvocation, Output, serde_json,
 };
 
@@ -72,7 +72,7 @@ fn handle(input: MessageActionInvocation) -> AppOutput {
 		text(selected),
 		Element::Separator,
 		text(
-			"This safe ViewRaw port exposes only the selected text and IDs granted by Serein—not private host objects or raw Gateway data.",
+			"This safe ViewRaw port exposes only the selected text and IDs granted by DTEW Cord—not private host objects or raw Gateway data.",
 		),
 	]);
 	let output = AppOutput {
@@ -97,12 +97,12 @@ fn handle(input: MessageActionInvocation) -> AppOutput {
 	}
 }
 
-serein_extension_sdk::export!(handle);
+dtewcord_extension_sdk::export!(handle);
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use serein_extension_sdk::{dispatch_typed, serde_json};
+	use dtewcord_extension_sdk::{dispatch_typed, serde_json};
 
 	#[test]
 	fn exact_text_and_only_public_ids_cross_the_abi() {
@@ -144,8 +144,8 @@ mod tests {
 	fn long_unicode_messages_stay_within_panel_and_response_limits() {
 		let selected_message = format!("{}🦀{}", "a".repeat(3999), "x".repeat(65_000));
 		let invocation = MessageActionInvocation {
-			invocation: serein_extension_sdk::AppInvocation {
-				invocation: serein_extension_sdk::Invocation {
+			invocation: dtewcord_extension_sdk::AppInvocation {
+				invocation: dtewcord_extension_sdk::Invocation {
 					action: "view-raw".into(),
 					selected_message: Some(selected_message),
 					..Default::default()
@@ -167,8 +167,8 @@ mod tests {
 		}));
 
 		let invocation = MessageActionInvocation {
-			invocation: serein_extension_sdk::AppInvocation {
-				invocation: serein_extension_sdk::Invocation {
+			invocation: dtewcord_extension_sdk::AppInvocation {
+				invocation: dtewcord_extension_sdk::Invocation {
 					action: "view-raw".into(),
 					selected_message: Some("\u{1}".repeat(50_000)),
 					..Default::default()
