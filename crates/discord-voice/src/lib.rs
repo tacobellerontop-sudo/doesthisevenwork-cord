@@ -21,7 +21,6 @@ mod video_av1;
 mod video_codec;
 // Linux has no shared hardware encoder, but the camera's GStreamer encoder still takes the
 // same configuration, so the facade is compiled on every supported platform.
-#[cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))]
 mod video_encode;
 mod video_feedback;
 mod video_hevc;

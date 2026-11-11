@@ -112,34 +112,6 @@ pub(crate) fn main() {
 	video.retain_user_sources(1, &[]);
 	assert_eq!(video.keyframe_requests().collect::<Vec<_>>(), vec![300]);
 
-	#[cfg(target_os = "macos")]
-	{
-		use std::sync::{
-			Arc,
-			atomic::{AtomicUsize, Ordering},
-		};
-		let pictures = Arc::new(AtomicUsize::new(0));
-		let sink = pictures.clone();
-		let mut decoder = platform::video::live::H264Decoder::new(Box::new(move |frame| {
-			assert_eq!((frame.width, frame.height), (854, 480));
-			sink.fetch_add(1, Ordering::Relaxed);
-		}))
-		.unwrap();
-		let mut encoder = openh264::encoder::Encoder::with_api_config(
-			openh264::OpenH264API::from_source(),
-			openh264::encoder::EncoderConfig::new(),
-		)
-		.unwrap();
-		let image = openh264::formats::YUVBuffer::new(854, 480);
-		for _ in 0..9 {
-			let frame = encoder.encode(&image).unwrap().to_vec();
-			decoder
-				.decode(&frame)
-				.expect("VideoToolbox hardware decoding");
-		}
-		decoder.flush();
-		assert_eq!(pictures.load(Ordering::Relaxed), 9);
-	}
 	println!(
 		"PASS: stream volume, mute, bounded backlog, packet reordering/RTX, SSRC replacement and native video decode."
 	);

@@ -554,27 +554,13 @@ pub(crate) fn down(input: &InputState, chord: &KeyChord) -> bool {
 fn chord_parts(chord: &KeyChord) -> Vec<String> {
 	let mut parts: Vec<String> = Vec::new();
 	if chord.modifiers & model::keybinds::PRIMARY != 0 {
-		parts.push(
-			if cfg!(target_os = "macos") {
-				"⌘"
-			} else {
-				"Ctrl"
-			}
-			.into(),
-		);
+		parts.push("Ctrl".into());
 	}
 	if chord.modifiers & model::keybinds::CTRL != 0 {
 		parts.push("Ctrl".into());
 	}
 	if chord.modifiers & model::keybinds::ALT != 0 {
-		parts.push(
-			if cfg!(target_os = "macos") {
-				"⌥"
-			} else {
-				"Alt"
-			}
-			.into(),
-		);
+		parts.push("Alt".into());
 	}
 	if chord.modifiers & model::keybinds::SHIFT != 0 {
 		parts.push("Shift".into());
@@ -903,11 +889,7 @@ mod tests {
 		assert!(bindings.is_valid());
 		assert_eq!(
 			chord_parts(bindings.chord(KeybindAction::SwitchConversation)).join(" + "),
-			if cfg!(target_os = "macos") {
-				"⌘ + K"
-			} else {
-				"Ctrl + K"
-			}
+			"Ctrl + K"
 		);
 		let ctx = egui::Context::default();
 		let mut down_without_consuming = false;

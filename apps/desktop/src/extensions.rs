@@ -1381,11 +1381,6 @@ fn atomic_write(path: &Path, bytes: &[u8], gate: &Gate) -> Result<(), String> {
 	let result: Result<(), String> = (|| {
 		let mut options = OpenOptions::new();
 		options.write(true).create(true).truncate(true);
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::OpenOptionsExt;
-			options.mode(0o600);
-		}
 		let mut file = options
 			.open(&temporary)
 			.map_err(|_| "Cannot write extension data")?;

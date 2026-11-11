@@ -19,8 +19,6 @@ pub struct Updates {
 	pub available: bool,
 	pub ready: bool,
 	pub supported: bool,
-	pub flatpak: bool,
-	pub linux_update_cmd: Option<String>,
 	pub progress: Option<f32>,
 	pub check_requested: bool,
 	pub download_requested: bool,
@@ -28,7 +26,6 @@ pub struct Updates {
 	pub copied_diagnostics: Option<f64>,
 	/// Feedback for the copy button of the diagnostic log's recent lines.
 	pub copied_log: Option<f64>,
-	pub copied_command: Option<f64>,
 	/// Ready flag the sidebar banner was dismissed at, so a later stage prompts again.
 	pub banner_dismissed: Option<bool>,
 	/// Recent releases on the selected channel, newest first.
@@ -44,15 +41,12 @@ impl Default for Updates {
 			available: false,
 			ready: false,
 			supported: false,
-			flatpak: false,
-			linux_update_cmd: None,
 			progress: None,
 			check_requested: false,
 			download_requested: false,
 			restart_requested: false,
 			copied_diagnostics: None,
 			copied_log: None,
-			copied_command: None,
 			banner_dismissed: None,
 			log: Vec::new(),
 		}
@@ -228,33 +222,8 @@ impl MessagingUi {
 			"Production"
 		};
 
-		#[cfg(target_os = "linux")]
-		let session_type = std::env::var("XDG_SESSION_TYPE")
-			.map(|s| format!(" ({s})"))
-			.unwrap_or_default();
-		#[cfg(not(target_os = "linux"))]
 		let session_type = "";
 
-		#[cfg(target_os = "linux")]
-		let package_type = if self.updates.flatpak {
-			"\n- **Packaging:** Flatpak".to_owned()
-		} else if let Some(cmd) = &self.updates.linux_update_cmd {
-			let mgr = if cmd.contains("dnf") {
-				"DNF (RPM)"
-			} else if cmd.contains("apt") {
-				"APT (DEB)"
-			} else if cmd.contains("pacman") {
-				"Pacman (Arch)"
-			} else if cmd.contains("zypper") {
-				"Zypper (RPM)"
-			} else {
-				"Native Package"
-			};
-			format!("\n- **Packaging:** {mgr}")
-		} else {
-			"\n- **Packaging:** Native / AppImage".to_owned()
-		};
-		#[cfg(not(target_os = "linux"))]
 		let package_type = "";
 
 		// The adapter and the preference that chose it are what graphics reports hinge on.
@@ -455,67 +424,13 @@ impl MessagingUi {
 							});
 					},
 				);
-				if !demo {
-					if self.updates.flatpak {
-						design::hint(
-							ui,
-							&crate::i18n::translate(
-								"updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or",
-							),
-						);
-					} else if !self.updates.supported {
-						if let Some(cmd) = &self.updates.linux_update_cmd {
-							design::card_divider(ui);
-							let copied_cmd = self
-								.updates
-								.copied_command
-								.is_some_and(|until| ui.input(|i| i.time) < until);
-							let cmd = cmd.clone();
-							design::row(
-								ui,
-								"updates-update-settings-package-manager-updates",
-								Some(
-									"updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a",
-								),
-								|ui| {
-									if design::button(
-										ui,
-										&crate::i18n::translate_if_key(if copied_cmd {
-											"updates-update-settings-copied"
-										} else {
-											"updates-update-settings-copy-command"
-										}),
-										design::ButtonKind::Outline,
-									)
-									.clicked()
-									{
-										ui.ctx().copy_text(cmd.clone());
-										self.updates.copied_command =
-											Some(ui.input(|i| i.time) + 2.5);
-										ui.ctx().request_repaint_after(
-											std::time::Duration::from_secs(3),
-										);
-									}
-								},
-							);
-							ui.add_space(6.0);
-							egui::Frame::new()
-								.fill(colors.base)
-								.corner_radius(6)
-								.inner_margin(egui::Margin::symmetric(10, 6))
-								.show(ui, |ui| {
-									ui.set_width(ui.available_width());
-									ui.monospace(&cmd);
-								});
-						} else {
-							design::hint(
-								ui,
-								&crate::i18n::translate(
-									"updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package",
-								),
-							);
-						}
-					}
+				if !demo && !self.updates.supported {
+					design::hint(
+						ui,
+						&crate::i18n::translate(
+							"updates-update-settings-in-app-installation-requires-an-x64-release-package",
+						),
+					);
 				}
 			},
 		);

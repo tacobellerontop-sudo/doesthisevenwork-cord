@@ -163,21 +163,6 @@ fn supplied_text(text: String) -> Result<Read, &'static str> {
 	Ok(Read::Content(Content::Text(text.replace("\r\n", "\n"))))
 }
 
-/// Linux file managers publish `text/uri-list` with CRLF line endings and may name a
-/// `localhost` authority; arboard leaves both in the path, which then fails as a filename.
-#[cfg(unix)]
-fn normalize(path: std::path::PathBuf) -> std::path::PathBuf {
-	use std::os::unix::ffi::OsStrExt;
-	let bytes = path.as_os_str().as_bytes();
-	let bytes = bytes.strip_suffix(b"\r").unwrap_or(bytes);
-	let bytes = match bytes.strip_prefix(b"localhost/") {
-		Some(_) => &bytes[b"localhost".len()..],
-		None => bytes,
-	};
-	std::path::PathBuf::from(std::ffi::OsStr::from_bytes(bytes))
-}
-
-#[cfg(not(unix))]
 fn normalize(path: std::path::PathBuf) -> std::path::PathBuf {
 	path
 }
@@ -201,16 +186,6 @@ fn png(bytes: &[u8], width: usize, height: usize) -> Result<Read, &'static str> 
 
 #[cfg(test)]
 mod tests {
-	#[test]
-	#[cfg(unix)]
-	fn uri_list_paths_lose_line_endings_and_localhost() {
-		use std::path::PathBuf;
-		let normalize = |s: &str| super::normalize(PathBuf::from(s));
-		assert_eq!(normalize("/home/a/b.png\r"), PathBuf::from("/home/a/b.png"));
-		assert_eq!(normalize("localhost/tmp/x"), PathBuf::from("/tmp/x"));
-		assert_eq!(normalize("/plain"), PathBuf::from("/plain"));
-		assert_eq!(normalize("localhost"), PathBuf::from("localhost"));
-	}
 
 	#[test]
 	#[ignore = "Explicit native check: replaces the system clipboard with a temp file"]

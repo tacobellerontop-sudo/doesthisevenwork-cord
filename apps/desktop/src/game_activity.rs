@@ -1328,7 +1328,6 @@ mod tests {
 	}
 
 	#[tokio::test]
-	#[cfg(windows)]
 	async fn replies_reach_pending_game_reads_as_complete_frames() {
 		use tokio::net::windows::named_pipe::{ClientOptions, ServerOptions};
 		let name = format!(

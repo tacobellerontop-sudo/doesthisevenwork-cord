@@ -6,68 +6,38 @@
 //! browser-shaped identity on every transport keeps the session classified as an ordinary
 //! web client. Nothing here carries account data; it is the same for every user.
 
-/// Chrome version advertised on Windows, where verification runs in Chromium WebView2.
+/// Chrome version advertised; verification runs in Chromium WebView2.
 const CHROME_MAJOR: &str = "149";
-/// Safari version advertised on macOS and Linux, where verification runs in WebKit.
-const SAFARI_VERSION: &str = "26.4";
 /// `sec-ch-ua` brand list of [`CHROME_MAJOR`]; the GREASE brand changes with every major.
 const CHROME_SEC_CH_UA: &str =
 	r#""Google Chrome";v="149", "Chromium";v="149", "Not)A;Brand";v="24""#;
 /// Build number of the official web client this fingerprint mirrors.
 pub const CLIENT_BUILD_NUMBER: u64 = 634_304;
 pub const LOCALE: &str = "en-US";
-/// The embedded hCaptcha widget runs in WKWebView or WebKitGTK everywhere except Windows.
-/// hCaptcha reads the real engine from script, so the advertised browser must follow it: a
-/// passcode solved in WebKit but submitted with a Chrome fingerprint reads as a relayed
-/// captcha and triggers phone verification or an account ban.
-const WEBKIT: bool = !cfg!(windows);
 
 /// Discord's spelling of the host operating system.
 pub fn os_name() -> &'static str {
-	match std::env::consts::OS {
-		"macos" => "Mac OS X",
-		"windows" => "Windows",
-		_ => "Linux",
-	}
+	"Windows"
 }
 
-/// Platform token used inside the user agent string.
-fn platform_token() -> &'static str {
-	match std::env::consts::OS {
-		"macos" => "Macintosh; Intel Mac OS X 10_15_7",
-		"windows" => "Windows NT 10.0; Win64; x64",
-		_ => "X11; Linux x86_64",
-	}
-}
-
-/// Browser name Discord expects in super-properties, matched to the verification engine.
+/// Browser name Discord expects in super-properties, matching the WebView2 engine that
+/// solves hCaptcha: a passcode solved in one engine but submitted with another engine's
+/// fingerprint reads as a relayed captcha and triggers phone verification or a ban.
 pub fn browser() -> &'static str {
-	if WEBKIT { "Safari" } else { "Chrome" }
+	"Chrome"
 }
 
 /// Browser version paired with [`browser`].
 pub fn browser_version() -> String {
-	if WEBKIT {
-		SAFARI_VERSION.to_owned()
-	} else {
-		format!("{CHROME_MAJOR}.0.0.0")
-	}
+	format!("{CHROME_MAJOR}.0.0.0")
 }
 
 /// `User-Agent` header value shared by REST, uploads, the Gateway identify and the
 /// embedded verification webview.
 pub fn user_agent() -> String {
-	if WEBKIT {
-		format!(
-			"Mozilla/5.0 ({}) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{SAFARI_VERSION} Safari/605.1.15",
-			platform_token()
-		)
-	} else {
-		format!(
-			"Mozilla/5.0 ({}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{CHROME_MAJOR}.0.0.0 Safari/537.36",
-			platform_token()
-		)
-	}
+	format!(
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{CHROME_MAJOR}.0.0.0 Safari/537.36"
+	)
 }
 
 #[cfg(feature = "transport")]
@@ -76,30 +46,18 @@ mod transport;
 pub use transport::{discord_request, emulation, websocket};
 
 /// Client-hint headers (`sec-ch-ua`, `sec-ch-ua-mobile`, `sec-ch-ua-platform`) Chrome sends on
-/// every same-origin fetch. Safari does not implement client hints, so it gets none.
+/// every same-origin fetch.
 pub fn client_hints() -> Option<[(&'static str, String); 3]> {
-	if browser() != "Chrome" {
-		return None;
-	}
-	let platform = if cfg!(target_os = "windows") {
-		"Windows"
-	} else {
-		"Linux"
-	};
 	Some([
 		("sec-ch-ua", CHROME_SEC_CH_UA.to_owned()),
 		("sec-ch-ua-mobile", "?0".to_owned()),
-		("sec-ch-ua-platform", format!("\"{platform}\"")),
+		("sec-ch-ua-platform", "\"Windows\"".to_owned()),
 	])
 }
 
-/// `Accept-Encoding` the advertised browser sends; Safari has no zstd.
+/// `Accept-Encoding` the advertised browser sends.
 pub fn accept_encoding() -> &'static str {
-	if browser() == "Chrome" {
-		"gzip, deflate, br, zstd"
-	} else {
-		"gzip, deflate, br"
-	}
+	"gzip, deflate, br, zstd"
 }
 
 /// Gateway `identify.d.properties` and the decoded `X-Super-Properties` payload.
@@ -171,8 +129,7 @@ mod tests {
 			assert!(text.contains(&format!("\"browser\":\"{}\"", browser())));
 			assert!(text.contains(&format!("\"browser_version\":\"{}\"", browser_version())));
 			assert!(user_agent().starts_with("Mozilla/5.0 ("));
-			assert_eq!(user_agent().contains("Chrome/"), browser() == "Chrome");
-			assert_eq!(user_agent().contains("Version/"), browser() == "Safari");
+			assert!(user_agent().contains("Chrome/"));
 			assert!(
 				super_properties()
 					.bytes()

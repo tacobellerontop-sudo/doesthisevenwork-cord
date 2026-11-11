@@ -1,26 +1,9 @@
 //! Explicitly selected, memory-only screen capture and H.264 encoding.
 pub use client_core::screen::{Settings, Source, SourceId};
-#[cfg(target_os = "linux")]
-#[path = "screen/audio_linux.rs"]
-mod audio_linux;
-#[cfg(all(test, not(target_os = "windows")))]
-#[path = "screen/audio_windows.rs"]
-mod audio_windows;
-#[cfg(not(target_os = "linux"))]
 #[path = "screen/capture.rs"]
 mod capture;
-#[cfg(any(test, not(target_os = "linux")))]
 #[path = "screen/convert.rs"]
 mod convert;
-#[cfg(target_os = "linux")]
-#[path = "screen/gstreamer.rs"]
-mod gstreamer;
-#[cfg(target_os = "linux")]
-#[path = "screen/linux.rs"]
-mod linux;
-#[cfg(target_os = "linux")]
-#[path = "screen/portal_linux.rs"]
-mod portal_linux;
 
 use openh264::{
 	OpenH264API,
@@ -37,7 +20,6 @@ use std::sync::{
 	mpsc,
 };
 
-#[cfg(not(target_os = "linux"))]
 use std::time::{Duration, Instant};
 
 pub const MAX_RAW_BYTES: usize = 3840 * 2160 * 4;
@@ -84,35 +66,10 @@ pub fn audio_supported() -> bool {
 }
 
 pub fn supported() -> bool {
-	cfg!(any(
-		target_os = "macos",
-		target_os = "windows",
-		target_os = "linux"
-	))
+	true
 }
 
 pub fn sources() -> Result<Vec<Source>, &'static str> {
-	#[cfg(target_os = "linux")]
-	{
-		let mut sources = vec![Source {
-			id: SourceId::Portal,
-			name: "Choose in the system picker".into(),
-			width: 0,
-			height: 0,
-			refresh_hz: 0,
-		}];
-		if linux::x11_session() {
-			sources.push(Source {
-				id: SourceId::X11Desktop,
-				name: "Entire X11 desktop · all monitors · no portal".into(),
-				width: 0,
-				height: 0,
-				refresh_hz: 0,
-			});
-		}
-		Ok(sources)
-	}
-	#[cfg(not(target_os = "linux"))]
 	capture::sources()
 }
 
@@ -121,8 +78,6 @@ pub struct Worker {
 	ready: Arc<AtomicBool>,
 	preview: Arc<Mutex<Option<image::RgbaImage>>>,
 	done: Option<mpsc::Receiver<Result<(), Cow<'static, str>>>>,
-	#[cfg(target_os = "linux")]
-	status: Arc<Mutex<&'static str>>,
 	preview_visible: Arc<AtomicBool>,
 	captured: Arc<AtomicBool>,
 }
@@ -144,10 +99,6 @@ impl Worker {
 		let worker_bitrate = bitrate.clone();
 		let preview = Arc::new(Mutex::new(None));
 		let worker_preview = preview.clone();
-		#[cfg(target_os = "linux")]
-		let status = Arc::new(Mutex::new("Choose a screen or window in the system picker"));
-		#[cfg(target_os = "linux")]
-		let worker_status = status.clone();
 		let preview_visible = Arc::new(AtomicBool::new(true));
 		let worker_preview_visible = preview_visible.clone();
 		let captured = Arc::new(AtomicBool::new(false));
@@ -172,24 +123,6 @@ impl Worker {
 				// The MFT event poll and capture pacing sleep 1 ms at a time.
 				let _resolution = crate::timer::Resolution::acquire();
 				let finished_ready = worker_ready.clone();
-				#[cfg(target_os = "linux")]
-				let result = linux::run(
-					settings,
-					worker_stop,
-					worker_ready,
-					worker_keyframe,
-					worker_bitrate,
-					send,
-					audio_send,
-					worker_audio_epoch,
-					worker_preview,
-					worker_status,
-					worker_preview_visible,
-					worker_captured,
-					&wake,
-				)
-				.map_err(Cow::Borrowed);
-				#[cfg(not(target_os = "linux"))]
 				let result = encode_loop(
 					settings,
 					worker_stop,
@@ -226,8 +159,6 @@ impl Worker {
 				ready: ready.clone(),
 				preview,
 				done: Some(done),
-				#[cfg(target_os = "linux")]
-				status,
 				preview_visible,
 				captured,
 			},
@@ -253,9 +184,6 @@ impl Worker {
 	}
 
 	pub fn capture_status(&self) -> Option<&'static str> {
-		#[cfg(target_os = "linux")]
-		return self.status.try_lock().ok().map(|status| *status);
-		#[cfg(not(target_os = "linux"))]
 		None
 	}
 
@@ -285,7 +213,6 @@ impl Drop for Worker {
 
 /// Captures, encodes and sends frames until the share stops or capture fails. A failure's
 /// reason is owned so it can carry the Windows error code of a failed audio capture.
-#[cfg(not(target_os = "linux"))]
 #[allow(clippy::too_many_arguments)] // Media outputs of one explicitly started capture.
 fn encode_loop(
 	settings: Settings,
@@ -307,9 +234,7 @@ fn encode_loop(
 	let origin = Instant::now();
 	let (raw_send, raw) = mpsc::sync_channel(1);
 	let capture_stop = Arc::new(AtomicBool::new(false));
-	#[cfg(target_os = "windows")]
 	let raw_pending = Arc::new(AtomicBool::new(false));
-	#[cfg(target_os = "windows")]
 	let _native = capture::Capture::start(
 		settings,
 		raw_send,
@@ -321,16 +246,6 @@ fn encode_loop(
 		stop.clone(),
 	)?;
 	// The worker's stop also reaches a pending macOS picker, so call teardown closes it now.
-	#[cfg(not(target_os = "windows"))]
-	let _native = capture::Capture::start(
-		settings,
-		raw_send,
-		audio,
-		capture_stop.clone(),
-		ready.clone(),
-		audio_epoch,
-		stop.clone(),
-	)?;
 	let mut encoding = None;
 	let mut first_frame_deadline = Some(Instant::now() + Duration::from_secs(15));
 	let mut next_frame = Instant::now();
@@ -338,7 +253,6 @@ fn encode_loop(
 	let mut preview_shown = preview_visible.load(Ordering::Acquire);
 
 	while !stop.load(Ordering::Acquire) && !send.is_closed() {
-		#[cfg(target_os = "windows")]
 		if _native.failed() {
 			return Err(_native.failure());
 		}
@@ -347,7 +261,6 @@ fn encode_loop(
 		}
 		let frame = match raw.recv_timeout(Duration::from_millis(100)) {
 			Ok(frame) => {
-				#[cfg(target_os = "windows")]
 				raw_pending.store(false, Ordering::Release);
 				Some(frame)
 			}
@@ -438,20 +351,6 @@ fn encode_loop(
 		// Retain one current source snapshot, never encoded media, for a viewer's keyframe
 		// request on an unchanged desktop. VideoToolbox takes packed BGRA at the stream size
 		// (ScreenCaptureKit already scales); other encoders convert the source in one pass.
-		#[cfg(target_os = "macos")]
-		{
-			let pixels = fit_frame(
-				latest_frame.take().expect("latest screen frame"),
-				settings.width,
-				settings.height,
-			)?;
-			latest_frame = Some(RawFrame {
-				width: settings.width,
-				height: settings.height,
-				stride: settings.width as usize * 4,
-				data: pixels,
-			});
-		}
 		let force_keyframe = keyframe.swap(false, Ordering::AcqRel);
 		let (data, is_keyframe) = encoding.as_mut().expect("secure screen encoder").encode(
 			latest_frame.as_ref().expect("latest screen frame"),
@@ -479,7 +378,6 @@ fn encode_loop(
 	Ok(())
 }
 
-#[cfg(any(test, not(target_os = "linux")))]
 fn retain_screen_frame(
 	latest: &mut Option<RawFrame>,
 	frame: Option<RawFrame>,
@@ -497,7 +395,6 @@ fn retain_screen_frame(
 /// Screen encoder preferring the platform hardware H.264 encoder (Media Foundation on
 /// Windows, VideoToolbox on macOS) and falling back to openh264 when it is unavailable or
 /// fails mid-stream.
-#[cfg(not(target_os = "linux"))]
 struct ScreenEncoder {
 	diagnostics: crate::diagnostics::EncoderRegistration,
 	software: Option<Encoder>,
@@ -508,7 +405,6 @@ struct ScreenEncoder {
 	bitrate: u32,
 }
 
-#[cfg(not(target_os = "linux"))]
 impl ScreenEncoder {
 	fn new(settings: Settings, bitrate: u32) -> Result<Self, &'static str> {
 		let config = crate::video_encode::Config {
@@ -519,13 +415,6 @@ impl ScreenEncoder {
 			max_bytes: MAX_ENCODED_BYTES,
 			profile: crate::video_encode::Profile::Main,
 		};
-		#[cfg(target_os = "macos")]
-		let hardware = crate::video_encode::hardware::Encoder::new(
-			config,
-			crate::video_encode::SourceFormat::Bgra,
-		)
-		.ok();
-		#[cfg(target_os = "windows")]
 		let hardware = crate::video_encode::hardware::Encoder::new(config).ok();
 		let software = if hardware.is_none() {
 			Some(encoder(settings, bitrate)?)
@@ -579,9 +468,6 @@ impl ScreenEncoder {
 		let (width, height) = (self.settings.width as usize, self.settings.height as usize);
 		let mut software_force = force_keyframe;
 		if let Some(hardware) = self.hardware.as_mut() {
-			#[cfg(target_os = "macos")]
-			let encoded = hardware.encode(&frame.data, (width, height), force_keyframe);
-			#[cfg(target_os = "windows")]
 			let encoded = hardware.encode_with(width * height * 3 / 2, force_keyframe, |picture| {
 				convert::bgra_to_yuv420(frame, width, height, convert::Chroma::Interleaved, picture)
 			});
@@ -618,14 +504,12 @@ impl ScreenEncoder {
 }
 
 /// Whether a software encoder should restart for a new transport target.
-#[cfg_attr(target_os = "linux", allow(dead_code))]
 pub(crate) fn software_rate_change(current: u32, target: u32) -> bool {
 	// Always honor congestion cuts of at least 15%; grow in 25% steps.
 	u64::from(target) * 100 <= u64::from(current) * 85
 		|| u64::from(target) * 100 >= u64::from(current) * 125
 }
 
-#[cfg(any(target_os = "windows", test))]
 pub(crate) fn i420_to_nv12(
 	y: &[u8],
 	u: &[u8],
@@ -655,11 +539,7 @@ pub(super) fn encoder(settings: Settings, bitrate: u32) -> Result<Encoder, &'sta
 		.max_frame_rate(FrameRate::from_hz(settings.fps as f32))
 		.usage_type(UsageType::ScreenContentRealTime)
 		.rate_control_mode(RateControlMode::Bitrate)
-		.complexity(if cfg!(target_os = "windows") {
-			Complexity::Low
-		} else {
-			Complexity::Medium
-		})
+		.complexity(Complexity::Low)
 		.num_threads(encoder_threads())
 		.intra_frame_period(IntraFramePeriod::from_num_frames(settings.fps * 2));
 	Encoder::with_api_config(OpenH264API::from_source(), config)
@@ -670,7 +550,7 @@ fn encoder_threads() -> u16 {
 	std::thread::available_parallelism().map_or(2, |count| count.get().clamp(2, 8) as u16)
 }
 
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[allow(dead_code)]
 pub(super) fn encode_pixels(
 	encoder: &mut Encoder,
 	yuv: &mut YUVBuffer,
@@ -752,7 +632,7 @@ pub(super) fn preview_frame(frame: &RawFrame) -> Result<image::RgbaImage, &'stat
 	Ok(image)
 }
 
-#[cfg(any(test, target_os = "macos"))]
+#[cfg(test)]
 fn fit_frame(frame: RawFrame, width: u32, height: u32) -> Result<Vec<u8>, &'static str> {
 	let (row_bytes, required) = validate_frame(&frame)?;
 
@@ -837,8 +717,6 @@ mod tests {
 			ready: Arc::new(AtomicBool::new(false)),
 			preview: Arc::new(Mutex::new(Some(preview))),
 			done: None,
-			#[cfg(target_os = "linux")]
-			status: Arc::new(Mutex::new("")),
 			preview_visible: Arc::new(AtomicBool::new(true)),
 			captured: Arc::new(AtomicBool::new(false)),
 		};

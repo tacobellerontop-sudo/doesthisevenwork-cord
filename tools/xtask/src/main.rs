@@ -186,7 +186,6 @@ fn copy_directory(source: &std::path::Path, destination: &std::path::Path) -> Re
 	}
 	Ok(())
 }
-#[allow(dead_code)]
 fn package_windows(root: &std::path::Path) -> Result<(), String> {
 	if !std::path::Path::new("packaging/windows/installer.nsi").is_file() {
 		println!("No packaging/windows/installer.nsi; the release zip is the Windows package.");
@@ -239,22 +238,9 @@ fn package_windows(root: &std::path::Path) -> Result<(), String> {
 	Ok(())
 }
 fn package() -> Result<(), String> {
-	let options: Vec<String> = std::env::args().skip(2).collect();
-	let format = match options.as_slice() {
-		[] => "deb",
-		[flag, value]
-			if flag == "--format"
-				&& matches!(value.as_str(), "deb" | "rpm" | "arch" | "dir" | "appimage")
-				&& cfg!(target_os = "linux") =>
-		{
-			value.as_str()
-		}
-		_ => {
-			return Err(
-				"Use cargo xtask package [--format deb|rpm|arch|dir|appimage (Linux only)]".into(),
-			);
-		}
-	};
+	if std::env::args().nth(2).is_some() {
+		return Err("cargo xtask package takes no options; it builds the Windows release".into());
+	}
 	let arguments = [
 		"build",
 		"--release",
@@ -266,45 +252,20 @@ fn package() -> Result<(), String> {
 	run(&arguments)?;
 	let root = PathBuf::from("dist");
 	std::fs::create_dir_all(&root).map_err(|e| e.to_string())?;
-	let exe = if cfg!(windows) {
-		"dtewcord.exe"
-	} else {
-		"dtewcord"
-	};
-	let destination = if cfg!(target_os = "macos") {
-		let app = root.join("DTEW Cord.app/Contents");
-		std::fs::create_dir_all(app.join("MacOS")).map_err(|e| e.to_string())?;
-		std::fs::copy("packaging/macos/Info.plist", app.join("Info.plist"))
-			.map_err(|e| e.to_string())?;
-		app.join("MacOS").join(exe)
-	} else {
-		root.join(exe)
-	};
-	if cfg!(windows) {
-		std::fs::copy(
-			"packaging/windows/install-notifications.ps1",
-			root.join("install-notifications.ps1"),
-		)
-		.map_err(|e| e.to_string())?;
-	}
+	let exe = "dtewcord.exe";
+	let destination = root.join(exe);
+	std::fs::copy(
+		"packaging/windows/install-notifications.ps1",
+		root.join("install-notifications.ps1"),
+	)
+	.map_err(|e| e.to_string())?;
+
 	let source = std::env::var_os("CARGO_TARGET_DIR")
 		.map_or_else(|| PathBuf::from("target"), PathBuf::from)
 		.join("release")
 		.join(exe);
-	if cfg!(target_os = "macos") {
-		// macOS caches code signatures by inode. Replace the executable rather
-		// than overwrite a previously launched, signed file in place.
-		let staging = destination.with_extension("staging");
-		match std::fs::remove_file(&staging) {
-			Ok(()) => {}
-			Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-			Err(error) => return Err(error.to_string()),
-		}
-		std::fs::copy(&source, &staging).map_err(|e| e.to_string())?;
-		std::fs::rename(&staging, &destination).map_err(|e| e.to_string())?;
-	} else {
-		std::fs::copy(&source, &destination).map_err(|e| e.to_string())?;
-	}
+	std::fs::copy(&source, &destination).map_err(|e| e.to_string())?;
+
 	for file in [
 		"README.md",
 		"LICENSE-MIT",
@@ -313,21 +274,7 @@ fn package() -> Result<(), String> {
 	] {
 		std::fs::copy(file, root.join(file)).map_err(|e| e.to_string())?;
 	}
-	let resources = if cfg!(target_os = "macos") {
-		root.join("DTEW Cord.app/Contents/Resources")
-	} else {
-		root.clone()
-	};
-	if cfg!(target_os = "macos") {
-		let status = std::process::Command::new("sh")
-			.arg("packaging/macos/compile-icon.sh")
-			.arg(&resources)
-			.status()
-			.map_err(|e| e.to_string())?;
-		if !status.success() {
-			return Err("macOS app icon compilation failed".into());
-		}
-	}
+	let resources = root.as_path();
 	std::fs::create_dir_all(resources.join("licenses")).map_err(|e| e.to_string())?;
 	std::fs::copy(
 		"assets/sounds/README.md",
@@ -405,57 +352,10 @@ fn package() -> Result<(), String> {
 		std::path::Path::new("assets/licenses/dependencies"),
 		&resources.join("licenses/dependencies"),
 	)?;
-	for file in [
-		"README.md",
-		"LICENSE-MIT",
-		"LICENSE-APACHE",
-		"THIRD_PARTY_NOTICES.md",
-	] {
-		std::fs::copy(file, resources.join(file)).map_err(|e| e.to_string())?;
-	}
-	if cfg!(target_os = "macos") {
-		// Seal only after every bundle resource has been staged. Ad-hoc signing
-		// needs no identity and makes no Developer ID or notarization claim.
-		let bundle = root.join("DTEW Cord.app");
-		let bundle = bundle.to_str().ok_or("Invalid bundle path")?;
-		// An ad-hoc signature's identity is its own hash, so it changes with every build and
-		// macOS keychain grants ("Always Allow") never survive one. A locally configured
-		// Developer ID identity keeps that trust stable across rebuilds; releases are signed
-		// and notarized separately by packaging/macos/sign-release.sh, which overrides this.
-		let identity = std::env::var("DTEWCORD_SIGNING_IDENTITY").unwrap_or_default();
-		let identity = if identity.trim().is_empty() {
-			"-".to_owned()
-		} else {
-			identity
-		};
-		run_tool("codesign", &["--force", "--sign", &identity, bundle])?;
-		run_tool("codesign", &["--verify", "--strict", bundle])?;
-	}
-	if cfg!(target_os = "linux") {
-		let mut arguments = vec![
-			if format == "appimage" {
-				"packaging/appimage/build.py"
-			} else {
-				"packaging/linux/package.py"
-			},
-			root.to_str().ok_or("Invalid package path")?,
-			env!("CARGO_PKG_VERSION"),
-		];
-		if format != "appimage" {
-			arguments.extend(["--format", format]);
-		}
-		run_tool("python3", &arguments)?;
-	}
-	if cfg!(windows) {
-		package_windows(&root)?;
-	}
+	package_windows(&root)?;
+
 	println!(
-		"{} package executable: {} ({} bytes)",
-		if cfg!(target_os = "macos") {
-			"Locally ad-hoc signed (not notarized)"
-		} else {
-			"Unsigned"
-		},
+		"Unsigned package executable: {} ({} bytes)",
 		destination.display(),
 		std::fs::metadata(&destination)
 			.map_err(|e| e.to_string())?

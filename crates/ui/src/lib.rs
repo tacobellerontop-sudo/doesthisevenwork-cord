@@ -1472,9 +1472,7 @@ impl MessagingUi {
 						))
 						.layout(egui::Layout::right_to_left(egui::Align::Center)),
 					|ui| {
-						if !cfg!(target_os = "linux") || self.uses_custom_title_bar() {
-							design::window_controls(ui);
-						}
+						design::window_controls(ui);
 						ui.spacing_mut().item_spacing.x = 10.0;
 						if self.updates.available || self.updates.ready {
 							let (label, icon) = if self.updates.ready {
@@ -4299,15 +4297,11 @@ impl MessagingUi {
 		ui.add_space(6.0);
 	}
 	fn shows_title_bar(&self) -> bool {
-		if cfg!(target_os = "linux") {
-			self.uses_custom_title_bar()
-		} else {
-			!self.hide_title_bar
-		}
+		!self.hide_title_bar
 	}
 	/// Linux only: DTEW Cord draws its own GTK 4 style header bar instead of the system one.
 	pub fn uses_custom_title_bar(&self) -> bool {
-		cfg!(target_os = "linux") && self.custom_title_bar
+		false && self.custom_title_bar
 	}
 	fn apply_pending_mention(
 		&mut self,

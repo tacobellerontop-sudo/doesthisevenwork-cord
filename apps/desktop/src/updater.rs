@@ -13,8 +13,6 @@ use std::{
 };
 use tokio::runtime::Runtime;
 
-#[path = "updater_delta.rs"]
-mod delta;
 #[path = "updater_install.rs"]
 mod install;
 
@@ -51,7 +49,6 @@ struct Package {
 	// but there is nothing here to download.
 	archive: Option<Asset>,
 	checksums: Option<Asset>,
-	zsync: Option<Asset>,
 }
 struct Staged {
 	directory: PathBuf,
@@ -150,11 +147,9 @@ impl Updater {
 			view.supported = true;
 			return false;
 		}
-		let supported = (cfg!(any(target_os = "macos", windows)) && !install::nix_session())
-			|| install::appimage_session();
+		// Releases carry an x64 package only; other builds are told about new versions.
+		let supported = cfg!(target_arch = "x86_64");
 		view.supported = supported;
-		view.flatpak = install::flatpak_session();
-		view.linux_update_cmd = install::linux_package_manager_update_command().map(str::to_owned);
 		if !enabled {
 			if let Some(job) = &self.job {
 				job.cancel.store(true, Ordering::Relaxed);
@@ -206,28 +201,7 @@ impl Updater {
 								self.log = Some(log);
 								self.status = package.as_ref().map_or_else(
 									|| "DTEW Cord is up to date on this channel.".into(),
-									|p| {
-										if install::flatpak_session() {
-											format!(
-												"DTEW Cord {} is available. Update with `flatpak update` or your Software center.",
-												p.version,
-											)
-										} else if install::nix_session() {
-											format!(
-												"DTEW Cord {} is available. Update it through Nix.",
-												p.version,
-											)
-										} else if let Some(cmd) =
-											install::linux_package_manager_update_command()
-										{
-											format!(
-												"DTEW Cord {} is available. Run `{cmd}` to update.",
-												p.version,
-											)
-										} else {
-											format!("DTEW Cord {} is available.", p.version)
-										}
-									},
+									|p| format!("DTEW Cord {} is available.", p.version),
 								);
 								self.package = package;
 								self.auto_download = true;
@@ -534,10 +508,10 @@ fn release_version(tag: &str) -> Option<semver::Version> {
 	}
 	semver::Version::parse(tag.strip_prefix('v')?).ok()
 }
-/// Releases publish a Windows package only. Other platforms still see that a newer version
-/// exists, but there is nothing for the app to download and install.
+/// Releases publish an x64 package only. Other builds still see that a newer version exists,
+/// but there is nothing for the app to download and install.
 fn asset_name(tag: &str) -> Option<String> {
-	cfg!(all(windows, target_arch = "x86_64")).then(|| format!("dtewcord-{tag}-Windows-X64.zip"))
+	cfg!(target_arch = "x86_64").then(|| format!("dtewcord-{tag}-Windows-X64.zip"))
 }
 fn on_channel(release: &Release, version: &semver::Version, nightly: bool) -> bool {
 	let is_nightly = version.pre.as_str().starts_with("nightly.");
@@ -660,7 +634,6 @@ fn select_release(
 			version: version.to_string(),
 			archive: None,
 			checksums: None,
-			zsync: None,
 		}));
 	};
 	let find = |name: &str| -> Result<Asset, String> {
@@ -686,11 +659,6 @@ fn select_release(
 	};
 	let archive = find(&wanted)?;
 	let checksums = find("SHA256SUMS.txt")?;
-	let zsync = wanted
-		.ends_with(".AppImage")
-		.then(|| find(&format!("{wanted}.zsync")).ok())
-		.flatten()
-		.filter(|asset| asset.size <= delta::MAX_CONTROL as u64);
 	if checksums.size > 64 * 1024 {
 		return Err("The checksum list exceeds its size limit.".into());
 	}
@@ -698,7 +666,6 @@ fn select_release(
 		version: version.to_string(),
 		archive: Some(archive),
 		checksums: Some(checksums),
-		zsync,
 	}))
 }
 async fn check_release(
@@ -809,37 +776,9 @@ async fn download_package(
 		.map_err(|_| "Could not prepare update storage.".to_owned())??;
 	let directory = stage.directory.clone();
 	let result = async {
-		let reused = if let Some(control) = package.zsync.filter(|_| install::appimage_session()) {
-			delta::download(
-				&client,
-				&archive,
-				&control,
-				&checksum_body,
-				&stage,
-				&cancel,
-				&progress,
-			)
-			.await
-			.is_ok()
-		} else {
-			false
-		};
-		if cancel.load(Ordering::Relaxed) {
-			return Err("Update cancelled.".into());
-		}
-		if !reused {
-			let partial = directory.join("package.zip");
-			match tokio::fs::remove_file(&partial).await {
-				Ok(()) => {}
-				Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-				Err(_) => return Err("Could not discard the partial update.".into()),
-			}
-			progress.store(0, Ordering::Relaxed);
-			download_full(&client, &archive, &directory, &expected, &cancel, &progress).await?;
-		}
+		download_full(&client, &archive, &directory, &expected, &cancel, &progress).await?;
 		let path = directory.clone();
-		let installation = stage.installation.clone();
-		tokio::task::spawn_blocking(move || install::unpack(&path, &installation, &cancel))
+		tokio::task::spawn_blocking(move || install::unpack(&path, &cancel))
 			.await
 			.map_err(|_| "Could not unpack the update.".to_owned())??;
 		Ok(())
@@ -914,7 +853,6 @@ async fn download_full(
 /// Offline checks used by the explicit demo debug path, never by release startup.
 #[cfg(feature = "demo")]
 pub fn debug_check() -> Result<(), String> {
-	delta::debug_check()?;
 	let stable = release_version("v1.2.3").ok_or("stable version")?;
 	let nightly = release_version("v1.2.3-nightly.9.1").ok_or("nightly version")?;
 	if nightly >= stable || release_version("v1.2.3/../../bad").is_some() {

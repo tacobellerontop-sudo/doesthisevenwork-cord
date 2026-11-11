@@ -15,12 +15,11 @@ pub(crate) enum Scope {
 	Transport,
 	StreamSend,
 	StreamReceive,
-	#[cfg_attr(not(any(target_os = "windows", target_os = "linux")), allow(dead_code))]
 	ScreenAudio,
 	/// Linux screen capture: `receive` counts pictures taken from the pipeline, `encode`
 	/// times the software encoder, `drops` counts pictures left in the pipeline while the
 	/// transport was behind, and `stalls` counts passes where the pipeline had none.
-	#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+	#[allow(dead_code)]
 	ScreenVideo,
 }
 
@@ -34,11 +33,8 @@ pub(crate) enum Stage {
 	Receive,
 	VideoSend,
 	VideoReceive,
-	#[cfg_attr(not(any(target_os = "windows", target_os = "linux")), allow(dead_code))]
 	CaptureRead,
-	#[cfg_attr(not(any(target_os = "windows", target_os = "linux")), allow(dead_code))]
 	CaptureQueue,
-	#[cfg_attr(not(any(target_os = "windows", target_os = "linux")), allow(dead_code))]
 	CaptureRestart,
 }
 
@@ -333,7 +329,7 @@ fn codec_label([hardware, software]: [u64; 2]) -> &'static str {
 
 /// Linux application-audio capture counters, reported under `Scope::ScreenAudio`.
 #[derive(Clone, Copy)]
-#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+#[allow(dead_code)]
 pub(crate) enum Capture {
 	/// Applications the enumeration allowed (after excluding this client).
 	Inputs,
@@ -516,7 +512,7 @@ impl Metrics {
 	}
 
 	/// Adds to one application-audio capture counter; ignored while diagnostics are off.
-	#[cfg_attr(not(target_os = "linux"), allow(dead_code))]
+	#[allow(dead_code)]
 	pub fn capture(&mut self, event: Capture, count: u64) {
 		if self.send.is_none() {
 			return;
@@ -565,7 +561,6 @@ impl Metrics {
 	}
 
 	/// Queue the current aggregates before a potentially blocking native operation.
-	#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 	pub fn checkpoint(&mut self) {
 		self.flush();
 	}

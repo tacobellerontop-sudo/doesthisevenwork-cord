@@ -152,7 +152,7 @@ fn transient_receive(error: &std::io::Error) -> bool {
 		std::io::ErrorKind::ConnectionReset
 			| std::io::ErrorKind::ConnectionRefused
 			| std::io::ErrorKind::Interrupted
-	) || (cfg!(windows) && error.raw_os_error() == Some(WSAEMSGSIZE))
+	) || error.raw_os_error() == Some(WSAEMSGSIZE)
 }
 // Native voice UDP ping: signaling heartbeats alone do not maintain an idle
 // media path (notably a receive-only stream or a muted call).

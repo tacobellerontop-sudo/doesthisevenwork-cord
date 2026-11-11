@@ -878,7 +878,6 @@ fn media_urls(rendition: &Rendition) -> Option<MediaUrls> {
 			direct_gif(source, size),
 		),
 	};
-	#[cfg(target_os = "windows")]
 	if rendition.lane == Lane::Viewer
 		&& let Some(original) = fallback.clone()
 	{
@@ -1865,9 +1864,6 @@ fn first_video_frame(bytes: &[u8], fit: u32) -> Option<egui::ColorImage> {
 
 fn open_preview_decoder(bytes: Arc<[u8]>, started: Instant) -> Option<platform::video::Decoder> {
 	let source = Box::new(Cursor::new(bytes));
-	#[cfg(target_os = "linux")]
-	let decoder = platform::video::Decoder::open_until(source, started + Duration::from_secs(3));
-	#[cfg(not(target_os = "linux"))]
 	let decoder = platform::video::Decoder::open(source);
 	decoder
 		.ok()
@@ -2168,11 +2164,6 @@ impl Disk {
 	}
 	fn open_with(root: PathBuf, limit: model::DiskLimit, retention: Duration) -> io::Result<Self> {
 		fs::create_dir_all(&root)?;
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::PermissionsExt;
-			fs::set_permissions(&root, fs::Permissions::from_mode(0o700))?;
-		}
 		let mut disk = Self {
 			root,
 			bytes: 0,
@@ -2236,15 +2227,9 @@ impl Disk {
 		let result = (|| {
 			let mut options = OpenOptions::new();
 			options.write(true).create_new(true);
-			#[cfg(unix)]
-			{
-				use std::os::unix::fs::OpenOptionsExt;
-				options.mode(0o600);
-			}
 			let mut file = options.open(&temp)?;
 			file.write_all(bytes)?;
 			drop(file);
-			#[cfg(windows)]
 			if path.exists() {
 				fs::remove_file(&path)?;
 			}
@@ -3339,16 +3324,11 @@ mod tests {
 		let media_key = "media:vs:2048x512:https://cdn.discordapp.com/attachments/1/2/image.png?ex=abc&is=def&hm=synthetic";
 		let urls = media_urls(&Rendition::parse(media_key).unwrap()).unwrap();
 		// Windows viewers prefer the original so system codecs can decode HEIC.
-		let transformed = if cfg!(windows) {
-			assert!(
-				urls.primary
-					.starts_with("https://cdn.discordapp.com/attachments/1/2/image.png?")
-			);
-			urls.fallback.unwrap()
-		} else {
-			assert_eq!(cdn_url(media_key).as_deref(), Some(urls.primary.as_str()));
+		assert!(
 			urls.primary
-		};
+				.starts_with("https://cdn.discordapp.com/attachments/1/2/image.png?")
+		);
+		let transformed = urls.fallback.unwrap();
 		assert!(transformed.starts_with("https://media.discordapp.net/attachments/1/2/image.png?"));
 		assert!(transformed.ends_with("format=webp&quality=lossless&width=2048&height=512"));
 		assert_ne!(disk_key(media_key).unwrap(), disk_key(embed_key).unwrap());
@@ -3638,7 +3618,6 @@ pub(crate) fn debug_heic_check() {
 	.unwrap();
 	let urls = media_urls(&rendition).unwrap();
 	assert_eq!(budget(&rendition.key()).canvas, 8192);
-	#[cfg(target_os = "windows")]
 	{
 		let viewer = Rendition {
 			lane: Lane::Viewer,

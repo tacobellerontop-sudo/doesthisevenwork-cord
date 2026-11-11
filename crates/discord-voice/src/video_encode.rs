@@ -4,16 +4,9 @@
 //! pipelines instead. Every backend is optional: callers keep an openh264 encoder for the
 //! machines and formats the hardware refuses, and fall back mid-stream when one fails.
 
-#[cfg(target_os = "macos")]
-#[path = "video_encode_macos.rs"]
-pub(crate) mod macos;
-#[cfg(target_os = "windows")]
 #[path = "video_encode_windows.rs"]
 pub(crate) mod windows;
 
-#[cfg(target_os = "macos")]
-pub(crate) use macos as hardware;
-#[cfg(target_os = "windows")]
 pub(crate) use windows as hardware;
 
 /// One hardware encoder's output format. Bounds come from the caller because a screen frame
@@ -35,26 +28,5 @@ pub(crate) struct Config {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Profile {
 	Baseline,
-	#[cfg_attr(target_os = "linux", allow(dead_code))]
 	Main,
-}
-
-/// Packed layout of the pictures handed to a hardware encoder.
-#[cfg(target_os = "macos")]
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum SourceFormat {
-	/// Screen capture delivers 32-bit BGRA.
-	Bgra,
-	/// The camera delivers 24-bit RGB.
-	Rgb,
-}
-
-#[cfg(target_os = "macos")]
-impl SourceFormat {
-	pub(crate) fn bytes_per_pixel(self) -> usize {
-		match self {
-			Self::Bgra => 4,
-			Self::Rgb => 3,
-		}
-	}
 }

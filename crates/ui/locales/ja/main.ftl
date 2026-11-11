@@ -51,16 +51,9 @@ general-start-minimized = 最小化して開始
 general-start-minimized-description = 邪魔にならないバックグラウンドで開始します。
 general-startup-unavailable = 自動起動は Windows と macOS で利用できます。
 general-window = ウィンドウ
-general-hide-decorations = タイトルバーなし
-general-hide-decorations-description = タイル型ウィンドウ マネージャー向け: DTEW Cord 独自のものを含め、すべてのタイトルバーと境界線を削除します。DTEW Cord の移動、サイズ変更、終了はウィンドウ マネージャーで行います。
-general-custom-title-bar = カスタムタイトルバー
-general-custom-title-bar-description = システムのタイトルバーを DTEW Cord 独自の GTK 4 風ヘッダーバーに置き換えます。
 general-hide-title-bar = セレインのタイトルバーを非表示にする
 general-hide-title-bar-description = 代わりに、システムのタイトル バーとウィンドウ ボタンを使用してください。
-general-keep-menu-bar = セレインをメニューバーに置いておく
 general-keep-system-tray = DTEW Cord をシステム トレイに入れておきます
-general-menu-bar-description = ウィンドウを閉じると、DTEW Cord がメニュー バーに表示されたままになります。終了するにはメニューから終了してください。
-general-linux-tray-description = クロージングによりセレインは継続します。トレイを使用して、表示、最小化、または終了します。
 general-windows-tray-description = ウィンドウを閉じると、DTEW Cord が通知領域に表示されたままになります。終了するにはメニューから終了してください。
 general-tray-unavailable = このプラットフォームではトレイを使用できません。
 general-graphics = グラフィックス
@@ -2270,10 +2263,6 @@ screen-body-refresh = リフレッシュ
 # Context: body
 screen-body-screen-or-window = スクリーンまたはウィンドウ
 # Context: body
-screen-body-send-what-your-mac-plays-along-with-the-screen-dtewcord = Mac で再生しているものを画面とともに送信します。セレイン自身の通話音声は省略されています。
-# Context: body
-screen-body-share-sound-from-other-apps-even-when-sharing-one-window = 1 つのウィンドウを共有している場合でも、他のアプリのサウンドを共有します。 DTEW Cord 自身の音声は省略されています。
-# Context: body
 screen-body-share-system-audio = システムオーディオを共有する
 # Context: body
 screen-body-share-the-shared-apps-sound-or-other-apps-for-a-screen = 共有中のアプリの音声を共有します。画面を共有する場合は他のすべてのアプリの音声を共有します。DTEW Cord 自身の音声は含まれません。
@@ -3964,11 +3953,7 @@ updates-update-settings-auto-update = 自動更新
 # Context: update_settings
 updates-update-settings-check-for-updates = アップデートを確認する
 # Context: update_settings
-updates-update-settings-copied = コピーされました
-# Context: update_settings
 updates-update-settings-copy = コピー
-# Context: update_settings
-updates-update-settings-copy-command = コピーコマンド
 # Context: update_settings
 updates-update-settings-copy-system-and-client-environment-details-formatted-for-github-issue = GitHub の問題レポート用にフォーマットされたシステムおよびクライアント環境の詳細をコピーします。
 # Context: update_settings
@@ -3982,15 +3967,11 @@ updates-update-settings-early-builds-with-the-newest-changes-nightly-releases-ca
 # Context: update_settings
 updates-update-settings-finish-the-current-update-before-checking-again = 再度確認する前に、現在の更新を終了してください。
 # Context: update_settings
-updates-update-settings-flatpak-manages-updates-via-its-repository-run-flatpak-update-or = Flatpak はリポジトリ経由でアップデートを管理します。 「 flatpak update 」を実行するか、GNOME ソフトウェア/KDE Discover を使用して新しいリリースをインストールします。
-# Context: update_settings
-updates-update-settings-in-app-installation-requires-a-macos-or-windows-release-package = アプリ内インストールには、macOS または Windows リリース パッケージ、または Linux x86-64 AppImage が必要です。他の Linux インストールでは、パッケージ マネージャーを使用します。
+updates-update-settings-in-app-installation-requires-an-x64-release-package = アプリ内インストールには、Windows x64 リリース パッケージが必要です。
 # Context: update_settings
 updates-update-settings-issue-diagnostics = 問題の診断
 # Context: update_settings
 updates-update-settings-nightly = 毎晩
-# Context: update_settings
-updates-update-settings-package-manager-updates = パッケージマネージャーのアップデート
 # Context: update_settings
 updates-update-settings-preferences = 設定
 # Context: update_settings
@@ -4001,8 +3982,6 @@ updates-update-settings-published-stable-releases-switching-channels-never-insta
 updates-update-settings-release-channel = リリースチャンネル
 # Context: update_settings
 updates-update-settings-restart-to-update = 更新するには再起動してください
-# Context: update_settings
-updates-update-settings-dtewcord-was-installed-via-your-distribution-run-this-in-a = DTEW Cord はディストリビューション経由でインストールされました。ターミナルでこれを実行して更新します。
 # Context: update_settings
 updates-update-settings-save-diagnostics = 診断を保存
 # Context: update_settings
@@ -4133,8 +4112,6 @@ voice-call-controls-dismiss-call = 通話を終了する
 voice-call-controls-leaving-is-unavailable-in-the-offline-preview = オフライン プレビューでは退席することはできません。
 # Context: call_failure
 voice-call-failure-copy-failure-reason = コピー失敗の理由
-# Context: camera_settings_content
-voice-camera-settings-content-camera-capture-is-unavailable-on-this-platform = このプラットフォームではカメラ キャプチャは利用できません。
 # Context: camera_settings_content
 voice-camera-settings-content-camera-device = カメラデバイス
 # Context: camera_settings_content
@@ -4599,68 +4576,6 @@ profiles-activity-empty = 共有されているアクティビティはありま
 profiles-mutuals-empty = Nothing to show here.
 
 reading-double-click-reaction = Double-click reaction
-
-## crates/platform/src/app_menu.rs
-# Context: macos_menu_bar
-app-menu-about = DTEW Cordについて
-# Context: macos_menu_bar
-app-menu-updates = アップデートを確認…
-# Context: macos_menu_bar
-app-menu-settings = 設定…
-# Context: macos_menu_bar
-app-menu-services = サービス
-# Context: macos_menu_bar
-app-menu-hide = DTEW Cordを非表示
-# Context: macos_menu_bar
-app-menu-hide-others = ほかを非表示
-# Context: macos_menu_bar
-app-menu-show-all = すべてを表示
-# Context: macos_menu_bar
-app-menu-quit = DTEW Cordを終了
-# Context: macos_menu_bar
-app-menu-file = ファイル
-# Context: macos_menu_bar
-app-menu-close-window = ウインドウを閉じる
-# Context: macos_menu_bar
-app-menu-edit = 編集
-# Context: macos_menu_bar
-app-menu-undo = 取り消す
-# Context: macos_menu_bar
-app-menu-redo = やり直す
-# Context: macos_menu_bar
-app-menu-cut = カット
-# Context: macos_menu_bar
-app-menu-copy = コピー
-# Context: macos_menu_bar
-app-menu-paste = ペースト
-# Context: macos_menu_bar
-app-menu-select-all = すべてを選択
-# Context: macos_menu_bar
-app-menu-emoji = 絵文字と記号
-# Context: macos_menu_bar
-app-menu-view = 表示
-# Context: macos_menu_bar
-app-menu-actual-size = 実際のサイズ
-# Context: macos_menu_bar
-app-menu-zoom-in = 拡大
-# Context: macos_menu_bar
-app-menu-zoom-out = 縮小
-# Context: macos_menu_bar
-app-menu-full-screen = フルスクリーンにする
-# Context: macos_menu_bar
-app-menu-window = ウインドウ
-# Context: macos_menu_bar
-app-menu-minimize = しまう
-# Context: macos_menu_bar
-app-menu-zoom = 拡大/縮小
-# Context: macos_menu_bar
-app-menu-bring-all-to-front = すべてを手前に移動
-# Context: macos_menu_bar
-app-menu-help = ヘルプ
-# Context: macos_menu_bar
-app-menu-github = GitHubのDTEW Cord
-# Context: macos_menu_bar
-app-menu-report-issue = 問題を報告…
 
 ## crates/model/src/system_messages.rs
 # Context: system_message

@@ -35,18 +35,9 @@ pub fn decode(
 	if !is_heic(bytes) || bytes.len() > 32 * 1024 * 1024 {
 		return None;
 	}
-	#[cfg(target_os = "windows")]
-	{
-		windows_decode(bytes, max_edge, max_alloc, output_edge)
-	}
-	#[cfg(not(target_os = "windows"))]
-	{
-		let _ = (max_edge, max_alloc, output_edge);
-		None
-	}
+	windows_decode(bytes, max_edge, max_alloc, output_edge)
 }
 
-#[cfg(target_os = "windows")]
 #[allow(unsafe_code)]
 fn windows_decode(
 	bytes: &[u8],

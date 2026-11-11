@@ -393,7 +393,7 @@ impl MessagingUi {
 		});
 		self.settings.notifications.heading(ui, Tab::Badges);
 		design::card(ui, |ui| {
-			let supported = cfg!(any(target_os = "windows", target_os = "macos"));
+			let supported = true;
 			ui.add_enabled_ui(supported, |ui| {
 				design::switch(
 					ui,

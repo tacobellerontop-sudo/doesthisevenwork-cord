@@ -6,28 +6,6 @@ license is retained in `assets/licenses/files/rasterlottie-0.2.2-LICENSE-MIT`.
 The pure-Rust renderer reuses the existing serde stack and adds tiny-skia 0.12.0;
 exact archive checksums are recorded in `Cargo.lock`.
 
-AppImage delta updates use **md4 0.10.2** (MIT OR Apache-2.0) for legacy zsync
-block matching only; SHA-256 remains the final update integrity check. The
-unmodified upstream MIT license is bundled at
-`assets/licenses/files/md4-0.10.2-LICENSE-MIT`; `Cargo.lock` records the registry
-archive checksum. Source: https://crates.io/crates/md4/0.10.2 (RustCrypto/hashes).
-
-Linux tray integration uses **ksni 0.3.6** (Unlicense), reusing zbus, Tokio and image.
-The unmodified license is retained in `assets/licenses/files/ksni-0.3.6-UNLICENSE`;
-`Cargo.lock` records the archive checksum.
-
-Linux call audio enables CPAL’s PulseAudio backend with **pulseaudio 0.3.1**
-(MIT), **enum-primitive-derive 0.3.0** (MIT), and **futures 0.3.34**
-(MIT OR Apache-2.0). Their unmodified license texts and provenance are bundled
-under `assets/licenses/voice`. The backend connects to PulseAudio or PipeWire-Pulse;
-it does not bundle an audio server.
-
-Linux stream audio uses **libpulse-sys 1.23.0** (MIT OR Apache-2.0) to capture individual
-application playback streams. Its unmodified MIT text and provenance are under
-`assets/licenses/voice` and ship with packages.
-The external system `libpulse` library retains its own license; it is dynamically linked,
-not bundled here. macOS uses the bindings only for offline Linux development checks.
-
 Packaging copies the repository's bundled notices, license texts and corresponding component
 source without scanning dependencies or checking license coverage. Declared-license checks run
 separately in the dedicated license CI job (`cargo xtask licenses`); its failure does not block
@@ -106,12 +84,10 @@ The locally patched **smithay-clipboard 0.7.3** (MIT, crates.io release) retains
 under `vendor/smithay-clipboard`. It adds a bounded raw-MIME clipboard read for Wayland image
 paste; see `vendor/smithay-clipboard/SEREIN-PATCH.md` for provenance.
 
-Linux login uses gtk4 0.11.4, webkit6 0.6.1, javascriptcore6 0.6.0, glib 0.22.9 and soup3
-0.9.0 Rust bindings (MIT). Windows/macOS retain Wry 0.57.0 (MIT OR Apache-2.0) via a documented
-manifest/build patch excluding obsolete Linux dependencies; backend sources are unchanged.
-Provenance is in vendor/wry/SEREIN-PATCH.md. Component notices and hashes in assets/licenses/login
-are staged in licenses/login in both variants. Binding licenses do not relicense system
-GTK/WebKitGTK libraries, which remain external prerequisites under their own terms.
+Login uses Wry 0.57.0 (MIT OR Apache-2.0) on WebView2 via a documented manifest/build patch
+excluding obsolete Linux dependencies; backend sources are unchanged. Provenance is in
+vendor/wry/SEREIN-PATCH.md. Component notices and hashes in assets/licenses/login are staged
+in licenses/login.
 
 The independent extension ports under `extensions/plugins/offline-composer-tools`,
 `text-commands`, `view-raw-message`, and `external-search-tools` adapt workflows from
@@ -179,7 +155,7 @@ are in `assets/twemoji/NAMES.md`; `assets/twemoji/LICENSE-UNICODE` is shipped in
 as `licenses/Unicode-LICENSE.txt`. Custom server emoji are service content fetched on demand,
 not redistributed in this repository; demo custom images are original synthetic shapes.
 
-Native system notifications use **notify-rust 4.18.0** (MIT OR Apache-2.0), with the opt-in modern macOS UserNotifications backend **mac-usernotifications 0.3.1** (MIT OR Apache-2.0). Its manifest also links **mac-notification-sys 0.6.15** (MIT/Apache-2.0), although the legacy notification backend is not selected. Additional host dependencies include **futures-timer 3.0.4** (MIT/Apache-2.0) and **objc2-core-location / objc2-user-notifications 0.3.2** (Zlib OR Apache-2.0 OR MIT). The notification adapters’ unmodified MIT texts, objc2’s upstream licensing notice and pinned source provenance are in [assets/licenses/notifications](assets/licenses/notifications). Linux uses the existing zbus dependency family; Windows uses **tauri-winrt-notification 0.7.3** and **windows 0.61.3** (MIT OR Apache-2.0). OS notification services/frameworks retain their platform terms. Notifications carry only generic DTEW Cord text; server content is not bundled in these assets.
+Native system notifications use **notify-rust 4.18.0** (MIT OR Apache-2.0) with **tauri-winrt-notification 0.7.3** and **windows 0.61.3** (MIT OR Apache-2.0). The notification adapters’ unmodified MIT texts and pinned source provenance are in [assets/licenses/notifications](assets/licenses/notifications). OS notification services/frameworks retain their platform terms. Notifications carry only generic DTEW Cord text; server content is not bundled in these assets.
 
 Optional voice echo cancellation uses **Sonora 0.2.0**, a Rust port of WebRTC
 AEC3, and its sonora-aec3/agc2/common-audio/fft/ns/simd 0.2.0 components
@@ -188,12 +164,6 @@ dignifiedquire). The unmodified workspace license is
 `assets/licenses/voice/sonora-LICENSE.txt`, staged by existing voice packaging.
 Krisp is not bundled. No extra native SDK or model download is required.
 Custom microphone profiles can enable Sonora noise suppression and digital AGC2.
-
-The macOS voice permission adapter additionally uses **objc2-av-foundation
-0.3.2** (Zlib OR Apache-2.0 OR MIT) and existing objc2 0.6.4 / block2 0.6.2.
-The objc2 upstream licensing notice already retained under
-`assets/licenses/notifications` covers these generated framework bindings.
-AVFoundation is supplied by macOS and is not redistributed.
 
 Optional microphone noise suppression uses **nnnoiseless 0.5.2**, a Rust port of
 Xiph RNNoise, with the built-in model (BSD-3-Clause). Its original COPYING is
@@ -204,9 +174,9 @@ strength_reduce 0.2.4 and transpose 0.2.3. Their license declarations and retain
 texts/notices are recorded in docs/dependency-versions.md and
 assets/licenses/voice/PROVENANCE.md and staged by the existing voice packager.
 
-Optional screen sharing adds **screencapturekit 10.0.3** (MIT OR Apache-2.0) on macOS, **windows-capture 2.0.1** (MIT) on Windows and **openh264 / openh264-sys2 0.9.8** (BSD-2-Clause) for source-built Cisco OpenH264 encoding. It reuses **image 0.25.10** (MIT OR Apache-2.0) for bounded scaling. Native frameworks are supplied by the OS. These dependencies stay behind the existing voice feature. Unmodified available license texts and source provenance are retained in `assets/licenses/voice/PROVENANCE.md`; the noted missing binding license text and existing full per-artifact redistribution review remain outstanding.
+Optional screen sharing adds **windows-capture 2.0.1** (MIT) and **openh264 / openh264-sys2 0.9.8** (BSD-2-Clause) for source-built Cisco OpenH264 encoding. It reuses **image 0.25.10** (MIT OR Apache-2.0) for bounded scaling. Native frameworks are supplied by the OS. These dependencies stay behind the existing voice feature. Unmodified available license texts and source provenance are retained in `assets/licenses/voice/PROVENANCE.md`; the noted missing binding license text and existing full per-artifact redistribution review remain outstanding.
 
-Camera sending in the macOS build uses **openh264 0.9.8** and
+Camera sending uses **openh264 0.9.8** and
 **openh264-sys2 0.9.8** (BSD-2-Clause, Ralf Biedert), built locally with the
 `source` feature. The sys crate bundles **Cisco OpenH264 2.6.0**, as identified
 by `upstream/codec/api/wels/codec_ver.h`; its BSD-2-Clause notice is reproduced
@@ -219,11 +189,7 @@ and makes no claim to their separately described patent-license coverage.
 
 New support dependencies are **wide 1.7.0** and **safe_arch 1.2.0**
 (Zlib OR Apache-2.0 OR MIT), and build-time **nasm-rs 0.3.2**
-(MIT OR Apache-2.0). Native capture additionally selects **objc2-core-media
-0.3.2** and **objc2-core-video 0.3.2** (Zlib OR Apache-2.0 OR MIT), alongside
-existing objc2/objc2-foundation/objc2-av-foundation, block2 and dispatch2
-bindings. CoreMedia, CoreVideo and AVFoundation remain macOS system frameworks.
-Camera and codec dependencies ship on supported platforms in the standard build. Their
+(MIT OR Apache-2.0). Camera and codec dependencies ship in the standard build. Their
 exact per-artifact license collection remains subject to the existing packaging
 gate described above; no camera package was produced by this local change.
 
@@ -267,26 +233,6 @@ Test-only WAT/WAST/wasm-encoder/wasmparser 0.245.1 use the wasm-tools MIT
 license at `76927bf4bdbddf4b15f835c5eddfffbdfe3bdbd5` (`wat-1.245.1-LICENSE-MIT`);
 leb128fmt license texts are also bundled. These test tools are not a plugin
 compiler shipped to end users. Creator packages carry their own license metadata.
-
-Linux Wayland decorations enable winit's **sctk-adwaita 0.10.1** backend (MIT),
-with ab_glyph 0.2.32 / ab_glyph_rasterizer 0.1.10 / owned_ttf_parser 0.25.1
-(Apache-2.0), ttf-parser 0.25.1 (MIT OR Apache-2.0), arrayref 0.3.9
-(BSD-2-Clause), strict-num 0.1.1 (MIT), and tiny-skia / tiny-skia-path 0.11.4
-(BSD-3-Clause). Its embedded Cantarell fallback font is SIL OFL 1.1.
-Their notices and license texts are retained in
-[the Adwaita dependency notices](assets/licenses/dependencies/wayland-adwaita-LICENSES.txt)
-and copied by the existing dependency-notice packaging step.
-
-Linux screen sharing reuses the already locked **gstreamer 0.25.3**,
-**gstreamer-app 0.25.2**, **gstreamer-video 0.25.3** Rust bindings
-(MIT OR Apache-2.0) and **zbus 5.19.0** (MIT, Tokio backend).
-GStreamer/PipeWire, VA-API/NVENC/OpenGL plugins and GPU drivers are native runtime
-components supplied by the distribution/Flatpak runtime, not new bundled codec source.
-Their upstream licenses and distribution packaging terms still apply. Software encoding
-uses the existing bundled OpenH264 notices above.
-
-Wayland global voice keybinds use **ashpd 0.13.13** (MIT) to access the desktop
-GlobalShortcuts portal. Its license is bundled under `assets/licenses/dependencies`.
 
 Scalable bundled Twemoji artwork uses **resvg 0.48.1** and **usvg 0.48.1**
 (MIT OR Apache-2.0), with default features disabled: no text shaping, font discovery,

@@ -312,11 +312,6 @@ impl CopyFile {
 		let root = std::env::temp_dir().join(format!("dtewcord-clipboard-{suffix}"));
 		#[allow(unused_mut)] // Unix permissions require the mutable builder.
 		let mut directory = fs::DirBuilder::new();
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::DirBuilderExt;
-			directory.mode(0o700);
-		}
 		directory
 			.create(&root)
 			.map_err(|_| "Cannot create clipboard temporary directory")?;
@@ -459,11 +454,6 @@ impl<'a> Partial<'a> {
 		let path = parent.join(format!(".dtewcord-{random}.partial"));
 		let mut options = OpenOptions::new();
 		options.write(true).create_new(true);
-		#[cfg(unix)]
-		{
-			use std::os::unix::fs::OpenOptionsExt;
-			options.mode(0o600);
-		}
 		let file = options
 			.open(&path)
 			.map_err(|_| "Cannot create download file")?;

@@ -38,8 +38,8 @@ fn key(key: egui::Key, modifiers: egui::Modifiers) -> egui::Event {
 fn primary() -> egui::Modifiers {
 	egui::Modifiers {
 		command: true,
-		ctrl: !cfg!(target_os = "macos"),
-		mac_cmd: cfg!(target_os = "macos"),
+		ctrl: !false,
+		mac_cmd: false,
 		..Default::default()
 	}
 }

@@ -23,7 +23,7 @@ fn accept(path: &str, into: &mut Vec<String>) {
 	into.push(path.to_owned());
 }
 
-#[cfg(any(target_os = "linux", test))]
+#[cfg(test)]
 fn accept_cmdline(reader: impl std::io::Read, into: &mut Vec<String>) -> std::io::Result<()> {
 	use std::io::Read;
 
@@ -41,7 +41,6 @@ fn accept_cmdline(reader: impl std::io::Read, into: &mut Vec<String>) -> std::io
 
 /// `"image.exe","1234","Console","1","12,345 K"`: the image name, unless it runs in the
 /// non-interactive services session. The session name is localized; its number is not.
-#[cfg(any(target_os = "windows", test))]
 fn interactive_image(line: &str) -> Option<&str> {
 	let mut fields = line.strip_prefix('"')?.split("\",\"");
 	let name = fields.next()?;
@@ -49,64 +48,6 @@ fn interactive_image(line: &str) -> Option<&str> {
 	(session.trim() != "0").then_some(name)
 }
 
-#[cfg(target_os = "linux")]
-mod native {
-	use super::{MAX_PROCESSES, accept, accept_cmdline};
-	use std::fs;
-
-	/// `/proc/<pid>/exe` is the real image; `cmdline`'s first word covers interpreted
-	/// launches (and Wine/Proton, where the Windows executable only appears there).
-	pub fn running() -> std::io::Result<Vec<String>> {
-		let mut paths = Vec::new();
-		for entry in fs::read_dir("/proc")? {
-			if paths.len() >= MAX_PROCESSES {
-				break;
-			}
-			let Ok(entry) = entry else { continue };
-			let name = entry.file_name();
-			let Some(name) = name.to_str() else { continue };
-			if name.parse::<u32>().is_err() {
-				continue;
-			}
-			let directory = entry.path();
-			if let Ok(target) = fs::read_link(directory.join("exe"))
-				&& let Some(target) = target.to_str()
-			{
-				accept(target, &mut paths);
-			}
-			// Bounded read: a command line may be megabytes, but only argv[0] is used.
-			if let Ok(cmdline) = fs::File::open(directory.join("cmdline")) {
-				let _ = accept_cmdline(cmdline, &mut paths);
-			}
-		}
-		Ok(paths)
-	}
-}
-
-#[cfg(target_os = "macos")]
-mod native {
-	use super::{MAX_PROCESSES, accept};
-	use std::process::Command;
-
-	/// `ps` reports the executable path of every process this user may see, without
-	/// arguments and without the private-API entitlements a direct sysctl walk needs.
-	pub fn running() -> std::io::Result<Vec<String>> {
-		let output = Command::new("/bin/ps").args(["-Axo", "comm="]).output()?;
-		if !output.status.success() {
-			return Err(std::io::Error::other("process list is unavailable"));
-		}
-		let mut paths = Vec::new();
-		for line in String::from_utf8_lossy(&output.stdout).lines() {
-			if paths.len() >= MAX_PROCESSES {
-				break;
-			}
-			accept(line, &mut paths);
-		}
-		Ok(paths)
-	}
-}
-
-#[cfg(target_os = "windows")]
 mod native {
 	use super::{MAX_PROCESSES, accept, interactive_image};
 	use std::os::windows::process::CommandExt;

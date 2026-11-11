@@ -1219,24 +1219,16 @@ pub fn apply(ctx: &egui::Context) {
 /// Height of the messaging window's custom title strip, in egui points.
 pub const TITLE_BAR_HEIGHT: f32 = 36.0;
 /// Space reserved at the left of window strips for macOS traffic lights.
-pub const TRAFFIC_LIGHT_INSET: f32 = if cfg!(target_os = "macos") { 72.0 } else { 0.0 };
+pub const TRAFFIC_LIGHT_INSET: f32 = 0.0;
 
 /// Width of the Windows caption buttons drawn by [`window_controls`]; zero elsewhere.
-pub const WINDOW_CONTROLS_WIDTH: f32 = if cfg!(target_os = "windows") {
-	3.0 * 46.0
-} else {
-	0.0
-};
+pub const WINDOW_CONTROLS_WIDTH: f32 = 3.0 * 46.0;
 
 /// Tallest Windows caption strip that draws [`window_controls`]: the login
 /// header (56 pt) above the sign-in header (44 pt) and the title strip
 /// ([`TITLE_BAR_HEIGHT`]). Resize handles start below it so corner clicks
 /// reach Close on every screen, not just the title strip.
-pub const WINDOW_CAPTION_HEIGHT: f32 = if cfg!(target_os = "windows") {
-	56.0
-} else {
-	TITLE_BAR_HEIGHT
-};
+pub const WINDOW_CAPTION_HEIGHT: f32 = 56.0;
 
 /// Make `rect` behave like a native title bar: drag moves the window and a double click
 /// toggles maximize.
@@ -1296,11 +1288,7 @@ pub(crate) fn resize_handles(
 	let (l, r, t, b) = (rect.left(), rect.right(), rect.top(), rect.bottom());
 	let edge = 5.0;
 	let corner = 12.0;
-	let (north_end, east_start) = if cfg!(target_os = "windows") {
-		(WINDOW_CONTROLS_WIDTH, WINDOW_CAPTION_HEIGHT)
-	} else {
-		(corner, corner)
-	};
+	let (north_end, east_start) = (WINDOW_CONTROLS_WIDTH, WINDOW_CAPTION_HEIGHT);
 	let rect_at = |min: [f32; 2], max: [f32; 2]| egui::Rect::from_min_max(min.into(), max.into());
 	[
 		(
@@ -1338,22 +1326,14 @@ pub(crate) fn resize_handles(
 			D::East,
 			C::ResizeHorizontal,
 		),
-		(
-			if cfg!(target_os = "windows") {
-				egui::Rect::NOTHING
-			} else {
-				rect_at([r - corner, t], [r, t + corner])
-			},
-			D::NorthEast,
-			C::ResizeNeSw,
-		),
+		(egui::Rect::NOTHING, D::NorthEast, C::ResizeNeSw),
 	]
 }
 
 /// Native resize handles for the undecorated Windows viewport, including sign-in.
 /// The top-right caption area is excluded so clicking the corner always reaches Close.
 pub fn window_resize(ctx: &egui::Context) {
-	window_resize_if(ctx, cfg!(target_os = "windows"));
+	window_resize_if(ctx, true);
 }
 
 /// [`window_resize`] when `active`; Linux enables it for the custom GTK 4 style title bar.
@@ -1391,13 +1371,6 @@ pub fn window_resize_if(ctx: &egui::Context, active: bool) {
 /// undecorated Windows frame, or Linux's GTK 4 style header bar buttons; callers decide
 /// whether Linux's custom title bar is active. Lay out in a right-to-left `ui`; a no-op on macOS.
 pub fn window_controls(ui: &mut egui::Ui) {
-	if cfg!(target_os = "linux") {
-		gtk_window_controls(ui);
-		return;
-	}
-	if !cfg!(target_os = "windows") {
-		return;
-	}
 	let p = palette(ui);
 	let maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
 	let height = ui.available_height().max(TITLE_BAR_HEIGHT);
@@ -1488,86 +1461,6 @@ pub fn window_controls(ui: &mut egui::Ui) {
 			.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
 	}
 	ui.add_space(12.0);
-	ui.spacing_mut().item_spacing.x = saved_spacing;
-}
-
-/// GTK 4 / libadwaita style header bar buttons: round 24 pt buttons with a soft fill that
-/// darkens on hover, symbolic glyphs, close on the far right. Lay out in a right-to-left `ui`.
-fn gtk_window_controls(ui: &mut egui::Ui) {
-	let p = palette(ui);
-	let maximized = ui.input(|i| i.viewport().maximized.unwrap_or(false));
-	let saved_spacing = ui.spacing().item_spacing.x;
-	ui.spacing_mut().item_spacing.x = 6.0;
-	ui.add_space(8.0);
-	let button = |ui: &mut egui::Ui, label: &str| -> (egui::Response, egui::Rect, Color32) {
-		let (rect, response) = ui.allocate_exact_size(egui::vec2(24.0, 24.0), egui::Sense::click());
-		response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, label));
-		let active = response.is_pointer_button_down_on();
-		let hovered = response.hovered() || response.has_focus();
-		let fill = if active {
-			p.selected
-		} else if hovered {
-			p.hover
-		} else {
-			p.hover.gamma_multiply(0.55)
-		};
-		ui.painter().circle_filled(rect.center(), 12.0, fill);
-		let color = if hovered || active {
-			p.text_strong
-		} else {
-			p.text
-		};
-		(response, rect, color)
-	};
-	let (close, rect, color) = button(ui, "Close");
-	let (c, stroke) = (rect.center(), Stroke::new(1.6, color));
-	ui.painter().line_segment(
-		[c + egui::vec2(-3.5, -3.5), c + egui::vec2(3.5, 3.5)],
-		stroke,
-	);
-	ui.painter().line_segment(
-		[c + egui::vec2(-3.5, 3.5), c + egui::vec2(3.5, -3.5)],
-		stroke,
-	);
-	if close.clicked() {
-		ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-	}
-	let (toggle, rect, color) = button(ui, if maximized { "Restore" } else { "Maximize" });
-	let (c, stroke) = (rect.center(), Stroke::new(1.6, color));
-	if maximized {
-		// The back window shows only where the front one does not cover it; the button fill
-		// is translucent, so it cannot mask the overlap.
-		let back = [
-			(-2.0, -2.0),
-			(-2.0, -4.5),
-			(4.5, -4.5),
-			(4.5, 2.0),
-			(2.0, 2.0),
-		]
-		.map(|(x, y)| c + egui::vec2(x, y));
-		ui.painter().add(egui::Shape::line(back.to_vec(), stroke));
-		let front = egui::Rect::from_min_max(c + egui::vec2(-4.5, -2.0), c + egui::vec2(2.0, 4.5));
-		ui.painter()
-			.rect_stroke(front, 1.0, stroke, egui::StrokeKind::Middle);
-	} else {
-		let square = egui::Rect::from_center_size(c, egui::Vec2::splat(8.0));
-		ui.painter()
-			.rect_stroke(square, 1.5, stroke, egui::StrokeKind::Middle);
-	}
-	if toggle.clicked() {
-		ui.ctx()
-			.send_viewport_cmd(egui::ViewportCommand::Maximized(!maximized));
-	}
-	let (minimize, rect, color) = button(ui, "Minimize");
-	let c = rect.center();
-	ui.painter().line_segment(
-		[c + egui::vec2(-4.0, 3.0), c + egui::vec2(4.0, 3.0)],
-		Stroke::new(1.6, color),
-	);
-	if minimize.clicked() {
-		ui.ctx()
-			.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
-	}
 	ui.spacing_mut().item_spacing.x = saved_spacing;
 }
 

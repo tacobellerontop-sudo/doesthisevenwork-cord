@@ -1813,7 +1813,6 @@ mod tests {
 
 #[cfg(all(debug_assertions, feature = "demo"))]
 pub(crate) fn debug_heic_check() {
-	#[cfg(target_os = "windows")]
 	{
 		let fixture = include_bytes!("../tests/fixtures/heic-large.heic");
 		let pixels = decode_preview(fixture)

@@ -624,15 +624,9 @@ fn open_link(link: &str) {
 		return;
 	}
 	let url = url.to_string();
-	#[cfg(target_os = "linux")]
-	let opener = std::process::Command::new("xdg-open").arg(&url).spawn();
-	#[cfg(target_os = "macos")]
-	let opener = std::process::Command::new("open").arg(&url).spawn();
-	#[cfg(target_os = "windows")]
 	let opener = std::process::Command::new("rundll32")
 		.args(["url.dll,FileProtocolHandler", &url])
 		.spawn();
-	#[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))]
 	drop(opener);
 }
 
