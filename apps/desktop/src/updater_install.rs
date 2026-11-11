@@ -758,7 +758,8 @@ fn verify_mac(candidate: &Path, installed: &Path) -> Result<(), String> {
 	}
 	let old = identity(installed)?;
 	let new = identity(candidate)?;
-	if old != new || new.1 != "io.github.tacobellerontop_sudo.dtewcord" {
+	// Apple bundle ids allow no underscore, so the bundle uses a hyphen where the app id has one.
+	if old != new || new.1 != "io.github.tacobellerontop-sudo.dtewcord" {
 		return Err("The update was not signed by this DTEW Cord publisher.".into());
 	}
 	let status = Command::new("/usr/sbin/spctl")

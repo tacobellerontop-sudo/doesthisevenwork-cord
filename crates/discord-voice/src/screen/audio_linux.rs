@@ -122,8 +122,7 @@ impl OwnApplication {
 					|| {
 						let v = v.to_ascii_lowercase();
 						v.contains("dtewcord") || v.contains("dtew cord")
-					}
-					|| v.eq_ignore_ascii_case("rustcord")
+					} || v.eq_ignore_ascii_case("rustcord")
 			})
 	}
 }

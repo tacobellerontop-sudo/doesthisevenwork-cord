@@ -1,0 +1,5 @@
+/target
+/dist
+/dist-appimage
+/dist-installer
+__pycache__/
