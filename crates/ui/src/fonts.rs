@@ -4,11 +4,11 @@ use std::sync::{Arc, Mutex, Weak};
 
 pub const MAX_CUSTOM_FONT_BYTES: usize = 32 * 1024 * 1024;
 const CUSTOM: [&str; 3] = [
-	"Serein Custom",
-	"Serein Custom Medium",
-	"Serein Custom SemiBold",
+	"DTEW Cord Custom",
+	"DTEW Cord Custom Medium",
+	"DTEW Cord Custom SemiBold",
 ];
-const DEFINITIONS_KEY: &str = "serein-font-definitions";
+const DEFINITIONS_KEY: &str = "dtewcord-font-definitions";
 
 #[derive(Clone)]
 pub struct CustomFont {
@@ -422,72 +422,72 @@ const INTER_SEMIBOLD: &[u8] = include_bytes!("../../../assets/fonts/Inter-SemiBo
 const NAME_FONTS: [(u32, &str, &[u8]); 14] = [
 	(
 		1,
-		"Serein Name Bangers",
+		"DTEW Cord Name Bangers",
 		include_bytes!("../../../assets/fonts/Bangers-Regular.ttf"),
 	),
 	(
 		2,
-		"Serein Name BioRhyme",
+		"DTEW Cord Name BioRhyme",
 		include_bytes!("../../../assets/fonts/BioRhyme.ttf"),
 	),
 	(
 		3,
-		"Serein Name Cherry Bomb",
+		"DTEW Cord Name Cherry Bomb",
 		include_bytes!("../../../assets/fonts/CherryBombOne-Regular.ttf"),
 	),
 	(
 		4,
-		"Serein Name Chicle",
+		"DTEW Cord Name Chicle",
 		include_bytes!("../../../assets/fonts/Chicle-Regular.ttf"),
 	),
 	(
 		5,
-		"Serein Name Compagnon",
+		"DTEW Cord Name Compagnon",
 		include_bytes!("../../../assets/fonts/Compagnon-Roman.otf"),
 	),
 	(
 		6,
-		"Serein Name MuseoModerno",
+		"DTEW Cord Name MuseoModerno",
 		include_bytes!("../../../assets/fonts/MuseoModerno.ttf"),
 	),
 	(
 		8,
-		"Serein Name Pixelify",
+		"DTEW Cord Name Pixelify",
 		include_bytes!("../../../assets/fonts/PixelifySans.ttf"),
 	),
 	(
 		9,
-		"Serein Name Ribes",
+		"DTEW Cord Name Ribes",
 		include_bytes!("../../../assets/fonts/Ribes-Regular.otf"),
 	),
 	(
 		10,
-		"Serein Name Sinistre",
+		"DTEW Cord Name Sinistre",
 		include_bytes!("../../../assets/fonts/Sinistre-Regular.otf"),
 	),
 	(
 		12,
-		"Serein Name Zilla Slab",
+		"DTEW Cord Name Zilla Slab",
 		include_bytes!("../../../assets/fonts/ZillaSlab-Regular.ttf"),
 	),
 	(
 		13,
-		"Serein Name Playpen Sans",
+		"DTEW Cord Name Playpen Sans",
 		include_bytes!("../../../assets/fonts/PlaypenSans.ttf"),
 	),
 	(
 		14,
-		"Serein Name Orbitron",
+		"DTEW Cord Name Orbitron",
 		include_bytes!("../../../assets/fonts/Orbitron.ttf"),
 	),
 	(
 		15,
-		"Serein Name New Rocker",
+		"DTEW Cord Name New Rocker",
 		include_bytes!("../../../assets/fonts/NewRocker-Regular.ttf"),
 	),
 	(
 		16,
-		"Serein Name Kalam",
+		"DTEW Cord Name Kalam",
 		include_bytes!("../../../assets/fonts/Kalam-Regular.ttf"),
 	),
 ];
@@ -687,7 +687,7 @@ fn add_fallback(definitions: &mut FontDefinitions, name: &str, data: FontData) {
 			.push(name.into());
 	}
 	for (family, list) in &mut definitions.families {
-		if matches!(family, FontFamily::Name(family) if family.starts_with("Serein Name ")) {
+		if matches!(family, FontFamily::Name(family) if family.starts_with("DTEW Cord Name ")) {
 			list.push(name.into());
 		}
 	}
@@ -829,7 +829,7 @@ mod tests {
 					fonts
 						.definitions()
 						.font_data
-						.contains_key("Serein Name Kalam")
+						.contains_key("DTEW Cord Name Kalam")
 				}));
 			})
 			.drop_without_applying_deltas();
@@ -838,7 +838,7 @@ mod tests {
 		let family = families[1].clone().expect("installed on the next pass");
 		ctx.run_ui(Default::default(), |ui| {
 			let list = &ui.fonts(|fonts| fonts.definitions().families[&family].clone());
-			assert_eq!(list[0], "Serein Name Bangers");
+			assert_eq!(list[0], "DTEW Cord Name Bangers");
 			assert!(list.iter().any(|face| face == "Inter Medium"));
 			assert!(list.iter().any(|face| face == "Noto Sans Arabic"));
 			ui.label(egui::RichText::new("Synthetic name").family(family.clone()));
@@ -860,10 +860,10 @@ mod tests {
 			name: "Synthetic".into(),
 			data: FontData::from_static(INTER),
 		};
-		let family = FontFamily::Name("Serein Name Bangers".into());
+		let family = FontFamily::Name("DTEW Cord Name Bangers".into());
 		apply_custom(&ctx, Some(&custom));
 		let list = ctx.fonts(|fonts| fonts.definitions().families[&family].clone());
-		assert_eq!(&list[..2], ["Serein Name Bangers", CUSTOM[1]]);
+		assert_eq!(&list[..2], ["DTEW Cord Name Bangers", CUSTOM[1]]);
 		apply_custom(&ctx, None);
 		ctx.run_ui(Default::default(), |ui| {
 			let definitions = ui.fonts(|fonts| fonts.definitions().clone());

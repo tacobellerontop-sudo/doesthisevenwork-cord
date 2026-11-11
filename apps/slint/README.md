@@ -1,21 +1,21 @@
-# Serein (Slint client)
+# DTEW Cord (Slint client)
 
-A second Serein frontend written with [Slint](https://slint.dev). It uses the same sign-in, credential store, REST and Gateway crates as the egui desktop app in `apps/desktop`, so both clients behave the same way towards Discord. Only the presentation layer is new.
+A second DTEW Cord frontend written with [Slint](https://slint.dev). It uses the same sign-in, credential store, REST and Gateway crates as the egui desktop app in `apps/desktop`, so both clients behave the same way towards Discord. Only the presentation layer is new.
 
 > [!WARNING]
-> Like the desktop app, this client signs in a normal Discord user account through Discord's own login page. Serein isn't endorsed by Discord, and using an unofficial client may break Discord's Terms of Service and lead to account enforcement.
+> Like the desktop app, this client signs in a normal Discord user account through Discord's own login page. DTEW Cord isn't endorsed by Discord, and using an unofficial client may break Discord's Terms of Service and lead to account enforcement.
 
 ## Run it
 
 ```sh
 # Offline preview with synthetic data; never contacts Discord.
-cargo run -p serein-slint --features demo -- --demo
+cargo run -p dtewcord-slint --features demo -- --demo
 
 # Real sign-in through Discord's login page; the session is saved in the system keychain.
-cargo run -p serein-slint
+cargo run -p dtewcord-slint
 ```
 
-Set `SEREIN_THEME=light` to start in the light theme. The button next to the account name switches themes at runtime.
+Set `DTEWCORD_THEME=light` to start in the light theme. The button next to the account name switches themes at runtime.
 
 ## What milestone 1 covers
 
@@ -41,4 +41,4 @@ The egui app remains the complete client: voice and video, forums, threads, reac
 
 ## Licensing
 
-Slint is available under GPLv3, the Slint Royalty-free Desktop, Mobile, and Web Applications License 2.0, or a commercial license. Serein's own code stays MIT OR Apache-2.0. A distributed build of this client has to meet the terms of whichever Slint license you choose. For example, the royalty-free license asks for Slint attribution in the app or on its website. Slint's crates aren't on the `deny.toml` license allow-list yet, so `cargo deny check licenses` reports them until that choice is recorded there.
+Slint is available under GPLv3, the Slint Royalty-free Desktop, Mobile, and Web Applications License 2.0, or a commercial license. DTEW Cord's own code stays MIT OR Apache-2.0. A distributed build of this client has to meet the terms of whichever Slint license you choose. For example, the royalty-free license asks for Slint attribution in the app or on its website. Slint's crates aren't on the `deny.toml` license allow-list yet, so `cargo deny check licenses` reports them until that choice is recorded there.

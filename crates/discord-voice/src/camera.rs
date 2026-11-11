@@ -190,7 +190,7 @@ impl Camera {
 		let worker = shared.clone();
 		let teardown = crate::teardown::Thread::start();
 		if thread::Builder::new()
-			.name("serein-camera".into())
+			.name("dtewcord-camera".into())
 			.spawn(move || {
 				// Declared first so it is released last, after the camera encoder.
 				let _teardown = teardown;
@@ -522,7 +522,7 @@ mod macos {
 		time::{Duration, Instant},
 	};
 
-	const DENIED: &str = "Camera access denied. Allow Serein (or your terminal) in System Settings > Privacy & Security > Camera, then try again.";
+	const DENIED: &str = "Camera access denied. Allow DTEW Cord (or your terminal) in System Settings > Privacy & Security > Camera, then try again.";
 
 	pub(super) fn devices() -> Result<DeviceList, &'static str> {
 		// SAFETY: Framework-owned device types and discovery only; no stream or permission request.
@@ -568,10 +568,10 @@ mod macos {
 		// exact AVFoundation delegate signature. AVFoundation uses a serial queue.
 		#[unsafe(super = NSObject)]
 		#[ivars = DelegateState]
-		struct SereinCameraDelegate;
+		struct DtewCordCameraDelegate;
 
-		unsafe impl NSObjectProtocol for SereinCameraDelegate {}
-		unsafe impl AVCaptureVideoDataOutputSampleBufferDelegate for SereinCameraDelegate {
+		unsafe impl NSObjectProtocol for DtewCordCameraDelegate {}
+		unsafe impl AVCaptureVideoDataOutputSampleBufferDelegate for DtewCordCameraDelegate {
 			#[unsafe(method(captureOutput:didOutputSampleBuffer:fromConnection:))]
 			fn capture(
 				&self,
@@ -672,7 +672,7 @@ mod macos {
 	struct CaptureSession {
 		session: Retained<AVCaptureSession>,
 		output: Retained<AVCaptureVideoDataOutput>,
-		_delegate: Retained<SereinCameraDelegate>,
+		_delegate: Retained<DtewCordCameraDelegate>,
 		queue: DispatchRetained<DispatchQueue>,
 	}
 
@@ -755,7 +755,7 @@ mod macos {
 		}
 		let mut encoder = CameraEncoder::new(shared.rate)?;
 		let (send, receive) = mpsc::sync_channel(1);
-		let queue = DispatchQueue::new("serein.camera.frames", None);
+		let queue = DispatchQueue::new("dtewcord.camera.frames", None);
 		// SAFETY: Only this worker configures/owns the session. Delegate lives until
 		// capture is stopped and the serial callback queue has drained.
 		let capture = unsafe {
@@ -804,12 +804,12 @@ mod macos {
 			);
 			output.setVideoSettings(Some(&settings));
 			output.setAlwaysDiscardsLateVideoFrames(true);
-			let allocated = SereinCameraDelegate::alloc().set_ivars(DelegateState {
+			let allocated = DtewCordCameraDelegate::alloc().set_ivars(DelegateState {
 				send,
 				shared: shared.clone(),
 				gate: Mutex::new(FrameGate::new(shared.rate)),
 			});
-			let delegate: Retained<SereinCameraDelegate> = msg_send![super(allocated), init];
+			let delegate: Retained<DtewCordCameraDelegate> = msg_send![super(allocated), init];
 			output.setSampleBufferDelegate_queue(
 				Some(ProtocolObject::from_ref(&*delegate)),
 				Some(&queue),

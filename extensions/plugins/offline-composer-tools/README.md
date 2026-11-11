@@ -1,7 +1,7 @@
 # Offline Composer Tools
 
 Five deterministic, user-invoked composer actions ported from Equicord/Vencord to
-Serein's sandboxed Rust extension API.
+DTEW Cord's sandboxed Rust extension API.
 
 ## Upstream and deliberate differences
 
@@ -59,7 +59,7 @@ Processing is offline and linear in the bounded SDK input size. Unexpectedly
 large generated expansions fall back to the original draft; the SDK independently
 enforces its serialized ABI byte limit. No result is sent anywhere automatically.
 
-Copyright Vendicated and contributors. Licensed under GPL-3.0-or-later; the Serein
+Copyright Vendicated and contributors. Licensed under GPL-3.0-or-later; the DTEW Cord
 port retains those upstream notices in `src/lib.rs`.
 
 ## Packaging
@@ -67,7 +67,7 @@ port retains those upstream notices in `src/lib.rs`.
 Package from `extensions/` with the license text embedded as an inert Wasm custom section:
 
 ```sh
-python pack.py plugins/offline-composer-tools/manifest.json target/wasm32-unknown-unknown/release/offline_composer_tools.wasm plugins/packages/offline-composer-tools.serein-extension --license licenses/Equicord-GPL-3.0.txt
+python pack.py plugins/offline-composer-tools/manifest.json target/wasm32-unknown-unknown/release/offline_composer_tools.wasm plugins/packages/offline-composer-tools.dtewcord-extension --license licenses/Equicord-GPL-3.0.txt
 ```
 
 The host ignores custom sections, so this does not change the executable ABI.

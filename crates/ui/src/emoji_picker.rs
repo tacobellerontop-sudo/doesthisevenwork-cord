@@ -2957,7 +2957,7 @@ mod tests {
 		};
 		let guild = state.guilds[0].id;
 		let mut matches = CustomMatches::default();
-		matches.update(&state, Some(guild), "serein_party");
+		matches.update(&state, Some(guild), "dtewcord_party");
 		let (source, custom) = matches.get(&state, 0).unwrap();
 		let emoji = model::ReactionEmoji {
 			id: Some(custom.id),
@@ -2995,7 +2995,7 @@ mod tests {
 		};
 		let guild = state.guilds[0].id;
 		let mut matches = CustomMatches::default();
-		matches.update(&state, Some(guild), "serein_party");
+		matches.update(&state, Some(guild), "dtewcord_party");
 		let (source, custom) = matches.get(&state, 0).unwrap();
 		assert!(custom.animated);
 		let emoji = model::ReactionEmoji {
@@ -3061,21 +3061,21 @@ mod tests {
 		picker.reaction = None;
 		let local = model::ReactionEmoji {
 			id: Some(Id(9002)),
-			name: Some("serein_party".into()),
+			name: Some("dtewcord_party".into()),
 		};
 		assert!(matches!(
-			picker.pick(&state, local.clone(), "<a:serein_party:9002>".into()),
+			picker.pick(&state, local.clone(), "<a:dtewcord_party:9002>".into()),
 			Pick::Insert(text) if text.contains("https://cdn.discordapp.com/emojis/9002.gif?size=64")
 		));
 		state.selected = Some(Id(22));
 		picker.channel = state.selected;
 		assert!(matches!(
-			picker.pick(&state, local.clone(), "<a:serein_party:9002>".into()),
+			picker.pick(&state, local.clone(), "<a:dtewcord_party:9002>".into()),
 			Pick::Insert(text) if text.contains("https://cdn.discordapp.com/emojis/9002.gif?size=64")
 		));
 		state.premium_type = 2;
 		assert!(matches!(
-			picker.pick(&state, local, "<a:serein_party:9002>".into()),
+			picker.pick(&state, local, "<a:dtewcord_party:9002>".into()),
 			Pick::Insert(_)
 		));
 
@@ -3141,7 +3141,7 @@ mod tests {
 			for _ in 0..3 {
 				assert!(frame(&mut picker, &mut state, &mut avatars, vec![]).is_empty());
 			}
-			let query = if custom { "serein_wave" } else { "rocket" };
+			let query = if custom { "dtewcord_wave" } else { "rocket" };
 			frame(
 				&mut picker,
 				&mut state,
@@ -3173,7 +3173,7 @@ mod tests {
 						matches!(&commands[0], Command::Reactions(client_core::reactions::Command::Set {
 						message: target, emoji, ..
 					}) if *target == message && emoji.id == custom.then_some(Id(9001))
-						&& emoji.name.as_deref() == Some(if custom { "serein_wave" } else { "🚀" }))
+						&& emoji.name.as_deref() == Some(if custom { "dtewcord_wave" } else { "🚀" }))
 					);
 					selected = true;
 					break;
@@ -3694,9 +3694,9 @@ pub(crate) fn debug_fallback_choice(state: &State) -> String {
 		state,
 		model::ReactionEmoji {
 			id: Some(Id(9002)),
-			name: Some("serein_party".into()),
+			name: Some("dtewcord_party".into()),
 		},
-		"<a:serein_party:9002>".into(),
+		"<a:dtewcord_party:9002>".into(),
 	) {
 		Pick::Insert(text) => text,
 		_ => panic!("fallback selection must edit the composer"),

@@ -18,9 +18,9 @@ use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
 use winit::window::Window;
 
 // A nonzero scalar, not a pointer: WS_SYSMENU plus a presence bit, even in fullscreen.
-const REQUESTED_MENU: PCWSTR = w!("Serein.CustomCaption.RequestedMenu");
+const REQUESTED_MENU: PCWSTR = w!("DTEW Cord.CustomCaption.RequestedMenu");
 // Modal move loops dispatch other windows' messages on this same thread.
-const TEMPORARY_DRAG: PCWSTR = w!("Serein.CustomCaption.TemporaryDragDepth");
+const TEMPORARY_DRAG: PCWSTR = w!("DTEW Cord.CustomCaption.TemporaryDragDepth");
 
 // winit retains WS_SYSMENU even for undecorated windows and restores it on style changes.
 // With a full-client DWM frame this paints native buttons underneath our custom buttons.

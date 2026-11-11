@@ -229,7 +229,7 @@ wry = { path = "vendor/wry" }
 smithay-clipboard = { path = "vendor/smithay-clipboard" }
 
 [patch."https://github.com/emilk/egui"]
-# Serein's egui fork: upstream PRs and local patches on the pinned rev; see vendor/egui/SEREIN-PATCH.md.
+# DTEW Cord's egui fork: upstream PRs and local patches on the pinned rev; see vendor/egui/SEREIN-PATCH.md.
 eframe = { path = "vendor/egui/eframe" }
 egui = { path = "vendor/egui/egui" }
 egui-wgpu = { path = "vendor/egui/egui-wgpu" }

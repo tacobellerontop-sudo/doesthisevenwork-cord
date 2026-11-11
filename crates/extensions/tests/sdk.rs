@@ -1,5 +1,5 @@
+use dtewcord_extension_sdk as sdk;
 use extensions::{Action, Capability, ExtensionKind, Invocation, Manifest, Output, Surface};
-use serein_extension_sdk as sdk;
 
 /// Builds a one-action plugin manifest whose capabilities are those the action's surface needs.
 fn manifest(action: &str, surface: Surface) -> Manifest {
@@ -425,7 +425,7 @@ fn every_sdk_panel_and_appearance_field_is_accepted_by_the_host() {
 					TextInput {
 						id: "name".into(),
 						label: "Name".into(),
-						value: "Serein".into(),
+						value: "DTEW Cord".into(),
 					},
 					Checkbox {
 						id: "enabled".into(),

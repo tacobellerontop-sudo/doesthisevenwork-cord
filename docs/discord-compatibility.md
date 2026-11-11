@@ -1,6 +1,6 @@
 # Discord compatibility and support boundaries
 
-Serein is an unofficial client and is not endorsed by Discord. Its implementation communicates with Discord services directly. Protocol behavior can change without notice, and technical compatibility does not imply permission under Discord's Terms of Service.
+DTEW Cord is an unofficial client and is not endorsed by Discord. Its implementation communicates with Discord services directly. Protocol behavior can change without notice, and technical compatibility does not imply permission under Discord's Terms of Service.
 
 ## Risks and limitations
 

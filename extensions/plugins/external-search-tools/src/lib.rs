@@ -3,7 +3,7 @@
  * Copyright (c) 2023 Vendicated and contributors
  * Portions adapted from ReplaceGoogleSearch, Copyright (c) 2024 Vendicated and contributors
  *
- * Serein adaptation copyright (c) 2026 Serein contributors.
+ * DTEW Cord adaptation copyright (c) 2026 Serein contributors.
  * Changed November 8, 2026: selected message text opens a host-reviewed
  * public browser URL instead of using inline translation or direct navigation.
  *
@@ -12,7 +12,7 @@
  * later version. See https://www.gnu.org/licenses/gpl-3.0.html.
  */
 use serde::{Deserialize, Serialize};
-use serein_extension_sdk::{
+use dtewcord_extension_sdk::{
 	AppAction, AppOutput, Element, HostEffect, MessageActionInvocation, Output,
 };
 use url::Url;
@@ -335,7 +335,7 @@ fn settings_panel(config: Config, notice: &str) -> Vec<Element> {
 			text: "External search tools".into(),
 		},
 		Element::Text {
-			text: "Translate or search the selected message in your browser. Serein does not fetch pages, call translation APIs, or send messages.".into(),
+			text: "Translate or search the selected message in your browser. DTEW Cord does not fetch pages, call translation APIs, or send messages.".into(),
 		},
 		Element::Select {
 			id: "provider".into(),
@@ -556,12 +556,12 @@ fn handle(input: MessageActionInvocation) -> AppOutput {
 	}
 }
 
-serein_extension_sdk::export!(handle);
+dtewcord_extension_sdk::export!(handle);
 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use serein_extension_sdk::{dispatch_typed, serde_json};
+	use dtewcord_extension_sdk::{dispatch_typed, serde_json};
 
 	fn run(value: serde_json::Value) -> AppOutput {
 		let bytes = dispatch_typed(&serde_json::to_vec(&value).unwrap(), handle).unwrap();
@@ -686,12 +686,12 @@ mod tests {
 
 		let searched = run(serde_json::json!({
 			"action": "search",
-			"selected_message": "Serein",
+			"selected_message": "DTEW Cord",
 			"storage": saved.output.storage
 		}));
 		assert!(
 			external_url(&searched)
-				.starts_with("https://en.wikipedia.org/w/index.php?search=Serein")
+				.starts_with("https://en.wikipedia.org/w/index.php?search=DTEW Cord")
 		);
 	}
 

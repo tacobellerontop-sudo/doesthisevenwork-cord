@@ -1492,7 +1492,7 @@ fn translatable(message: &Message) -> bool {
 	!crate::i18n::message_text(message).trim().is_empty()
 }
 
-/// Uses the existing reviewed external-link flow; no message text leaves Serein silently.
+/// Uses the existing reviewed external-link flow; no message text leaves DTEW Cord silently.
 /// Very large messages are bounded before constructing a browser URL; the flag is true when
 /// only the start of the text fits, so the confirmation can say so.
 fn translation_url(message: &Message) -> Option<(String, bool)> {

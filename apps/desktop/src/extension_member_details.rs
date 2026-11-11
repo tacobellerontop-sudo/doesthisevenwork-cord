@@ -248,7 +248,7 @@ mod tests {
 			"Server bio"
 		);
 		let package = parse_package(include_bytes!(
-			"../../../examples/extensions/packages/guild-inspector.serein-extension"
+			"../../../examples/extensions/packages/guild-inspector.dtewcord-extension"
 		))
 		.unwrap();
 		let invocation = Invocation {

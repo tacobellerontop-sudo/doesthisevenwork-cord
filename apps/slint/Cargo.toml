@@ -1,12 +1,12 @@
 [package]
-name = "serein-slint"
+name = "dtewcord-slint"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Serein chat client built with Slint, on the same login and backend crates as the egui desktop app"
+description = "DTEW Cord chat client built with Slint, on the same login and backend crates as the egui desktop app"
 
 [[bin]]
-name = "serein-slint"
+name = "dtewcord-slint"
 path = "src/main.rs"
 
 [features]

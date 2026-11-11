@@ -1,4 +1,4 @@
-// Serein's Slint client. All data comes from Rust (`src/view.rs`), which maps client-core's
+// DTEW Cord's Slint client. All data comes from Rust (`src/view.rs`), which maps client-core's
 // `State` onto these flat rows; this file owns layout, theme and input only.
 
 import { ScrollView } from "std-widgets.slint";
@@ -443,12 +443,12 @@ component SignInScreen inherits Rectangle {
             padding: 32px;
             spacing: 16px;
             Image {
-                source: @image-url("../../../assets/brand/serein-256.png");
+                source: @image-url("../../../assets/brand/dtewcord-256.png");
                 height: 72px;
                 image-fit: contain;
             }
             Text {
-                text: root.restoring ? "Welcome back" : "Sign in to Serein";
+                text: root.restoring ? "Welcome back" : "Sign in to DTEW Cord";
                 color: Theme.strong;
                 font-family: Theme.font;
                 font-weight: 600;
@@ -456,7 +456,7 @@ component SignInScreen inherits Rectangle {
                 horizontal-alignment: center;
             }
             Text {
-                text: "Serein uses Discord's own login page. Your password goes to Discord, never to Serein, and the session is kept in your system keychain.";
+                text: "DTEW Cord uses Discord's own login page. Your password goes to Discord, never to DTEW Cord, and the session is kept in your system keychain.";
                 color: Theme.muted;
                 font-family: Theme.font;
                 font-size: 14px;
@@ -482,7 +482,7 @@ component SignInScreen inherits Rectangle {
                 warning := VerticalLayout {
                     padding: 12px;
                     Text {
-                        text: "Serein is an unofficial client and is not endorsed by Discord. Signing in a normal account with an unofficial client may break Discord's Terms of Service and can lead to account enforcement.";
+                        text: "DTEW Cord is an unofficial client and is not endorsed by Discord. Signing in a normal account with an unofficial client may break Discord's Terms of Service and can lead to account enforcement.";
                         color: Theme.text;
                         font-family: Theme.font;
                         font-size: 12px;
@@ -505,7 +505,7 @@ export component AppWindow inherits Window {
 
     // 0 sign-in, 1 connecting, 2 messaging
     in property <int> screen: 0;
-    in property <string> window-title: "Serein";
+    in property <string> window-title: "DTEW Cord";
     in property <string> sign-in-status;
     in property <bool> sign-in-busy;
     in property <bool> restoring;
@@ -564,7 +564,7 @@ export component AppWindow inherits Window {
             alignment: center;
             spacing: 16px;
             Image {
-                source: @image-url("../../../assets/brand/serein-256.png");
+                source: @image-url("../../../assets/brand/dtewcord-256.png");
                 height: 96px;
                 image-fit: contain;
             }

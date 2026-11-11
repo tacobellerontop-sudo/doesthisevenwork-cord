@@ -20,8 +20,8 @@ const SIGNAL_TIMEOUT: Duration = Duration::from_secs(30);
 /// Names why a share ended, under the same opt-in variable as the voice reports. A share
 /// that stops by itself otherwise leaves only the latest status, which the stop overwrites.
 fn note(event: &str, reason: &str) {
-	if std::env::var_os("SEREIN_VOICE_DIAGNOSTICS").is_some_and(|value| value == "1") {
-		eprintln!("[Serein voice Screen] {event}={reason}");
+	if std::env::var_os("DTEWCORD_VOICE_DIAGNOSTICS").is_some_and(|value| value == "1") {
+		eprintln!("[DTEW Cord voice Screen] {event}={reason}");
 	}
 }
 

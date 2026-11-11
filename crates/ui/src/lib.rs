@@ -1032,7 +1032,7 @@ impl MessagingUi {
 					voice_channel: None,
 					channel: None,
 					embed: model::Embed {
-						title: Some("Serein community".into()),
+						title: Some("DTEW Cord community".into()),
 						..Default::default()
 					},
 				})),
@@ -4305,7 +4305,7 @@ impl MessagingUi {
 			!self.hide_title_bar
 		}
 	}
-	/// Linux only: Serein draws its own GTK 4 style header bar instead of the system one.
+	/// Linux only: DTEW Cord draws its own GTK 4 style header bar instead of the system one.
 	pub fn uses_custom_title_bar(&self) -> bool {
 		cfg!(target_os = "linux") && self.custom_title_bar
 	}
@@ -10678,7 +10678,7 @@ pub fn debug_pr565(mut state: State, mut user: model::User) {
 	state.own_profile.data = Some(profiles::synthetic(&own, None));
 	assert_eq!(
 		profiles::known_username(&state, own.id).as_deref(),
-		Some("serein.preview")
+		Some("dtewcord.preview")
 	);
 	click(
 		&mut view,

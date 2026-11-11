@@ -1,4 +1,4 @@
-use serein_extension_sdk::{
+use dtewcord_extension_sdk::{
 	Error, Invocation, MAX_IO_BYTES, Output, TickInvocation, dispatch, dispatch_typed, serde_json,
 };
 
@@ -17,7 +17,7 @@ mod abi {
 		panic!("invalid ABI input reached handler")
 	}
 
-	serein_extension_sdk::export!(handler);
+	dtewcord_extension_sdk::export!(handler);
 }
 
 #[test]
@@ -174,7 +174,7 @@ fn typed_values_and_storage_distinguish_missing_from_invalid() {
 
 #[test]
 fn typed_event_dispatch_keeps_bounds_and_rejects_bad_json_before_the_handler() {
-	use serein_extension_sdk::{EventInvocation, MessageEventKind, dispatch_typed};
+	use dtewcord_extension_sdk::{EventInvocation, MessageEventKind, dispatch_typed};
 	let bytes = dispatch_typed(
 		br#"{"action":"event","message_event":{"kind":"delete","channel_id":"1","message_id":"2"}}"#,
 		|input: EventInvocation| {

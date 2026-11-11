@@ -4,7 +4,7 @@ This repository is an unofficial Discord client. Please do not include account c
 
 ## Reporting vulnerabilities
 
-For a suspected vulnerability in Serein's code, contact the maintainers through the project's GitHub security reporting facilities rather than publishing exploit details in a public issue. Include the affected component, impact, reproduction steps that do not expose real user data, and a proposed mitigation if available.
+For a suspected vulnerability in DTEW Cord's code, contact the maintainers through the project's GitHub security reporting facilities rather than publishing exploit details in a public issue. Include the affected component, impact, reproduction steps that do not expose real user data, and a proposed mitigation if available.
 
 ## Scope
 

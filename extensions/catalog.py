@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and check the immutable extension catalog; canonical package validation lives in Serein.
+"""Generate and check the immutable extension catalog; canonical package validation lives in DTEW Cord.
 
 Package URLs are pinned to a commit on `main`. Pull requests are squash-merged, so a branch
 commit can disappear; pins are therefore written after merge (`--pin`, run by CI) from the
@@ -15,7 +15,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent
-REPOSITORY = "ViceVerse-cz/Serein"
+REPOSITORY = "tacobellerontop-sudo/doesthisevenwork-cord"
 PACKAGE_DIRS = ("themes", "plugins/packages")
 CAPABILITIES = {"selected_message", "composer", "storage", "deleted_messages", "image_sharing", "appearance", "rich_presence", "api_proxy", "external_navigation"}
 RESERVED = {"con", "prn", "aux", "nul"} | {f"{prefix}{n}" for prefix in ("com", "lpt") for n in range(1, 10)}
@@ -96,7 +96,7 @@ class Tree:
 
     def packages(self):
         listed = git("ls-tree", "-r", "--full-tree", "--name-only", self.commit, "--", *(self.path(d) for d in PACKAGE_DIRS)).decode().splitlines()
-        return sorted((p[len(self.prefix):] for p in listed if p.endswith(".serein-extension")), key=lambda p: (not p.startswith("themes/"), p))
+        return sorted((p[len(self.prefix):] for p in listed if p.endswith(".dtewcord-extension")), key=lambda p: (not p.startswith("themes/"), p))
 
     def read(self, relative):
         try:
@@ -111,7 +111,7 @@ class WorkingTree:
     prefix = ""
 
     def packages(self):
-        return [path.relative_to(ROOT).as_posix() for directory in PACKAGE_DIRS for path in sorted((ROOT / directory).glob("*.serein-extension"))]
+        return [path.relative_to(ROOT).as_posix() for directory in PACKAGE_DIRS for path in sorted((ROOT / directory).glob("*.dtewcord-extension"))]
 
     def read(self, relative):
         path = ROOT / relative

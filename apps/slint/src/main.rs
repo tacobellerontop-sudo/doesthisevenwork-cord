@@ -1,4 +1,4 @@
-//! Serein's Slint client: the same sign-in, credential store, REST and Gateway crates as the
+//! DTEW Cord's Slint client: the same sign-in, credential store, REST and Gateway crates as the
 //! egui desktop app, with a new Slint presentation layer.
 //!
 //! `--demo` (with the `demo` feature) opens synthetic offline data and never contacts Discord.
@@ -170,7 +170,7 @@ impl App {
 			Ok(view) => {
 				self.login = Some(view);
 				self.sign_in_status =
-					"Finish signing in on Discord's page. Serein receives only the session token."
+					"Finish signing in on Discord's page. DTEW Cord receives only the session token."
 						.into();
 			}
 			Err(failure) => {
@@ -461,10 +461,10 @@ impl App {
 		ui.set_window_title(
 			match &self.state.selected.and_then(|id| self.state.channel(id)) {
 				Some(channel) => format!(
-					"{} · {title} · Serein",
+					"{} · {title} · DTEW Cord",
 					self.state.conversation_name(channel)
 				),
-				None => format!("{title} · Serein"),
+				None => format!("{title} · DTEW Cord"),
 			}
 			.into(),
 		);
@@ -656,7 +656,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.enable_all()
 		.build()?;
 	let ui = AppWindow::new()?;
-	if let Ok(theme) = std::env::var("SEREIN_THEME") {
+	if let Ok(theme) = std::env::var("DTEWCORD_THEME") {
 		ui.global::<Theme>().set_dark(theme != "light");
 	}
 
