@@ -14,12 +14,12 @@
         "capabilities": [],
         "actions": []
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/forest-piano.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/forest-piano.dtewcord-extension",
       "sha256": "3fffa784b2f406b4ad435fa5804baa1bed9ead9682254546ccf332c2bae12505",
       "download_bytes": 6452658,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/forest-piano.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/forest-piano.png",
         "sha256": "f3e8df1046c03eeed4a477530c5dec114ee582caa0ec4bb28e24b4131b8ce29f",
         "download_bytes": 147517
       }
@@ -32,15 +32,15 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/forest.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/forest.dtewcord-extension",
       "sha256": "f576fbcb73f452da4ecddda35f92932cdd3ef7b46959a38837fe3491784d6038",
       "download_bytes": 1454,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/forest.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/forest.png",
         "sha256": "a55d6c1dedee9e9696bd7a634aca41977f20eb428580d32da12a0dc477b543a9",
         "download_bytes": 66398
       }
@@ -53,15 +53,15 @@
         "version": "1.0.0",
         "author": "a1.lol",
         "license": "MIT",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/golden.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/golden.dtewcord-extension",
       "sha256": "0018a46e9c5e4d0431ba02a860b3d7deffab9c159c5d52e04928421ccb3be586",
       "download_bytes": 1794,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/golden.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/golden.png",
         "sha256": "1e9df1eaf7fe9906d9088924403f8cf4f4cd71527ce0af97681c600704536a1b",
         "download_bytes": 66164
       }
@@ -74,15 +74,15 @@
         "version": "1.1.0",
         "author": "a1.lol",
         "license": "MIT",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/katana.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/katana.dtewcord-extension",
       "sha256": "cf4ef3755d9208e700ee721b66edad3fceb4f26e52d09b82e645bf49070f1a15",
       "download_bytes": 994,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/katana.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/katana.png",
         "sha256": "693726039bd2edac1d44bdaa624c7b2bb3cf3e5245b87316a925418902097b06",
         "download_bytes": 66257
       }
@@ -95,15 +95,15 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/latte.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/latte.dtewcord-extension",
       "sha256": "a3c3ac481e6d4039a5df26a0e58583add79e638f7a58a6fae309d1beb74a468d",
       "download_bytes": 1452,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/latte.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/latte.png",
         "sha256": "3c0a7016eb6994d1be6fb27368a06cd717657f4a042db7647255d7cbd6387275",
         "download_bytes": 65904
       }
@@ -116,15 +116,15 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/midnight.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/midnight.dtewcord-extension",
       "sha256": "f7ffb0acdb7269f1e2fdb235536870cef344f3fac761543174ddc091bb2aebb6",
       "download_bytes": 1458,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/midnight.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/midnight.png",
         "sha256": "81eb4c6bd634cc7e624a7d9714ae2503e8e05260470b7ff0af63daa3e0a98c16",
         "download_bytes": 65740
       }
@@ -137,15 +137,15 @@
         "version": "1.0.0",
         "author": "a1.lol",
         "license": "MIT",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/obsidian.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/obsidian.dtewcord-extension",
       "sha256": "e42cb1ad38f0c495375343bb8e64852ccb98a5a860293cd9ce3a86bbec1f0dd5",
       "download_bytes": 1838,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/obsidian.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/obsidian.png",
         "sha256": "8860202e554147302139d5664714d65bdf6b94e8729228d4937a25c55f405588",
         "download_bytes": 66162
       }
@@ -158,15 +158,15 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/ocean.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/ocean.dtewcord-extension",
       "sha256": "7309d84495dc4487ccb3e3355fd704c79dd8f68b14a3441ccc7ea5bda5ef9be8",
       "download_bytes": 958,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/ocean.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/ocean.png",
         "sha256": "7fd9532d983c52ec9f86a345d23e2c6822597ca29a34833958be816e0bcc1913",
         "download_bytes": 85376
       }
@@ -179,15 +179,15 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/rose.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/rose.dtewcord-extension",
       "sha256": "bf8ad0dc259c375fbce786591530f0c2121cf336e63fc39daac11a2fc000087c",
       "download_bytes": 1450,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/rose.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/rose.png",
         "sha256": "c5b3380a76863535afb52314db03240cf86f481e7805f73ac3cd6789a404980b",
         "download_bytes": 65114
       }
@@ -200,17 +200,17 @@
         "version": "1.0.0",
         "author": "a1.lol",
         "license": "CC0-1.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme",
         "capabilities": [],
         "actions": []
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/soft-white.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/soft-white.dtewcord-extension",
       "sha256": "e981bf8d1230bf540e531d49eecde1f06769e635b55ba2b4eb376dab668248a0",
       "download_bytes": 5860518,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/soft-white.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/soft-white.png",
         "sha256": "dbe0d64360c5eba021b03122cae6776a9f05585f5335c47580684e7d3ac73e60",
         "download_bytes": 110890
       }
@@ -223,15 +223,15 @@
         "version": "1.0.0",
         "author": "a1.lol",
         "license": "MIT",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "theme"
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/themes/teal.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/themes/teal.dtewcord-extension",
       "sha256": "1c794d14b12bb470164e2c220051de7c20b13de8175390595a559f551bb6409a",
       "download_bytes": 1827,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/teal.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/teal.png",
         "sha256": "07f686309198ce01ddf28bbc9e1d07b91fac27949e4e4c769c3c88e084b6c36c",
         "download_bytes": 65843
       }
@@ -268,12 +268,12 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/api-proxy.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/api-proxy.dtewcord-extension",
       "sha256": "e6ce691505357f3e19d5db33762e8d54da355a35b19fde309edec04fc0a7a85c",
       "download_bytes": 920979,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/api-proxy.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/api-proxy.png",
         "sha256": "3764a08ea4cfda49a365bdf79480b61753130c6cf623083ef64410a88ddb64a1",
         "download_bytes": 69881
       }
@@ -325,12 +325,12 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/custom-rpc.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/custom-rpc.dtewcord-extension",
       "sha256": "f6f70f0f537052910a6e5497bf4d40a6d8d7e5ece3be4d4678a09d872e31b0ac",
       "download_bytes": 409132,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/custom-rpc.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/custom-rpc.png",
         "sha256": "32a89d15bce3c35b0d2d176f4a0fc2c30dc1be01bdd0db6a634910fdacb1bac9",
         "download_bytes": 43030
       }
@@ -343,7 +343,7 @@
         "version": "1.0.3",
         "author": "Equicord/Vencord contributors; Serein port contributors",
         "license": "GPL-3.0-or-later",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord/tree/main/extensions/plugins/external-search-tools",
+        "source": "https://github.com/ViceVerse-cz/Serein/tree/main/extensions/plugins/external-search-tools",
         "kind": "plugin",
         "capabilities": [
           "selected_message",
@@ -373,10 +373,10 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/external-search-tools.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/external-search-tools.dtewcord-extension",
       "sha256": "4cf8ebba8c82731a7478b874fbe54556e03d239a74eae49c4114f1cafdff8e8d",
       "download_bytes": 1853128,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f"
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2"
     },
     {
       "manifest": {
@@ -386,7 +386,7 @@
         "version": "1.0.0",
         "author": "Serein contributors",
         "license": "MIT OR Apache-2.0",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord",
+        "source": "https://github.com/ViceVerse-cz/Serein",
         "kind": "plugin",
         "capabilities": [
           "deleted_messages"
@@ -399,12 +399,12 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/message-delete-protector.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/message-delete-protector.dtewcord-extension",
       "sha256": "dffd601e3b85b17ae9bacc6deedc526e225c3ee81072ee5e8e64981da03bf6f9",
       "download_bytes": 338103,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f",
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2",
       "preview": {
-        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/previews/message-delete-protector.png",
+        "url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/previews/message-delete-protector.png",
         "sha256": "729063ad60d977fef21d630e07e09677ce07836b1a6bd18d447c3541af5a938c",
         "download_bytes": 65905
       }
@@ -417,7 +417,7 @@
         "version": "1.0.2",
         "author": "Equicord/Vencord contributors; Serein port contributors",
         "license": "GPL-3.0-or-later",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord/tree/main/extensions/plugins/offline-composer-tools",
+        "source": "https://github.com/ViceVerse-cz/Serein/tree/main/extensions/plugins/offline-composer-tools",
         "kind": "plugin",
         "capabilities": [
           "composer"
@@ -450,10 +450,10 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/offline-composer-tools.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/offline-composer-tools.dtewcord-extension",
       "sha256": "4341b10ba13b0c0ac6a358792be121db5af6a936f0a75bcca0e8bf24e507a1cf",
       "download_bytes": 1157194,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f"
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2"
     },
     {
       "manifest": {
@@ -463,7 +463,7 @@
         "version": "1.0.1",
         "author": "Equicord/Vencord contributors; Serein port contributors",
         "license": "GPL-3.0-or-later",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord/tree/main/extensions/plugins/text-commands",
+        "source": "https://github.com/ViceVerse-cz/Serein/tree/main/extensions/plugins/text-commands",
         "kind": "plugin",
         "capabilities": [
           "composer",
@@ -517,10 +517,10 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/text-commands.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/text-commands.dtewcord-extension",
       "sha256": "a6d2f111abb5cfdbc4906ca0503c3ab4c8fd5a0bccc2e25cf4cfb1933e5e7abe",
       "download_bytes": 596352,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f"
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2"
     },
     {
       "manifest": {
@@ -530,7 +530,7 @@
         "version": "1.0.1",
         "author": "Equicord/Vencord contributors; Serein port contributors",
         "license": "GPL-3.0-or-later",
-        "source": "https://github.com/tacobellerontop-sudo/doesthisevenwork-cord/tree/main/extensions/plugins/view-raw-message",
+        "source": "https://github.com/ViceVerse-cz/Serein/tree/main/extensions/plugins/view-raw-message",
         "kind": "plugin",
         "capabilities": [
           "selected_message"
@@ -543,10 +543,10 @@
           }
         ]
       },
-      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/3abae434ebd9545fdbed044613653f917a27c19f/extensions/plugins/packages/view-raw-message.dtewcord-extension",
+      "release_url": "https://raw.githubusercontent.com/tacobellerontop-sudo/doesthisevenwork-cord/a49fcd68b8316f9de308c2d52eaea1b116fb57a2/extensions/plugins/packages/view-raw-message.dtewcord-extension",
       "sha256": "b0c45fcd93f9efb209b0a44df745f15e7ffc46ce1498e69ffe46dd4001fe3349",
       "download_bytes": 1358624,
-      "source_commit": "3abae434ebd9545fdbed044613653f917a27c19f"
+      "source_commit": "a49fcd68b8316f9de308c2d52eaea1b116fb57a2"
     }
   ]
 }
