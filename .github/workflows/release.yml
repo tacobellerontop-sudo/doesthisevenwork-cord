@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   CARGO_TERM_COLOR: always
   CARGO_PROFILE_RELEASE_DEBUG: "0"
@@ -121,6 +125,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag || github.ref }}
+      # apple-metal's Swift bridge uses macOS 26 SDK symbols.
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
       - uses: Swatinem/rust-cache@v2
       - name: Package
         run: cargo run --locked -p xtask -- package
