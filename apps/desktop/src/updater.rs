@@ -534,25 +534,10 @@ fn release_version(tag: &str) -> Option<semver::Version> {
 	}
 	semver::Version::parse(tag.strip_prefix('v')?).ok()
 }
+/// Releases publish a Windows package only. Other platforms still see that a newer version
+/// exists, but there is nothing for the app to download and install.
 fn asset_name(tag: &str) -> Option<String> {
-	if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
-		return install::appimage_session().then(|| format!("dtewcord-{tag}-Linux-X64.AppImage"));
-	}
-	let os = if cfg!(target_os = "macos") {
-		"macOS"
-	} else if cfg!(windows) {
-		"Windows"
-	} else {
-		return None;
-	};
-	let arch = if cfg!(target_arch = "aarch64") {
-		"ARM64"
-	} else if cfg!(target_arch = "x86_64") {
-		"X64"
-	} else {
-		return None;
-	};
-	Some(format!("dtewcord-{tag}-{os}-{arch}.zip"))
+	cfg!(all(windows, target_arch = "x86_64")).then(|| format!("dtewcord-{tag}-Windows-X64.zip"))
 }
 fn on_channel(release: &Release, version: &semver::Version, nightly: bool) -> bool {
 	let is_nightly = version.pre.as_str().starts_with("nightly.");
