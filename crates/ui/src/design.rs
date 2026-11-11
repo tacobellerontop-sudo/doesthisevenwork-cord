@@ -2913,10 +2913,17 @@ pub fn row<R>(
 	let title = crate::i18n::translate_if_key(title);
 	let detail = detail.map(crate::i18n::translate_if_key);
 	let p = palette(ui);
+	const GAP: f32 = 12.0;
 	let width = ui.available_width();
-	let text_width = (width * 0.55).max(120.0);
+	// The text column takes what the controls leave. A fixed 55% share let wide controls (a
+	// colour well, hex code and "Use default") spill left over the description, so the
+	// controls' width from the previous frame is remembered and the frame is redone on change.
+	let key = ui.make_persistent_id(("settings-row-controls", &title));
+	let remembered: Option<f32> = ui.data(|data| data.get_temp(key));
+	let control_width = remembered.unwrap_or(width * 0.45 - GAP);
+	let text_width = (width - control_width - GAP).max(width.min(120.0));
 	ui.horizontal(|ui| {
-		ui.spacing_mut().item_spacing.x = 12.0;
+		ui.spacing_mut().item_spacing.x = GAP;
 		ui.allocate_ui_with_layout(
 			egui::vec2(text_width, 0.0),
 			egui::Layout::top_down(egui::Align::Min),
@@ -2930,8 +2937,13 @@ pub fn row<R>(
 				}
 			},
 		);
-		ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control)
-			.inner
+		let controls = ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), control);
+		let used = controls.response.rect.width().min(width);
+		if remembered.is_none_or(|old| (old - used).abs() > 0.5) {
+			ui.data_mut(|data| data.insert_temp(key, used));
+			ui.ctx().request_discard("settings row controls resized");
+		}
+		controls.inner
 	})
 	.inner
 }

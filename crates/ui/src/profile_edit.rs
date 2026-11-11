@@ -582,8 +582,7 @@ fn preview(
 	let rgb = |c: u32| egui::Color32::from_rgb((c >> 16) as u8, (c >> 8) as u8, c as u8);
 	ui.scope(|ui| {
 		let background = ui.painter().add(egui::Shape::Noop);
-		ui.visuals_mut().override_text_color = Some(theme.text);
-		ui.visuals_mut().hyperlink_color = theme.link;
+		theme.apply_to(ui.visuals_mut());
 		ui.set_width(ui.available_width());
 		ui.spacing_mut().item_spacing.y = 0.0;
 		{
@@ -696,7 +695,13 @@ fn preview(
 							}
 							if !draft.bio.is_empty() {
 								ui.add_space(8.0);
-								ui.separator();
+								// Card-coloured rule: `apply_to` clears the app theme's stroke.
+								let (rule, _) = ui.allocate_exact_size(
+									egui::vec2(ui.available_width(), 1.0),
+									egui::Sense::hover(),
+								);
+								ui.painter()
+									.rect_filled(rule, 0, theme.muted.gamma_multiply(0.4));
 								ui.add_space(8.0);
 								ui.label(design::eyebrow(
 									ui,
