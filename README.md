@@ -25,6 +25,7 @@ Serein is an unofficial Discord client written in Rust. This trimmed source arch
 | `crates/ui` | Existing egui desktop presentation layer |
 | `crates/test-support` | Test fixtures and synthetic support utilities |
 | `apps/desktop` | Existing desktop executable and composition root |
+| `apps/slint` | Slint client on the same login and backend crates (see `apps/slint/README.md`) |
 | `extensions/` | Extension SDK, plugins, themes and catalog |
 | `vendor/` | Patched dependencies referenced by the workspace manifest |
 | `assets/` | Fonts, icons, sounds, emoji and license/provenance notices |

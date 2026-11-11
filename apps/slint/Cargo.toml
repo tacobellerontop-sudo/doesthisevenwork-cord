@@ -1,0 +1,39 @@
+[package]
+name = "serein-slint"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Serein chat client built with Slint, on the same login and backend crates as the egui desktop app"
+
+[[bin]]
+name = "serein-slint"
+path = "src/main.rs"
+
+[features]
+default = []
+# Offline synthetic data from test-support; never contacts Discord.
+demo = ["dep:test-support"]
+
+[dependencies]
+client-core.workspace = true
+discord-api.workspace = true
+discord-gateway.workspace = true
+model.workspace = true
+platform.workspace = true
+tokio.workspace = true
+winit.workspace = true
+test-support = { workspace = true, optional = true }
+url.workspace = true
+time = { workspace = true, features = ["local-offset"] }
+slint = { version = "=1.18.1", default-features = false, features = ["std", "compat-1-2", "backend-winit", "renderer-femtovg", "accessibility", "unstable-winit-030"] }
+
+[dev-dependencies]
+test-support.workspace = true
+
+[build-dependencies]
+slint-build = "=1.18.1"
+
+[lints.rust]
+# The workspace forbids unsafe code. Slint's generated item tree needs `unsafe`, so this crate
+# denies it instead and allows it only inside the generated `ui` module.
+unsafe_code = "deny"
