@@ -3675,8 +3675,7 @@ impl MessagingUi {
 					.as_ref()
 					.is_none_or(|call| call.channel != *channel)
 		});
-		if let Some(channel) = state.voice.incoming.or(existing) {
-			let incoming = state.voice.incoming == Some(channel);
+		if let Some(channel) = state.voice.incoming {
 			let conversation = state.channel(channel).cloned();
 			let name = state
 				.channels
@@ -3709,43 +3708,25 @@ impl MessagingUi {
 						}
 						ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 							ui.spacing_mut().item_spacing.x = 8.0;
-							if incoming {
-								let decline = round_action(
-									ui,
-									crate::icons::Icon::HangUp,
-									colors.danger,
-									!state.demo,
-									"Decline",
-								);
-								if decline.clicked()
-									&& let Some(command) = state.decline_call()
-								{
-									commands.push(command);
-								}
+							let decline = round_action(
+								ui,
+								crate::icons::Icon::HangUp,
+								colors.danger,
+								!state.demo,
+								"Decline",
+							);
+							if decline.clicked()
+								&& let Some(command) = state.decline_call()
+							{
+								commands.push(command);
 							}
-							let answer = if incoming {
-								round_action(
-									ui,
-									crate::icons::Icon::Phone,
-									colors.positive,
-									unavailable.is_none(),
-									"Answer",
-								)
-							} else {
-								ui.add_enabled(
-									unavailable.is_none(),
-									egui::Button::new(
-										design::medium(
-											ui,
-											crate::i18n::translate("voice-call-bar-join-call"),
-											13.0,
-										)
-										.color(egui::Color32::WHITE),
-									)
-									.fill(colors.positive)
-									.min_size(egui::vec2(84.0, 36.0)),
-								)
-							}
+							let answer = round_action(
+								ui,
+								crate::icons::Icon::Phone,
+								colors.positive,
+								unavailable.is_none(),
+								"Answer",
+							)
 							.on_disabled_hover_text(unavailable.unwrap_or(""));
 							if answer.clicked() {
 								self.request_call(state, channel, false, commands);
@@ -3764,14 +3745,8 @@ impl MessagingUi {
 										);
 										ui.label(
 											RichText::new(crate::i18n::translate_if_key(
-												if incoming {
-													unavailable
-														.unwrap_or("voice-call-bar-incoming-call")
-												} else if !state.gateway_connected {
-													"voice-call-bar-reconnect-to-refresh-call"
-												} else {
-													"voice-call-bar-call-in-progress"
-												},
+												unavailable
+													.unwrap_or("voice-call-bar-incoming-call"),
 											))
 											.size(13.0)
 											.color(colors.muted),
@@ -3782,6 +3757,165 @@ impl MessagingUi {
 						});
 					});
 				});
+		} else if let Some(channel) = existing {
+			self.existing_call_stage(ui, state, channel, commands);
+		}
+	}
+
+	/// A private call this device has not joined: who is in it, then a Join call button.
+	fn existing_call_stage(
+		&mut self,
+		ui: &mut egui::Ui,
+		state: &mut State,
+		channel: Id,
+		commands: &mut Vec<Command>,
+	) {
+		const AVATAR: f32 = 56.0;
+		const TILE: f32 = 104.0;
+		let colors = design::palette(ui);
+		let unavailable = self.call_unavailable(state, channel);
+		let people: Vec<(Option<model::User>, String)> = state
+			.voice
+			.dm_participants(channel)
+			.iter()
+			.map(|participant| {
+				let user = participant_user(state, channel, participant.user).cloned();
+				let name = user
+					.as_ref()
+					.map_or_else(|| "Participant".to_owned(), |u| u.name.clone());
+				(user, name)
+			})
+			.collect();
+		let status = if !state.gateway_connected {
+			Some("voice-call-bar-reconnect-to-refresh-call")
+		} else if people.is_empty() {
+			Some("voice-call-bar-call-in-progress")
+		} else {
+			None
+		};
+		let conversation = state.channel(channel).cloned();
+		egui::Panel::top("dm-existing-call")
+			.show_separator_line(false)
+			.frame(
+				egui::Frame::new()
+					.fill(STAGE_FILL)
+					.inner_margin(egui::Margin::symmetric(16, 16)),
+			)
+			.show(ui, |ui| {
+				// The stage stays black in every theme, like the joined call above it.
+				ui.visuals_mut().dark_mode = true;
+				ui.vertical_centered(|ui| {
+					ui.spacing_mut().item_spacing = egui::vec2(TILE_GAP, 8.0);
+					let width = ui.available_width();
+					let fits = ((width + TILE_GAP) / (TILE + TILE_GAP)).floor().max(1.0) as usize;
+					let shown = if people.len() > fits {
+						fits.saturating_sub(1)
+					} else {
+						people.len()
+					};
+					let extra = people.len() - shown;
+					let tiles = (shown + usize::from(extra > 0)).max(1);
+					let row = tiles as f32 * TILE + (tiles - 1) as f32 * TILE_GAP;
+					ui.horizontal(|ui| {
+						ui.add_space(((width - row) * 0.5).max(0.0));
+						if people.is_empty() {
+							// Nobody reported yet: the conversation stands in for the call.
+							tile(ui, |ui| match conversation.as_ref() {
+								Some(group) if group.kind == 3 => {
+									self.avatars.show_group(ui, group, AVATAR, state.demo);
+								}
+								Some(dm) if dm.kind == 1 && !dm.recipients.is_empty() => {
+									self.avatars.show(ui, &dm.recipients[0], AVATAR, state.demo);
+								}
+								other => {
+									design::avatar(
+										ui,
+										other.map_or("Direct message", |c| c.name.as_str()),
+										AVATAR,
+									);
+								}
+							});
+						}
+						for (user, name) in &people[..shown] {
+							tile(ui, |ui| {
+								match user {
+									Some(user) => self.avatars.show(ui, user, AVATAR, state.demo),
+									None => design::avatar(ui, name, AVATAR),
+								};
+								ui.add(
+									egui::Label::new(
+										RichText::new(name).size(13.0).color(STAGE_TEXT),
+									)
+									.truncate(),
+								);
+							});
+						}
+						if extra > 0 {
+							tile(ui, |ui| {
+								let label = format!("+{extra}");
+								let (rect, response) = ui.allocate_exact_size(
+									egui::Vec2::splat(AVATAR),
+									egui::Sense::hover(),
+								);
+								ui.painter()
+									.circle_filled(rect.center(), AVATAR * 0.5, TILE_FILL);
+								ui.painter().text(
+									rect.center(),
+									egui::Align2::CENTER_CENTER,
+									&label,
+									egui::FontId::proportional(18.0),
+									STAGE_TEXT,
+								);
+								let names = people[shown..]
+									.iter()
+									.map(|(_, name)| name.as_str())
+									.collect::<Vec<_>>()
+									.join("\n");
+								response.on_hover_text(names);
+							});
+						}
+					});
+					if let Some(status) = status {
+						ui.label(
+							RichText::new(crate::i18n::translate(status))
+								.size(13.0)
+								.color(STAGE_MUTED),
+						);
+					}
+					ui.add_space(4.0);
+					let join = ui
+						.add_enabled(
+							unavailable.is_none(),
+							egui::Button::new(
+								design::medium(
+									ui,
+									crate::i18n::translate("voice-call-bar-join-call"),
+									14.0,
+								)
+								.color(egui::Color32::WHITE),
+							)
+							.fill(colors.positive)
+							.corner_radius(8)
+							.min_size(egui::vec2(120.0, 36.0)),
+						)
+						.on_disabled_hover_text(unavailable.unwrap_or(""));
+					if join.clicked() {
+						self.request_call(state, channel, false, commands);
+					}
+				});
+			});
+
+		/// One fixed-width column: avatar on top, name underneath.
+		fn tile(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui)) {
+			ui.allocate_ui_with_layout(
+				egui::vec2(TILE, AVATAR + 24.0),
+				egui::Layout::top_down(egui::Align::Center),
+				|ui| {
+					ui.set_width(TILE);
+					ui.spacing_mut().item_spacing.y = 6.0;
+					add(ui);
+				},
+			);
 		}
 	}
 
@@ -5590,6 +5724,74 @@ mod tests {
 		view.apply_ring_request(&mut state, &mut commands);
 		assert!(commands.is_empty());
 		assert!(view.ring_request.is_none());
+	}
+
+	#[test]
+	fn existing_dm_call_shows_who_is_in_the_call() {
+		fn labels(shape: &egui::Shape, out: &mut Vec<String>) {
+			match shape {
+				egui::Shape::Text(text) => out.push(text.galley.job.text.clone()),
+				egui::Shape::Vec(shapes) => shapes.iter().for_each(|shape| labels(shape, out)),
+				_ => {}
+			}
+		}
+		fn text(state: &mut State, width: f32) -> Vec<String> {
+			let ctx = egui::Context::default();
+			let mut messaging = MessagingUi {
+				voice_available: true,
+				..Default::default()
+			};
+			let mut out = vec![];
+			for _ in 0..2 {
+				out.clear();
+				let mut commands = vec![];
+				let mut output = ctx.run_ui(
+					egui::RawInput {
+						screen_rect: Some(egui::Rect::from_min_size(
+							egui::Pos2::ZERO,
+							egui::vec2(width, 480.0),
+						)),
+						..Default::default()
+					},
+					|ui| messaging.call_bar(ui, state, &mut commands, None),
+				);
+				output.textures_delta.clear();
+				assert!(commands.is_empty(), "Showing a call must never join");
+				for shape in output.shapes {
+					labels(&shape.shape, &mut out);
+				}
+			}
+			out
+		}
+		let participant = |user| Participant {
+			user,
+			muted: false,
+			deafened: false,
+			server_muted: false,
+			server_deafened: false,
+			video: false,
+			streaming: false,
+		};
+		let mut state = test_support::existing_call_demo_state();
+		state.demo = false;
+		let peer = state.channel(Id(22)).unwrap().recipients[0].clone();
+		let own = state.user.clone().unwrap();
+		state.apply_voice(client_core::voice::Event::Call {
+			channel: Id(22),
+			ringing: Some(vec![]),
+			participants: Some(vec![participant(peer.id), participant(own.id)]),
+			unavailable: false,
+		});
+		assert!(state.voice.incoming.is_none() && state.voice.active.is_none());
+		let shown = text(&mut state, 900.0);
+		assert!(shown.iter().any(|label| *label == peer.name), "{shown:?}");
+		assert!(shown.iter().any(|label| *label == own.name), "{shown:?}");
+		assert!(shown.iter().any(|label| label == "Join call"));
+		assert!(!shown.iter().any(|label| label == "Call in progress"));
+		// Too narrow for every tile: the rest collapse into a count.
+		let narrow = text(&mut state, 150.0);
+		assert!(narrow.iter().any(|label| label == "+2"), "{narrow:?}");
+		assert!(narrow.iter().any(|label| label == "Join call"));
 	}
 
 	#[test]

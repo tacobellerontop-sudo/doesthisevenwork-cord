@@ -1437,6 +1437,8 @@ impl Desktop {
 					test_support::voice_demo_state()
 				} else if std::env::args().any(|arg| arg == "--demo-existing-call") {
 					test_support::existing_call_demo_state()
+				} else if std::env::args().any(|arg| arg == "--demo-existing-group-call") {
+					test_support::existing_group_call_demo_state()
 				} else if std::env::args()
 					.any(|arg| matches!(arg.as_str(), "--demo-call" | "--demo-call-stream"))
 				{

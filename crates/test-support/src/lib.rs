@@ -890,6 +890,41 @@ pub fn existing_call_demo_state() -> State {
 	state.status = "Offline call fixture · no microphone or network access";
 	state
 }
+/// Synthetic ongoing group call on other clients, with its members known; never joined here.
+pub fn existing_group_call_demo_state() -> State {
+	let mut state = demo_state();
+	let channel = Id(29);
+	let _ = state.select(channel);
+	load_page(&mut state, None);
+	state.demo = false;
+	let participants = state
+		.channel(channel)
+		.map(|group| {
+			group
+				.recipients
+				.iter()
+				.map(|user| client_core::voice::Participant {
+					user: user.id,
+					muted: false,
+					deafened: false,
+					server_muted: false,
+					server_deafened: false,
+					video: false,
+					streaming: false,
+				})
+				.collect()
+		})
+		.unwrap_or_default();
+	state.apply_voice(client_core::voice::Event::Call {
+		channel,
+		ringing: Some(vec![]),
+		participants: Some(participants),
+		unavailable: false,
+	});
+	state.demo = true;
+	state.status = "Offline call fixture · no microphone or network access";
+	state
+}
 pub fn load_page(state: &mut State, before: Option<Id>) {
 	load_page_with_cursors(state, before, None);
 }
