@@ -7,7 +7,7 @@ tag must match the workspace version in `Cargo.toml`.
 
 | Path | Used for |
 |---|---|
-| `windows/dtewcord.rc`, `windows/DTEW Cord.ico` | The executable's icon and version resource |
+| `windows/dtewcord.rc`, `windows/dtewcord-slint.rc`, `windows/DTEW Cord.ico` | Each executable's icon and version resource (`tools/generate-brand.py` renders the `.ico`) |
 | `windows/install-notifications.ps1` | Start Menu shortcut with the app id, needed for Windows notifications |
 | `release-notes/<tag>.md` | GitHub release notes; the in-app updater shows its `###` sections and `-` items |
 
