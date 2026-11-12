@@ -831,6 +831,9 @@ pub struct State {
 	pub member_search_nonce: u64,
 	pub direct_presences: Vec<MemberPresence>,
 	pub local_game_activity: Option<model::RichActivity>,
+	/// This account's chosen status and custom status, as the account menu set them. Discord
+	/// never echoes our own presence back, so lists show it from here.
+	pub local_own_presence: Option<(model::PresenceStatus, String)>,
 	#[doc(hidden)]
 	pub direct_presence_bytes: Option<(usize, usize)>,
 	#[doc(hidden)]
@@ -1068,6 +1071,7 @@ impl Default for State {
 			game_mentions: Default::default(),
 			direct_presences: vec![],
 			local_game_activity: Default::default(),
+			local_own_presence: None,
 			direct_presence_bytes: None,
 			direct_presence_epoch: 0,
 			direct_presence_lossy: false,

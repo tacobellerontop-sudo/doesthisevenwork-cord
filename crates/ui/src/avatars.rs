@@ -72,6 +72,11 @@ pub(crate) struct Avatars {
 	/// Hidden cosmetics are neither painted nor requested.
 	pub cosmetics: model::CosmeticPreferences,
 	avatar_animation: bool,
+	/// Paints stills in greyscale, for offline people; see [`Avatars::with_greyscale`].
+	greyscale: bool,
+	/// Greyscale copies of fitted stills, by image key: (edge, texture).
+	greys: HashMap<String, (u32, TextureHandle)>,
+	grey_bytes: usize,
 	animations: HashMap<String, Animation>,
 	no_animations: HashSet<String>,
 	/// Animated keys whose frames were released or declined; they reload only when they would play.
@@ -145,6 +150,19 @@ impl Animation {
 
 		ctx.request_repaint_after(frame_remaining.max(Duration::from_millis(1)));
 		self.texture.clone()
+	}
+}
+
+/// Budget for greyscale copies; they are small avatar stills, rebuilt on demand.
+const GREY_BYTES: usize = 8 * 1024 * 1024;
+
+/// Rec. 601 luma per pixel, keeping alpha. Pixels are premultiplied, so luma stays within it.
+fn desaturate(image: &mut ColorImage) {
+	for pixel in image.pixels_mut() {
+		let [r, g, b, a] = pixel.to_array();
+		let luma = ((u32::from(r) * 299 + u32::from(g) * 587 + u32::from(b) * 114 + 500) / 1000)
+			.min(u32::from(a)) as u8;
+		*pixel = egui::Color32::from_rgba_premultiplied(luma, luma, luma, a);
 	}
 }
 
@@ -422,6 +440,9 @@ impl Avatars {
 		}
 	}
 	fn forget_raster(&mut self, key: &str) {
+		if let Some((_, texture)) = self.greys.remove(key) {
+			self.grey_bytes = self.grey_bytes.saturating_sub(texture.byte_size());
+		}
 		if let Some(image) = self.sources.remove(key) {
 			self.source_bytes = self.source_bytes.saturating_sub(image.pixels().len() * 4);
 		}
@@ -1310,8 +1331,67 @@ impl Avatars {
 			animated_texture.unwrap_or_else(|| entry.1.clone())
 		};
 		let texture = self.coverage(ui.ctx(), key, &full, animated, rect);
-		paint_texture(ui, &texture, rect, radius, cover, egui::Color32::WHITE);
+		let texture = if self.greyscale && !animated {
+			self.grey(ui.ctx(), key, &texture)
+		} else {
+			Some(texture)
+		};
+		match texture {
+			Some(texture) => {
+				paint_texture(ui, &texture, rect, radius, cover, egui::Color32::WHITE);
+			}
+			// No pixels to desaturate yet: dim the colour copy instead.
+			None => {
+				paint_texture(
+					ui,
+					&full,
+					rect,
+					radius,
+					cover,
+					egui::Color32::from_gray(140),
+				);
+			}
+		}
 		true
+	}
+	/// The greyscale copy of a still at `fitted`'s size, made once from its source pixels.
+	fn grey(
+		&mut self,
+		ctx: &egui::Context,
+		key: &str,
+		fitted: &TextureHandle,
+	) -> Option<TextureHandle> {
+		let edge = fitted.resolution()[0].max(fitted.resolution()[1]) as u32;
+		if let Some((cached, texture)) = self.greys.get(key)
+			&& *cached == edge
+		{
+			return Some(texture.clone());
+		}
+		let source = self.raster_pixels(key, false)?;
+		let source_edge = source.resolution()[0].max(source.resolution()[1]) as u32;
+		let mut image = if edge < source_edge {
+			crate::resample::downscale(&source, edge)
+		} else {
+			(*source).clone()
+		};
+		desaturate(&mut image);
+		if self.grey_bytes > GREY_BYTES {
+			self.greys.clear();
+			self.grey_bytes = 0;
+		}
+		let texture = ctx.load_texture("grey-image", image, egui::TextureOptions::LINEAR);
+		self.grey_bytes += texture.byte_size();
+		if let Some((_, old)) = self.greys.insert(key.to_owned(), (edge, texture.clone())) {
+			self.grey_bytes = self.grey_bytes.saturating_sub(old.byte_size());
+		}
+		Some(texture)
+	}
+	/// Paint stills (avatars, decorations) in greyscale while `active`, as offline people show.
+	pub fn with_greyscale<R>(&mut self, active: bool, draw: impl FnOnce(&mut Self) -> R) -> R {
+		let previous = std::mem::replace(&mut self.greyscale, active);
+		let result = draw(self);
+		self.greyscale = previous;
+		result
 	}
 	pub fn show_group(
 		&mut self,
@@ -1835,6 +1915,24 @@ fn synthetic_gif(gif: &model::Gif) -> ColorImage {
 
 #[cfg(test)]
 mod tests {
+	#[test]
+	fn greyscale_keeps_alpha_and_brightness_order() {
+		let mut image = ColorImage::new(
+			[3, 1],
+			vec![
+				egui::Color32::from_rgb(255, 0, 0),
+				egui::Color32::from_rgb(0, 255, 0),
+				egui::Color32::from_rgba_premultiplied(40, 40, 40, 40),
+			],
+		);
+		desaturate(&mut image);
+		let [red, green, clear] = [image.pixels()[0], image.pixels()[1], image.pixels()[2]];
+		assert!(red.r() == red.g() && red.g() == red.b() && red.a() == 255);
+		assert!(green.r() > red.r());
+		assert_eq!(clear.a(), 40);
+		assert!(clear.r() <= 40);
+	}
+
 	#[test]
 	fn idle_artwork_expires_without_evicting_visible_images_and_reloads() {
 		let ctx = egui::Context::default();

@@ -1305,13 +1305,18 @@ fn with_local_activity<'a>(
 	&'a [model::RichActivity],
 	model::ClientPlatforms,
 ) {
-	if state.user.as_ref().is_some_and(|own| own.id == user)
-		&& let Some(activity) = state.local_game_activity()
-	{
-		(remote.0, remote.1, std::slice::from_ref(activity), remote.3)
-	} else {
-		remote
+	if !state.user.as_ref().is_some_and(|own| own.id == user) {
+		return remote;
 	}
+	// Discord does not send us our own presence in member lists or DMs; show what we chose.
+	let (status, custom) = match state.local_own_presence() {
+		Some((status, custom)) => (Some(status), custom),
+		None => (remote.0, remote.1),
+	};
+	let activities = state
+		.local_game_activity()
+		.map_or(remote.2, std::slice::from_ref);
+	(status, custom, activities, remote.3)
 }
 
 pub(crate) fn is_spotify(activity: &model::RichActivity) -> bool {

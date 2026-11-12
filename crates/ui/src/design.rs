@@ -2871,6 +2871,12 @@ pub fn code_colors(ui: &egui::Ui) -> CodeColors {
 	}
 }
 
+/// An offline person's name: the muted text pushed a further third of the way into the
+/// list background, so it stays legible but sits clearly behind online names.
+pub fn offline_name(colors: &Palette) -> Color32 {
+	mix(colors.muted, colors.sidebar, 0.35)
+}
+
 /// Linear blend of two colours in premultiplied space; `t` = 0 keeps `a`, 1 gives `b`.
 pub fn mix(a: Color32, b: Color32, t: f32) -> Color32 {
 	let lerp = |x: u8, y: u8| (f32::from(x) + (f32::from(y) - f32::from(x)) * t).round() as u8;
