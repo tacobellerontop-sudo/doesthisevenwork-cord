@@ -6,6 +6,7 @@
 mod clock;
 mod markdown;
 mod session;
+mod theming;
 mod view;
 
 mod ui {
@@ -30,7 +31,7 @@ use std::{
 	},
 	time::{Duration, Instant},
 };
-use ui::{AppWindow, ChannelItem, GuildItem, MessageItem, Theme};
+use ui::{AppWindow, ChannelItem, GuildItem, MessageItem};
 
 /// Which screen `AppWindow.screen` shows.
 mod screen {
@@ -650,9 +651,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.enable_all()
 		.build()?;
 	let ui = AppWindow::new()?;
-	if let Ok(theme) = std::env::var("DTEWCORD_THEME") {
-		ui.global::<Theme>().set_dark(theme != "light");
-	}
+	let selection = Rc::new(RefCell::new(theming::Selection::from_env(
+		std::env::var("DTEWCORD_THEME").ok().as_deref(),
+	)));
+	selection.borrow().apply(&ui);
 
 	APP.with(|slot| {
 		*slot.borrow_mut() = Some(App {
@@ -729,8 +731,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let weak = ui.as_weak();
 	ui.on_toggle_theme(move || {
 		if let Some(ui) = weak.upgrade() {
-			let theme = ui.global::<Theme>();
-			theme.set_dark(!theme.get_dark());
+			let mut selection = selection.borrow_mut();
+			selection.dark = !selection.dark;
+			selection.apply(&ui);
 		}
 	});
 

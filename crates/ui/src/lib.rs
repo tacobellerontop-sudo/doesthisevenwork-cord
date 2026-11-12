@@ -114,6 +114,7 @@ mod setup;
 mod shortcuts;
 mod switcher;
 mod text_menu;
+pub mod themes;
 mod thumbhash;
 #[cfg(feature = "demo")]
 pub use polls::debug_poll_check;
@@ -579,8 +580,8 @@ pub struct MessagingUi {
 	mention_lookup: member_search::Search,
 	emoji_picker: emoji_picker::Picker,
 	reaction_picker: emoji_picker::Picker,
-	/// Set when the user picks a theme preset; the host persists it.
-	pub theme_variant_changed: Option<design::Variant>,
+	/// Built-in and custom themes; the host persists its selection and opens its file dialogs.
+	pub themes: themes::Themes,
 	pub primary_color: Option<[u8; 3]>,
 	pub transparency_blur: bool,
 	pub transparency: u8,

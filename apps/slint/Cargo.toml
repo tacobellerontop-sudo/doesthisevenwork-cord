@@ -19,6 +19,7 @@ client-core.workspace = true
 discord-api.workspace = true
 discord-gateway.workspace = true
 model.workspace = true
+theme.workspace = true
 platform.workspace = true
 tokio.workspace = true
 winit.workspace = true

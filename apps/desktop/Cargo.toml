@@ -31,6 +31,7 @@ futures-util.workspace = true
 zeroize.workspace = true
 platform.workspace = true
 local-store.workspace = true
+theme.workspace = true
 winit.workspace = true
 wreq.workspace = true
 rasterlottie.workspace = true

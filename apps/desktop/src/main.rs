@@ -48,6 +48,7 @@ mod slash_demo;
 mod spotify;
 mod startup;
 mod sticker_upload;
+mod theme_files;
 mod toggle_setting;
 mod tray_window;
 mod updater;
@@ -836,6 +837,8 @@ type MonitorKey = (Option<egui::Rect>, Option<f32>, Option<egui::Vec2>, bool);
 struct Desktop {
 	login: Option<platform::LoginView>,
 	captcha: captcha::Captcha,
+	/// Import and export dialogs for custom themes.
+	theme_files: theme_files::ThemeFiles,
 	connection: Option<connection::Connection>,
 	state: State,
 	messaging: ui::MessagingUi,
@@ -1621,6 +1624,9 @@ impl Desktop {
 			.last()
 			.map_or(10_000, |m| m.id.0.max(10_000));
 		let mut messaging = ui::MessagingUi::default();
+		if let Some(dir) = theme_files::library_dir(demo) {
+			messaging.themes.set_library(dir);
+		}
 		// Fixture video textures the view borrows by id; the desktop keeps them alive.
 		#[cfg_attr(not(feature = "demo"), allow(unused_mut))]
 		let mut demo_textures: Vec<egui::TextureHandle> = Vec::new();
@@ -2153,6 +2159,7 @@ impl Desktop {
 		Ok(Self {
 			login: None,
 			captcha: captcha::Captcha::default(),
+			theme_files: theme_files::ThemeFiles::default(),
 			connection: None,
 			state,
 			messaging,
@@ -4442,13 +4449,9 @@ impl Desktop {
 						ctx.set_theme(self.appearance);
 					}
 					if !self.state.demo && !self.variant_changed {
-						// Unknown keys from a newer build fall back to the default preset.
-						let variant = variant
-							.as_deref()
-							.and_then(ui::design::Variant::from_key)
-							.unwrap_or_default();
-						ui::design::set_variant(variant);
-						ui::design::apply(ctx);
+						// Unknown keys from a newer build and deleted custom themes fall back
+						// to the default theme.
+						self.messaging.themes.restore(ctx, variant.as_deref());
 					}
 					continue;
 				}
@@ -6473,11 +6476,17 @@ impl eframe::App for Desktop {
 					};
 			}
 		}
-		if let Some(variant) = self.messaging.theme_variant_changed.take() {
+		if std::mem::take(&mut self.messaging.themes.selection_changed) {
 			self.variant_changed = true;
-			let key = (variant != ui::design::Variant::Standard).then(|| variant.key().to_owned());
+			let key = self.messaging.themes.selection_key();
 			self.queue_cache_for(model::Id(0), cache::Operation::SaveThemeVariant(key));
 		}
+		self.theme_files.tick(
+			&mut self.messaging.themes,
+			&ctx,
+			&self.runtime,
+			&self.window,
+		);
 		let switch = self.messaging.switch_account_requested.take();
 		let add = std::mem::take(&mut self.messaging.add_account_requested);
 		let forget = self.messaging.forget_account_requested.take();

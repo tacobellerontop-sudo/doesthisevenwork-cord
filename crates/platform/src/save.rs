@@ -151,6 +151,40 @@ pub fn text_destination(
 	}
 }
 
+/// A DTEW Cord theme file to import.
+pub fn theme_file_source(
+	parent: Arc<winit::window::Window>,
+) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
+	let dialog = rfd::AsyncFileDialog::new()
+		.set_parent(parent.as_ref())
+		.set_title("Import DTEW Cord theme")
+		.add_filter("DTEW Cord theme", &["json"])
+		.pick_file();
+	async move {
+		let file = dialog.await?;
+		drop(parent);
+		Some(file.path().to_owned())
+	}
+}
+
+/// Where to save a copy of a DTEW Cord theme file.
+pub fn theme_file_destination(
+	parent: Arc<winit::window::Window>,
+	filename: &str,
+) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
+	let dialog = rfd::AsyncFileDialog::new()
+		.set_parent(parent.as_ref())
+		.set_title("Export DTEW Cord theme")
+		.set_file_name(safe_filename(filename))
+		.add_filter("DTEW Cord theme", &["json"])
+		.save_file();
+	async move {
+		let file = dialog.await?;
+		drop(parent);
+		Some(file.path().to_owned())
+	}
+}
+
 /// Publish a completed sibling file without replacing a concurrently created destination.
 /// Native exclusive rename also works on volumes that do not support hard links.
 #[allow(unsafe_code)]

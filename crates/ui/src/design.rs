@@ -76,86 +76,8 @@ pub fn rail_name(response: &egui::Response, name: impl AsRef<str>) {
 	painter.galley(rect.min + margin.left_top(), galley, text_color);
 }
 
-/// Recolour preset layered over the light/dark preference.
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
-#[repr(u8)]
-pub enum Variant {
-	/// The house palette: neutral grey surfaces, following the light/dark preference.
-	#[default]
-	Standard = 0,
-	/// Deep black surfaces for OLED displays.
-	Eclipse = 1,
-	/// Lighter blue-grey surfaces.
-	Slate = 2,
-	Nightfall = 3,
-	Ember = 4,
-	Verdant = 5,
-	Afterglow = 6,
-}
-impl Variant {
-	pub const ALL: [Variant; 7] = [
-		Variant::Standard,
-		Variant::Eclipse,
-		Variant::Slate,
-		Variant::Nightfall,
-		Variant::Ember,
-		Variant::Verdant,
-		Variant::Afterglow,
-	];
-	pub fn label(self) -> &'static str {
-		match self {
-			Variant::Standard => "DTEW Cord",
-			Variant::Eclipse => "Eclipse",
-			Variant::Slate => "Slate",
-			Variant::Nightfall => "Nightfall",
-			Variant::Ember => "Ember",
-			Variant::Verdant => "Verdant",
-			Variant::Afterglow => "Afterglow",
-		}
-	}
-	/// Stable identifier for persistence.
-	pub fn key(self) -> &'static str {
-		match self {
-			Variant::Standard => "standard",
-			Variant::Eclipse => "eclipse",
-			Variant::Slate => "slate",
-			Variant::Nightfall => "nightfall",
-			Variant::Ember => "ember",
-			Variant::Verdant => "verdant",
-			Variant::Afterglow => "afterglow",
-		}
-	}
-	/// Keys written by builds that shipped the previous theme names.
-	fn legacy_key(self) -> &'static str {
-		match self {
-			Variant::Standard => "standard",
-			Variant::Eclipse => "onyx",
-			Variant::Slate => "ash",
-			Variant::Nightfall => "midnight-blurple",
-			Variant::Ember => "crimson-moon",
-			Variant::Verdant => "forest",
-			Variant::Afterglow => "sunset",
-		}
-	}
-	pub fn from_key(key: &str) -> Option<Variant> {
-		Variant::ALL
-			.into_iter()
-			.find(|v| v.key() == key || v.legacy_key() == key)
-	}
-	/// Gradient variants ignore the light/dark preference and always use dark text.
-	pub fn is_gradient(self) -> bool {
-		matches!(
-			self,
-			Variant::Nightfall | Variant::Ember | Variant::Verdant | Variant::Afterglow
-		)
-	}
-	fn from_u8(value: u8) -> Variant {
-		Variant::ALL
-			.into_iter()
-			.find(|v| *v as u8 == value)
-			.unwrap_or_default()
-	}
-}
+/// Built-in themes come from DTEW Cord's shared theme crate; see [`theme::Builtin`].
+pub use theme::Builtin as Variant;
 static VARIANT: AtomicU8 = AtomicU8::new(0);
 static PRIMARY_COLOR: AtomicU32 = AtomicU32::new(0);
 
@@ -259,14 +181,6 @@ impl Palette {
 const fn rgb(value: u32) -> Color32 {
 	Color32::from_rgb((value >> 16) as u8, (value >> 8) as u8, value as u8)
 }
-const fn rgba(value: u32, alpha: u8) -> Color32 {
-	Color32::from_rgba_premultiplied(
-		((value >> 16) as u8 as u32 * alpha as u32 / 255) as u8,
-		((value >> 8) as u8 as u32 * alpha as u32 / 255) as u8,
-		(value as u8 as u32 * alpha as u32 / 255) as u8,
-		alpha,
-	)
-}
 /// DTEW Cord azure: the house accent, packed for call sites that speak in integer colours.
 pub const DEFAULT_PRIMARY_RGB: u32 = 0x1a72e8;
 pub const DEFAULT_PRIMARY_COLOR: [u8; 3] = [
@@ -274,120 +188,77 @@ pub const DEFAULT_PRIMARY_COLOR: [u8; 3] = [
 	(DEFAULT_PRIMARY_RGB >> 8) as u8,
 	DEFAULT_PRIMARY_RGB as u8,
 ];
-const PRIMARY: Color32 = Color32::from_rgb(
-	DEFAULT_PRIMARY_COLOR[0],
-	DEFAULT_PRIMARY_COLOR[1],
-	DEFAULT_PRIMARY_COLOR[2],
-);
-const MENTION_BG: Color32 = rgba(DEFAULT_PRIMARY_RGB, 76);
-fn dark_common(
-	base: Color32,
-	sidebar: Color32,
-	chat: Color32,
-	raised: Color32,
-	hover: Color32,
-	selected: Color32,
-	border: Color32,
-) -> Palette {
+/// Convert theme tokens to the egui palette.
+pub fn palette_from_tokens(tokens: &theme::Tokens) -> Palette {
+	use theme::Token;
+	let color = |token: Token| color32(tokens.get(token));
+	let chat = color(Token::Chat);
+	let sidebar = color(Token::Sidebar);
 	Palette {
-		base,
+		base: color(Token::Base),
 		sidebar,
 		chat,
-		raised,
-		hover,
-		selected,
-		border,
-		text_strong: rgb(0xededef),
-		text: rgb(0xcfcfd4),
-		muted: rgb(0x94949c),
-		link: rgb(0x54abff),
-		accent: PRIMARY,
-		accent_text: Color32::WHITE,
-		positive: rgb(0x2fb87a),
-		warning: rgb(0xe8a33d),
-		danger: DARK_DANGER,
-		mention_bg: MENTION_BG,
-		mention_text: rgb(0xbcd9ff),
-		backdrop: None,
+		raised: color(Token::Raised),
+		hover: color(Token::Hover),
+		selected: color(Token::Selected),
+		border: color(Token::Border),
+		text_strong: color(Token::TextStrong),
+		text: color(Token::Text),
+		muted: color(Token::Muted),
+		link: color(Token::Link),
+		accent: color(Token::Accent),
+		accent_text: color(Token::AccentText),
+		positive: color(Token::Positive),
+		warning: color(Token::Warning),
+		danger: color(Token::Danger),
+		mention_bg: color(Token::MentionBg),
+		mention_text: color(Token::MentionText),
+		backdrop: tokens.backdrop.map(|stops| stops.map(color32)),
 		canvas: chat,
 		surface: sidebar,
 	}
 }
-/// Gradient preset with an opaque border, like the flat presets, for stable fractional-scale edges.
-fn gradient(stops: [u32; 2], border: u32) -> Palette {
-	let mut p = dark_common(
-		Color32::from_black_alpha(140),
-		Color32::from_black_alpha(90),
-		Color32::from_black_alpha(90),
-		Color32::from_black_alpha(120),
-		Color32::from_white_alpha(18),
-		Color32::from_white_alpha(34),
-		rgb(border),
-	);
-	p.text = rgb(0xe6eaf2);
-	p.muted = rgb(0xafb6c4);
-	p.backdrop = Some([rgb(stops[0]), rgb(stops[1])]);
-	p
+/// A theme colour as egui's premultiplied colour.
+pub fn color32(color: theme::Color) -> Color32 {
+	Color32::from_rgba_unmultiplied(color.r, color.g, color.b, color.a)
 }
-/// Resolve a built-in preset with the current accent, before extension overrides or surface blending.
+/// Resolve a built-in preset with the current accent, before custom themes or surface blending.
 pub fn builtin_colors(dark: bool, variant: Variant) -> Palette {
-	let palette = match variant {
-		Variant::Standard if dark => dark_common(
-			rgb(0x0e0e10),
-			rgb(0x141416),
-			rgb(0x18181b),
-			rgb(0x202023),
-			rgb(0x242427),
-			rgb(0x2e2e32),
-			rgb(0x27272a),
-		),
-		Variant::Standard => Palette {
-			base: rgb(0xe4e4e7),
-			sidebar: rgb(0xf2f2f4),
-			chat: Color32::WHITE,
-			raised: rgb(0xebebee),
-			hover: rgb(0xe8e8eb),
-			selected: rgb(0xdadade),
-			border: rgb(0xe0e0e4),
-			text_strong: rgb(0x0f0f11),
-			text: rgb(0x2f2f34),
-			muted: rgb(0x62626a),
-			link: rgb(0x0b63d6),
-			accent: PRIMARY,
-			accent_text: Color32::WHITE,
-			positive: rgb(0x1c9c63),
-			warning: rgb(0xc8860f),
-			danger: rgb(0xd23742),
-			mention_bg: MENTION_BG,
-			mention_text: rgb(0x14508f),
-			backdrop: None,
-			canvas: Color32::WHITE,
-			surface: rgb(0xf2f2f4),
-		},
-		Variant::Eclipse => dark_common(
-			Color32::BLACK,
-			rgb(0x070708),
-			rgb(0x070708),
-			rgb(0x141416),
-			rgb(0x17171a),
-			rgb(0x222226),
-			rgb(0x1c1c20),
-		),
-		Variant::Slate => dark_common(
-			rgb(0x1b1f2a),
-			rgb(0x262b38),
-			rgb(0x2c3140),
-			rgb(0x343a4b),
-			rgb(0x313747),
-			rgb(0x3d4456),
-			rgb(0x3a4152),
-		),
-		Variant::Nightfall => gradient([0x35519f, 0x1b1440], 0x2f3451),
-		Variant::Ember => gradient([0x8c2340, 0x140609], 0x41262e),
-		Variant::Verdant => gradient([0x2b6350, 0x081a15], 0x283934),
-		Variant::Afterglow => gradient([0xd9663c, 0x35205e], 0x5b3b40),
-	};
-	customize(palette, primary_color())
+	customize(palette_from_tokens(&variant.tokens(dark)), primary_color())
+}
+/// The active custom theme's colours for both appearances, `[light, dark]`, and whether each
+/// brings its own accent.
+#[derive(Clone, Copy)]
+struct CustomPalettes {
+	tokens: [theme::Tokens; 2],
+	sets_accent: [bool; 2],
+}
+thread_local! {
+	static CUSTOM_THEME: std::cell::Cell<Option<CustomPalettes>> = const { std::cell::Cell::new(None) };
+}
+/// Show a custom theme instead of the selected built-in, or go back to the built-in with
+/// `None`. Selects the custom theme's base as the variant. Call [`apply`] afterwards.
+pub fn set_custom_theme(custom: Option<&theme::CustomTheme>) {
+	CUSTOM_THEME.set(custom.map(|custom| CustomPalettes {
+		tokens: [custom.tokens(false), custom.tokens(true)],
+		sets_accent: [custom.sets_accent(false), custom.sets_accent(true)],
+	}));
+	if let Some(custom) = custom {
+		set_variant(custom.base());
+	}
+}
+/// Whether a custom theme is showing.
+pub fn custom_theme_active() -> bool {
+	CUSTOM_THEME.get().is_some()
+}
+/// The colours a custom theme would show, opaque, for previews and swatches.
+pub fn custom_preview_colors(dark: bool, custom: &theme::CustomTheme) -> Palette {
+	let palette = palette_from_tokens(&custom.tokens(dark));
+	opaque_surfaces(if custom.sets_accent(dark) {
+		palette
+	} else {
+		customize(palette, primary_color())
+	})
 }
 #[derive(Clone, Copy)]
 struct ExtensionPalette {
@@ -823,17 +694,25 @@ const ACCENT_FIELD: usize = 11;
 /// Whether the active community theme brings its own accent for this mode. Such a theme
 /// replaces the user's primary colour instead of being tinted by it.
 pub fn theme_sets_accent(dark: bool) -> bool {
-	EXTENSION_THEME
+	CUSTOM_THEME
 		.get()
-		.is_some_and(|palettes| palettes[usize::from(dark)].colors[ACCENT_FIELD].is_some())
+		.is_some_and(|custom| custom.sets_accent[usize::from(dark)])
+		|| EXTENSION_THEME
+			.get()
+			.is_some_and(|palettes| palettes[usize::from(dark)].colors[ACCENT_FIELD].is_some())
 }
 /// Resolve theme and accent colors before applying desktop opacity.
 fn resolved_colors(dark: bool, variant: Variant) -> Palette {
-	let mut palette = builtin_colors(dark, variant);
-	let mut themed_accent = false;
+	let (mut palette, mut themed_accent) = match CUSTOM_THEME.get() {
+		Some(custom) => (
+			palette_from_tokens(&custom.tokens[usize::from(dark)]),
+			custom.sets_accent[usize::from(dark)],
+		),
+		None => (palette_from_tokens(&variant.tokens(dark)), false),
+	};
 	if let Some(palettes) = EXTENSION_THEME.get() {
 		let theme = palettes[usize::from(dark)];
-		themed_accent = theme.colors[ACCENT_FIELD].is_some();
+		themed_accent |= theme.colors[ACCENT_FIELD].is_some();
 		palette = recolor(palette, theme);
 	}
 	if themed_accent {
