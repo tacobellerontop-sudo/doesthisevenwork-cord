@@ -1958,6 +1958,7 @@ dependencies = [
  "client-core",
  "discord-api",
  "discord-gateway",
+ "find-msvc-tools",
  "model",
  "platform",
  "slint",

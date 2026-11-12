@@ -31,6 +31,7 @@ slint = { version = "=1.18.1", default-features = false, features = ["std", "com
 test-support.workspace = true
 
 [build-dependencies]
+find-msvc-tools = "=0.1.12"
 slint-build = "=1.18.1"
 
 [lints.rust]
