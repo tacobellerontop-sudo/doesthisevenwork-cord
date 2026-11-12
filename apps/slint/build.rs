@@ -34,7 +34,9 @@ fn windows_icon() {
 	} else {
 		let resource = out.join("dtewcord-slint-icon.o");
 		let mut compiler = Command::new("windres");
-		compiler.args(["-i", "dtewcord-slint.rc", "-o"]).arg(&resource);
+		compiler
+			.args(["-i", "dtewcord-slint.rc", "-o"])
+			.arg(&resource);
 		(compiler, resource)
 	};
 	assert!(
@@ -45,5 +47,8 @@ fn windows_icon() {
 			.success(),
 		"application icon resource compilation failed"
 	);
-	println!("cargo:rustc-link-arg-bin=dtewcord-slint={}", resource.display());
+	println!(
+		"cargo:rustc-link-arg-bin=dtewcord-slint={}",
+		resource.display()
+	);
 }
