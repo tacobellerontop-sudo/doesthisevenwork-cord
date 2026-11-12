@@ -445,13 +445,7 @@ impl MessagingUi {
 									.filter(|(_, _, incoming)| *incoming)
 									.count()
 							})
-							.filter(|count| {
-								*count > 0
-									&& !crate::interface_tweaks::on(
-										ui.ctx(),
-										extensions::InterfaceTweak::HiddenRequestCounts,
-									)
-							});
+							.filter(|count| *count > 0);
 						if header_tab(ui, &title, count, self.friends.tab == tab, tab == Tab::Add)
 							.clicked() && self.friends.tab != tab
 						{

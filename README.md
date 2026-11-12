@@ -1,6 +1,6 @@
 # DTEW Cord — Discord client backend and desktop reference
 
-DTEW Cord (short for *doesthisevenwork-cord*) is an unofficial Discord client written in Rust. It is a fork of [Serein](https://github.com/ViceVerse-cz/Serein); the Serein contributors' copyright notices are kept in `LICENSE-MIT`, `LICENSE-APACHE` and the extension packages. This trimmed source archive keeps the Rust workspace, Discord protocol/networking crates, client state and storage layers, extension SDK/catalog, native voice implementation, vendored dependency patches, assets, and the existing desktop GUI.
+DTEW Cord (short for *doesthisevenwork-cord*) is an unofficial Discord client written in Rust. It is a fork of [Serein](https://github.com/ViceVerse-cz/Serein); the Serein contributors' copyright notices are kept in `LICENSE-MIT` and `LICENSE-APACHE`. This trimmed source archive keeps the Rust workspace, Discord protocol/networking crates, client state and storage layers, native voice implementation, vendored dependency patches, assets, and the existing desktop GUI.
 
 **This archive is not a finished Discord TUI.** It is a backend-rich starting point for building a separate terminal frontend (for example, with Ratatui) while retaining the current GUI as a working reference implementation.
 
@@ -20,13 +20,12 @@ DTEW Cord (short for *doesthisevenwork-cord*) is an unofficial Discord client wr
 | `crates/local-store` | Local SQLite persistence |
 | `crates/platform` | OS-specific credential and native platform integrations |
 | `crates/discord-voice` | Voice transport, audio processing and media support |
-| `crates/extensions` | Extension package parsing, permissions and runtime integration |
+| `crates/extensions` | Theme palette types only; to be replaced by DTEW Cord's own theming system |
 | `crates/diagnostics` | Diagnostics and logging support |
 | `crates/ui` | Existing egui desktop presentation layer |
 | `crates/test-support` | Test fixtures and synthetic support utilities |
 | `apps/desktop` | Existing desktop executable and composition root |
 | `apps/slint` | Slint client on the same login and backend crates (see `apps/slint/README.md`) |
-| `extensions/` | Extension SDK, plugins, themes and catalog |
 | `vendor/` | Patched dependencies referenced by the workspace manifest |
 | `assets/` | Fonts, icons, sounds, emoji and license/provenance notices |
 | `tools/` | Workspace development utilities and diagnostics |
@@ -38,7 +37,7 @@ Build the terminal frontend as a separate application crate rather than trying t
 1. Start with `model`, `discord-protocol`, `discord-api`, and `discord-gateway` to understand the data and transport boundaries.
 2. Reuse `client-core`, `session-cache`, and `local-store` where their public APIs fit. These are the most relevant layers for session state, history, navigation, and persistence.
 3. Treat `crates/ui` as the desktop implementation, not as a dependency of the terminal renderer. A TUI should own its own event loop, rendering, keybindings, layout and terminal lifecycle.
-4. Reuse `discord-voice`, `platform`, and `extensions` selectively. Voice devices, desktop credential dialogs, and graphical extension settings will need terminal-specific adapters or may be deferred.
+4. Reuse `discord-voice` and `platform` selectively. Voice devices and desktop credential dialogs will need terminal-specific adapters or may be deferred.
 5. Keep transport callbacks away from rendering. Bridge asynchronous Gateway/REST events into a bounded application event queue, then update state on the TUI task.
 
 A possible future workspace layout is:
@@ -58,7 +57,7 @@ crates/
   ...
 ```
 
-Do not assume every desktop capability is automatically available to a terminal frontend. Image/video presentation, file pickers, camera capture, rich profile cards, extension UI, and some voice controls require new terminal workflows.
+Do not assume every desktop capability is automatically available to a terminal frontend. Image/video presentation, file pickers, camera capture, rich profile cards, and some voice controls require new terminal workflows.
 
 ## Build the existing desktop application
 
@@ -70,10 +69,6 @@ cargo run -p dtewcord
 ```
 
 The workspace retains the original dependency lockfile and vendored patches. Removing dot-prefixed repository metadata means Git hosting workflows, ignore rules, and local Cargo configuration are not included in this archive. Cargo's project manifests and lockfile remain.
-
-## Extensions
-
-The extension SDK, bundled plugins, themes, catalog and authoring documentation remain under `extensions/`. Start with `extensions/README.md` and `docs/extension-sdk-overview.md`. Extensions are not a substitute for the core Discord transport or session state.
 
 ## License and third-party code
 

@@ -1,6 +1,6 @@
 //! Group-only menus and one session-scoped editor. Selecting an image never sends it.
 use crate::shortcuts::{Intent, ShortcutView};
-use crate::{MessagingUi, avatars::Avatars, design, icons};
+use crate::{avatars::Avatars, design, icons};
 use client_core::{Command, State};
 use model::{Channel, Id, Patch, Shortcut};
 
@@ -56,13 +56,6 @@ impl GroupMenu {
 			return;
 		}
 		ui.set_width(224.0);
-		crate::extensions_ui::context_menu_items(
-			ui,
-			extensions::MenuTarget::Channel {
-				channel_id: channel.id.to_string(),
-				guild_id: None,
-			},
-		);
 		let colors = design::palette(ui);
 		let enabled = (state.demo || state.gateway_connected)
 			&& !state.group_action_pending()
@@ -414,21 +407,6 @@ impl GroupMenu {
 	}
 }
 
-impl MessagingUi {
-	pub(crate) fn preview_group_editor(
-		&mut self,
-		state: &State,
-		channel: Id,
-	) -> Result<(), String> {
-		let channel = state
-			.channel(channel)
-			.filter(|channel| channel.guild.is_none() && channel.kind == 3)
-			.cloned()
-			.ok_or_else(|| "Group conversation is unavailable".to_owned())?;
-		self.group_menu.open(state, &channel, true);
-		Ok(())
-	}
-}
 fn row(ui: &mut egui::Ui, label: &str, color: egui::Color32) -> egui::Response {
 	let label = crate::i18n::translate_if_key(label);
 	ui.add_sized(

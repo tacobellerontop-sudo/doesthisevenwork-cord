@@ -81,7 +81,6 @@ impl Desktop {
 			self.state.generation,
 			self.state.user.as_ref().map(|u| u.id),
 			self.account_presences.clone(),
-			self.api_proxy.subscribe(),
 			ctx.clone(),
 		));
 	}
@@ -94,7 +93,6 @@ impl Desktop {
 		self.captcha.close();
 		self.notification_runtime.clear(&self.window);
 		self.messaging.image_share_requested = None;
-		let extension_logout = self.extensions.logout(ctx);
 		self.role_icon.cancel();
 		self.role_icon_scope = None;
 		self.group_icon.cancel();
@@ -143,11 +141,6 @@ impl Desktop {
 			self.messaging
 				.accounts
 				.retain(|saved| Some(saved.id) != old_account);
-		}
-		if let Err(error) = extension_logout {
-			self.messaging.extensions.status = error;
-			self.cache_error = true;
-			self.cache_status = "Extension account data removal could not be queued";
 		}
 		self.app_settings.apply(&mut self.messaging);
 		self.messaging.share_game_activity = self.game_activity.enabled;
@@ -208,7 +201,6 @@ impl Desktop {
 		if unsent
 			|| self.messaging.has_edit()
 			|| self.messaging.has_server_settings_changes()
-			|| self.messaging.extensions.theme_editor_dirty()
 			|| self.state.server_settings.pending
 			|| self.state.server_admin.pending
 			|| self.uploads.has_unsent()
@@ -498,12 +490,6 @@ impl Desktop {
 									15.0,
 								)
 								.color(p.text_strong),
-							);
-							ui.add_space(8.0);
-							ui.label(
-								egui::RichText::new("Early preview")
-									.size(13.0)
-									.color(p.muted),
 							);
 							ui.with_layout(
 								egui::Layout::right_to_left(egui::Align::Center),

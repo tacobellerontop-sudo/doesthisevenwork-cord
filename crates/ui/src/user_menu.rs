@@ -161,13 +161,12 @@ fn voice_available(ui: &egui::Ui) -> bool {
 	ui.data(|data| data.get_temp::<bool>(egui::Id::unique(VOICE_AVAILABLE))) == Some(true)
 }
 
-/// Fills a user's context menu, including plugin user actions for non-webhook users. On a
-/// one-to-one DM row, plugin channel actions for that DM are offered alongside them.
+/// Fills a user's context menu.
 pub(super) fn contents(
 	ui: &mut egui::Ui,
 	state: &State,
 	user: &User,
-	place: Place,
+	_place: Place,
 	profile: &mut crate::profiles::ProfileSession,
 	action: &mut Option<Action>,
 	view: Option<ShortcutView<'_>>,
@@ -175,28 +174,6 @@ pub(super) fn contents(
 	let colors = crate::design::palette(ui);
 	ui.set_min_width(200.0);
 	ui.spacing_mut().button_padding = egui::vec2(8.0, 6.0);
-	if !user.webhook {
-		let channel = match place {
-			Place::Open => state.selected,
-			Place::Conversation(id) => Some(id),
-			Place::Nowhere => None,
-		}
-		.and_then(|id| state.channel(id));
-		let mut targets = vec![extensions::MenuTarget::User {
-			user_id: user.id.to_string(),
-			guild_id: channel.and_then(|c| c.guild).map(|g| g.to_string()),
-			channel_id: channel.map(|c| c.id.to_string()),
-		}];
-		if let Place::Conversation(_) = place
-			&& let Some(dm) = channel.filter(|c| c.guild.is_none() && c.kind == 1)
-		{
-			targets.push(extensions::MenuTarget::Channel {
-				channel_id: dm.id.to_string(),
-				guild_id: None,
-			});
-		}
-		crate::extensions_ui::context_menu_targets(ui, &targets);
-	}
 	if ui
 		.button(crate::i18n::translate("user-menu-contents-profile"))
 		.clicked()

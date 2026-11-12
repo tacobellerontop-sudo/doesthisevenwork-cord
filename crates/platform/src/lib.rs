@@ -13,7 +13,6 @@ pub mod notifications;
 pub mod plaintext_login;
 pub mod pointer;
 pub mod processes;
-pub mod proxy_credentials;
 pub mod save;
 pub mod single_instance;
 pub mod startup;

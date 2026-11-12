@@ -7,14 +7,12 @@ DTEW Cord is an unofficial client that handles authenticated Discord sessions an
 - Authentication credentials and session identifiers.
 - Private messages, attachments, server membership and profile data.
 - Local drafts, caches and SQLite records.
-- Extension permissions and data exposed to extension code.
 
 ## Core precautions
 
 - Keep credentials in the operating-system credential store where supported; never print them or include them in diagnostics.
 - Keep network origins fixed and validate responses before applying them to client state.
 - Bound queues, response bodies, caches and attachment staging to limit resource exhaustion.
-- Apply extension capabilities through explicit permission checks; do not treat extension packages as trusted merely because they are catalogued.
 - Clear account-scoped state on logout and account changes.
 - Avoid logging message bodies, tokens, private URLs or attachment contents.
 

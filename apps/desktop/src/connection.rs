@@ -27,7 +27,6 @@ pub struct Connection {
 	/// One fixed-size candidate failure, independent of the account event queue.
 	pub confirmation_failure: watch::Receiver<Option<ConfirmationFailure>>,
 	pub share_activity: watch::Sender<bool>,
-	pub custom_rich_presence: watch::Sender<Option<extensions::CustomRichPresence>>,
 	pub own_presence: watch::Sender<model::OwnPresence>,
 	/// Idle-after timeout while Go idle when away applies (`None`: off or in a call); a poller
 	/// turns system inactivity into gateway afk.
@@ -241,7 +240,6 @@ impl Connection {
 		generation: u64,
 		expected_user: Option<model::Id>,
 		cached_presence: BTreeMap<model::Id, model::OwnPresence>,
-		api_proxy: watch::Receiver<Option<discord_api::proxy::ApiProxy>>,
 		ctx: egui::Context,
 	) -> Self {
 		let (commands, mut receive) = mpsc::channel(COMMAND_SLOTS);
@@ -251,7 +249,6 @@ impl Connection {
 		let (finished, terminal) = watch::channel(None);
 		let (confirmation_report, confirmation_failure) = watch::channel(None);
 		let (share_activity, share_receive) = watch::channel(false);
-		let (custom_rich_presence, custom_receive) = watch::channel(None);
 		let (own_presence, presence_receive) = watch::channel(model::OwnPresence::default());
 		let (auto_idle, auto_idle_receive) = watch::channel(None);
 		let (idle_timeout_send, idle_timeout) = watch::channel(None);
@@ -294,7 +291,7 @@ impl Connection {
                 emit_event(&send, &typing_send, Envelope {generation,event}, &ctx)
             };
             let result=async {
-                let api=DiscordApi::with_proxy(secret.clone(), api_proxy)?;
+                let api=DiscordApi::new(secret.clone())?;
                 // Discovery does not depend on the account check, so they share one round trip.
                 // The account error wins: a rejected token fails both.
                 let (user,gateway)=tokio::join!(api.current_user(),api.gateway_url());
@@ -359,7 +356,7 @@ impl Connection {
 				let (activity_send,activity_receive)=watch::channel(None);
 				let (member_query_send, member_query_receive) = watch::channel([None, None]);
 				let _sharing_task=AbortTask(tokio::spawn(run_activity_sharing(api.clone(),share_receive.clone(),sharing_requests,sharing_report,finished.clone(),wake.clone())));
-				let _activity_task=AbortTask(tokio::spawn(crate::game_activity::run((share_receive,custom_receive,crate::game_activity::Registered{games:registered_receive,current:running_send}),activity_send,game_report,invite_send,wake.clone(),user.clone(),api.clone())));
+				let _activity_task=AbortTask(tokio::spawn(crate::game_activity::run((share_receive,crate::game_activity::Registered{games:registered_receive,current:running_send}),activity_send,game_report,invite_send,wake.clone(),user.clone(),api.clone())));
 				let _spotify_task=AbortTask(tokio::spawn(crate::spotify::run(api.clone(),user.id,presence_receive.clone(),spotify_send,wake.clone())));
 				let _idle_task=AbortTask(tokio::spawn(run_auto_idle(auto_idle_receive,afk,wake.clone(),platform::idle::system_idle)));
                 let (recipient_scope,mut recipient_scope_changed)=watch::channel(0u64);
@@ -889,7 +886,6 @@ impl Connection {
 			game_activity,
 			registered_games,
 			running_game,
-			custom_rich_presence,
 			spotify_activity,
 			rpc_invite,
 			activity_observation,

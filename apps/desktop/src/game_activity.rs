@@ -29,8 +29,6 @@ use tokio_tungstenite::{
 	},
 };
 
-mod custom;
-
 pub type Detection = Result<Option<model::RichActivity>, &'static str>;
 const MAX_CLIENTS: usize = 8;
 /// Two images per activity, and a client normally repeats the same pair.
@@ -121,11 +119,7 @@ pub struct Registered {
 
 /// Sharing owns the listeners and all clients. Dropping it cancels every pending operation.
 pub async fn run(
-	sharing: (
-		watch::Receiver<bool>,
-		watch::Receiver<Option<extensions::CustomRichPresence>>,
-		Registered,
-	),
+	sharing: (watch::Receiver<bool>, Registered),
 	activity: watch::Sender<Option<Activity>>,
 	report: watch::Sender<Detection>,
 	invites: watch::Sender<Option<(u64, String)>>,
@@ -133,7 +127,7 @@ pub async fn run(
 	user: User,
 	api: Arc<discord_api::DiscordApi>,
 ) {
-	let (enabled, custom_requests, registered) = sharing;
+	let (enabled, registered) = sharing;
 	let registered = &registered;
 	run_enabled(enabled, &activity, &report, &ctx, || async {
 		let _clear = ClearCurrent(&registered.current);
@@ -143,12 +137,6 @@ pub async fn run(
 		};
 		let (detected_send, mut detected) = watch::channel(None);
 		let (detected_report_send, mut detected_report) = watch::channel(Ok(None));
-		let (custom_send, mut custom_report) = watch::channel(Ok(None));
-		let _custom = Abort(tokio::spawn(custom::run(
-			custom_requests.clone(),
-			custom_send,
-			service.clone(),
-		)));
 		let listener = listen(
 			&detected_send,
 			&detected_report_send,
@@ -169,20 +157,9 @@ pub async fn run(
 				}
 				result = detected.changed() => { if result.is_err() { return Ok(()); } }
 				result = detected_report.changed() => { if result.is_err() { return Ok(()); } }
-				result = custom_report.changed() => { if result.is_err() { return Ok(()); } }
 			}
-			let custom = custom_report.borrow_and_update().clone();
-			let (latest, display) = match custom {
-				Ok(Some(value)) => {
-					let display = display_activity(&value);
-					(Some(value), Ok(Some(display)))
-				}
-				Ok(None) => (
-					detected.borrow_and_update().clone(),
-					detected_report.borrow_and_update().clone(),
-				),
-				Err(error) => (None, Err(error)),
-			};
+			let latest = detected.borrow_and_update().clone();
+			let display = detected_report.borrow_and_update().clone();
 			activity.send_if_modified(|current| {
 				if *current == latest {
 					false
@@ -1642,59 +1619,5 @@ mod tests {
 		settings.dirty = false;
 		settings.observe(false);
 		assert!(settings.dirty && settings.saving && !settings.enabled);
-	}
-
-	#[tokio::test]
-	async fn custom_presence_cancels_stale_artwork_and_stop_clears() {
-		let service = Offline {
-			release: Some(Arc::new(Notify::new())),
-			..Offline::default()
-		};
-		let started = service.started.clone();
-		let mut request = extensions::CustomRichPresence {
-			application_id: "7".into(),
-			name: "Custom game".into(),
-			large_image: Some(extensions::RichPresenceImage {
-				key: "map".into(),
-				text: None,
-				url: None,
-			}),
-			..Default::default()
-		};
-		let (send, receive) = watch::channel(Some(request.clone()));
-		let (output, mut results) = watch::channel(Ok(None));
-		let worker = tokio::spawn(custom::run(receive, output, service));
-		timeout(Duration::from_secs(2), started.notified())
-			.await
-			.unwrap();
-		// Metadata never completes: a newer request must cancel it and publish without artwork.
-		request.large_image = None;
-		request.name = "Latest custom game".into();
-		send.send_replace(Some(request));
-		timeout(Duration::from_secs(2), results.changed())
-			.await
-			.unwrap()
-			.unwrap();
-		assert_eq!(
-			results
-				.borrow_and_update()
-				.as_ref()
-				.unwrap()
-				.as_ref()
-				.unwrap()
-				.name,
-			"Latest custom game"
-		);
-		send.send_replace(None);
-		timeout(Duration::from_secs(2), results.changed())
-			.await
-			.unwrap()
-			.unwrap();
-		assert_eq!(*results.borrow_and_update(), Ok(None));
-		drop(send);
-		timeout(Duration::from_secs(2), worker)
-			.await
-			.unwrap()
-			.unwrap();
 	}
 }

@@ -6,7 +6,6 @@ language-label = Jazyk zobrazení
 language-description = Zvolte jazyk aplikace DTEW Cord. Obsah Discordu se nepřekládá.
 section-user = Uživatelská nastavení
 section-app = Nastavení aplikace
-section-customization = Přizpůsobení
 page-account = Můj účet
 page-profile = Profil
 page-general = Obecné
@@ -19,8 +18,6 @@ page-voice = Hlas a video
 page-keybinds = Klávesové zkratky
 page-storage = Data a soukromí
 page-updates = Aktualizace
-page-extensions = Rozšíření
-page-themes = Motivy
 description-account = Účet Discord přihlášený na tomto zařízení.
 description-profile = Zvolte, jak se zobrazujete na Discordu.
 description-general = Spouštění, okno a grafika na tomto zařízení.
@@ -33,10 +30,6 @@ description-voice = Mikrofon, reproduktory, kamera a zpracování hlasu.
 description-keybinds = Klávesové zkratky aplikace DTEW Cord.
 description-storage = Co DTEW Cord uchovává na tomto zařízení.
 description-updates = Udržujte DTEW Cord na tomto zařízení aktuální.
-description-extensions = Správa komunitních pluginů.
-description-themes = Výběr komunitního motivu.
-theme-maker = Tvůrce motivů
-theme-maker-description = Upravte si ho podle sebe. Změny uvidíte přímo v konverzacích.
 search = Hledat
 no-settings-found = Nebyla nalezena žádná nastavení
 search-suggestion = Zkuste motiv, oznámení, hlas nebo mezipaměť.
@@ -918,131 +911,68 @@ emoji-picker-unicode-button-with-search-emoji = Hledat emotikony
 
 ## crates/ui/src/extensions_ui.rs
 # Context: card_body
-extensions-ui-card-body-active = Aktivní
 # Context: card_body
-extensions-ui-card-body-apply-this-installed-theme-to-the-app = Použijte tento nainstalovaný motiv na aplikaci.
 # Context: card_body
-extensions-ui-card-body-by = podle
 # Context: card_body
-extensions-ui-card-body-cleanup-pending = Čeká se na vyčištění
 # Context: card_body
-extensions-ui-card-body-enabled = Povoleno
 # Context: card_body
-extensions-ui-card-body-finish-removing-this-extension-and-its-local-data = Dokončete odstranění tohoto rozšíření a jeho místních dat.
 # Context: card_body
-extensions-ui-card-body-open-tool = Otevřete nástroj
 # Context: card_body
-extensions-ui-card-body-plugin = Plugin
 # Context: card_body
-extensions-ui-card-body-remove = Odstranit
 # Context: card_body
-extensions-ui-card-body-remove-this-theme-and-delete-its-local-data = Odeberte tento motiv a odstraňte jeho místní data.
 # Context: card_body
-extensions-ui-card-body-removes-this-extension-and-deletes-its-local-data = Odebere toto rozšíření a smaže jeho místní data.
 # Context: card_body
-extensions-ui-card-body-review-the-new-release-before-it-replaces-this-version = Zkontrolujte nové vydání, než nahradí tuto verzi.
 # Context: card_body
-extensions-ui-card-body-update = Aktualizovat
 # Context: composer_menu
-extensions-ui-composer-menu-tools = Nástroje
 # Context: consent_modal
-extensions-ui-consent-modal-allow-every-listed-permission-to-continue = Povolit pokračování všech uvedených oprávnění.
 # Context: consent_modal
-extensions-ui-consent-modal-allow-this-extension-to = Povolit tomuto rozšíření
 # Context: consent_modal
-extensions-ui-consent-modal-by = podle
 # Context: consent_modal
-extensions-ui-consent-modal-cancel = Zrušit
 # Context: consent_modal
-extensions-ui-consent-modal-disabling-removes-the-extension-and-its-local-data-re-enabling = Zakázání odstraní rozšíření a jeho místní data. Opětovná aktivace začíná znovu.
 # Context: consent_modal
-extensions-ui-consent-modal-enable = Umožnit
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-extension = Povolit toto rozšíření
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-theme = Povolit toto téma
 # Context: consent_modal
-extensions-ui-consent-modal-everything-it-may-touch-is-listed-below = Vše, čeho se může dotknout, je uvedeno níže.
 # Context: consent_modal
-extensions-ui-consent-modal-no-access-to-conversations-or-composer-text = Žádný přístup ke konverzacím nebo textu skladatele.
 # Context: consent_modal
-extensions-ui-consent-modal-reviewed = Zkontrolováno
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed = Nerecenzováno
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed-package-its-source-has-not-been-reviewed-for-the = Nezkontrolovaný balíček — jeho zdroj nebyl zkontrolován pro katalog.
 # Context: consent_modal
-extensions-ui-consent-modal-view-source = Zobrazit zdroj
 # Context: preview_image
-extensions-ui-preview-image-preview = Náhled
 # Context: preview_image
-extensions-ui-preview-image-view-preview = Zobrazit náhled
 # Context: preview_modal
-extensions-ui-preview-modal-close-preview = Zavřít náhled
 # Context: preview_modal
-extensions-ui-preview-modal-creator-preview = Náhled tvůrce
 # Context: preview_modal
-extensions-ui-preview-modal-example-deleted-message-appearance = Příklad vzhledu smazané zprávy
 # Context: preview_modal
 extensions-ui-preview-modal-selecting-artwork-sends-it-as-an-image-attachment = Výběrem kresby se odešle jako obrazová příloha.
-extensions-ui-preview-modal-unavailable-artwork-falls-back-to-images = Nedostupné emoji a samolepky se místo toho odešlou jako obrázkové přílohy.
 # Context: settings
-extensions-ui-settings-no-extensions-yet = Zatím žádná rozšíření
 # Context: settings
-extensions-ui-settings-no-matches = Žádné zápasy
 # Context: settings
-extensions-ui-settings-no-themes-yet = Zatím žádná témata
 # Context: settings
-extensions-ui-settings-refresh-the-catalog-or-import-a-creator-s-package-to = Začněte obnovením katalogu nebo importem balíčku autora.
 # Context: settings
-extensions-ui-settings-try-a-different-name-or-creator = Zkuste jiné jméno nebo autora.
 # Context: show_result
-extensions-ui-show-result-apply-to-draft = Použít do konceptu
 # Context: show_result
-extensions-ui-show-result-close = Zavřít
 # Context: show_result
-extensions-ui-show-result-dismiss = Zavřít
 # Context: show_result
-extensions-ui-show-result-extension-error = Chyba rozšíření
 # Context: show_result
-extensions-ui-show-result-proposed-app-action = Navrhovaná akce aplikace
 # Context: show_result
-extensions-ui-show-result-proposed-composer-text = Navrhovaný text skladatele
 # Context: show_result
-extensions-ui-show-result-review-the-result-app-actions-and-draft-changes-need-your = Zkontrolujte výsledek. Akce v aplikaci a změny konceptů vyžadují váš souhlas.
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-theme-editor = Zpět k editoru témat
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-themes = Zpět k tématům
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-changes-are-not-saved-yet = Změny zatím nejsou uloženy
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-customize = Přizpůsobit
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-previewing-theme = Náhled tématu
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-theme-preview = Náhled motivu
 # Context: toolbar
-extensions-ui-toolbar-checking-for-packages-and-updates = Kontrola balíčků a aktualizací
 # Context: toolbar
-extensions-ui-toolbar-clear-search = Vymazat vyhledávání
 # Context: toolbar
-extensions-ui-toolbar-dismiss = Zavřít
 # Context: toolbar
-extensions-ui-toolbar-import-theme = Importovat motiv…
 # Context: toolbar
-extensions-ui-toolbar-look-for-new-packages-and-updates-nothing-installs-on-its = Hledejte nové balíčky a aktualizace. Nic se neinstaluje samo.
 # Context: toolbar
-extensions-ui-toolbar-open-a-package-file-from-this-computer = Otevřete soubor balíčku z tohoto počítače.
 # Context: toolbar
-extensions-ui-toolbar-refresh-catalog = Aktualizovat katalog
 # Context: toolbar
-extensions-ui-toolbar-search-extensions = Vyhledat rozšíření
 # Context: toolbar
-extensions-ui-toolbar-search-themes = Vyhledat motivy
 # Context: toolbar
-extensions-ui-toolbar-working-on-your-last-action = Zpracovávám poslední akci
-
 ## crates/ui/src/fonts.rs
 # Context: show
 # Context: show
@@ -1642,11 +1572,9 @@ lib-ime-updates-text-wait-for-readable-current-message-history = Počkejte na č
 # Context: mention_switch
 lib-mention-switch-ping-the-original-author = Ping na původního autora
 # Context: title_bar
-lib-title-bar-offline-preview = OFFLINE NÁHLED
 # Context: title_bar
 lib-title-bar-sign-in-again = Znovu se přihlaste
 # Context: title_bar
-lib-title-bar-synthetic-data-no-network-or-local-storage = Syntetická data · žádná síť ani místní úložiště
 
 ## apps/desktop/src/main.rs
 # Context: restoring
@@ -3668,191 +3596,101 @@ switcher-show-where-would-you-like-to-go = kam bys chtěl jít?
 
 ## crates/ui/src/theme_editor.rs
 # Context: appearance_switch
-theme-editor-appearance-switch-colors-and-opacity-are-saved-separately-for-dark-and-light = Barvy a krytí jsou uloženy odděleně pro tmavý a světlý vzhled.
 # Context: appearance_switch
 theme-editor-appearance-switch-dark = Tmavý
 # Context: appearance_switch
-theme-editor-appearance-switch-editing = Editace
 # Context: appearance_switch
 theme-editor-appearance-switch-light = Světlý
 # Context: color_input
-theme-editor-color-input-use-rrggbb-or-rrggbbaa = Použijte #RRGGBB nebo #RRGGBBAA
 # Context: color_override
-theme-editor-color-override-reset = Resetovat
 # Context: color_override
-theme-editor-color-override-use-rrggbb-or-rrggbbaa = Použijte #RRGGBB nebo #RRGGBBAA.
 # Context: color_override
-theme-editor-color-override-use-the-default-color-for-this-appearance = Pro tento vzhled použijte výchozí barvu
 # Context: cover_card
-theme-editor-cover-card-automatic-preview = Automatický náhled
 # Context: cover_card
-theme-editor-cover-card-choose-cover = Vyberte kryt
 # Context: cover_card
-theme-editor-cover-card-custom-cover = Kryt na zakázku
 # Context: cover_card
-theme-editor-cover-card-png-or-jpeg-up-to-2-mib-this-image-does = PNG nebo JPEG, až 2 MiB. Tento obrázek nemění pozadí chatu.
 # Context: cover_card
-theme-editor-cover-card-remove = Odstranit
 # Context: cover_card
-theme-editor-cover-card-replace-cover = Vyměňte kryt
 # Context: description
-theme-editor-description-direct-messages-and-channel-navigation = Přímé zprávy a navigace kanálů
 # Context: description
-theme-editor-description-the-area-around-the-message-box = Oblast kolem pole zprávy
 # Context: description
-theme-editor-description-the-conversation-timeline = Historie konverzace
 # Context: description
-theme-editor-description-the-left-server-rail = Levý panel serverů
 # Context: description
-theme-editor-description-the-member-and-search-pane-on-the-right = Panel členů a vyhledávání vpravo
 # Context: description
-theme-editor-description-window-title-and-conversation-header = Název okna a záhlaví konverzace
 # Context: image_card
-theme-editor-image-card-background-image = Obrázek na pozadí
 # Context: image_card
-theme-editor-image-card-choose-image = Vyberte obrázek
 # Context: image_card
-theme-editor-image-card-no-image-selected = Nebyl vybrán žádný obrázek
 # Context: image_card
-theme-editor-image-card-pixels = pixelů
 # Context: image_card
-theme-editor-image-card-png-or-jpeg-up-to-2-mib = PNG nebo JPEG, až 2 MiB
 # Context: image_card
-theme-editor-image-card-remove = Odstranit
 # Context: image_card
-theme-editor-image-card-replace-image = Nahradit obrázek
 # Context: label
-theme-editor-label-member-list = Seznam členů
 # Context: label
-theme-editor-label-message-input-area = Oblast pro zadávání zpráv
 # Context: label
-theme-editor-label-message-list = Seznam zpráv
 # Context: label
-theme-editor-label-people-channels = Lidé a kanály
 # Context: label
-theme-editor-label-server-list = Seznam serverů
 # Context: label
-theme-editor-label-top-bars = Horní panely
 # Context: metric_label
-theme-editor-metric-label-reset = Resetovat
 # Context: metric_label
-theme-editor-metric-label-use-the-built-in-value = Použijte vestavěnou hodnotu
 # Context: section_controls
-theme-editor-section-controls-0-shows-the-image-100-is-a-solid-section-color = 0 % ukazuje obrázek. 100 % je plná barva sekce.
 # Context: section_controls
-theme-editor-section-controls-selected-section = Vybraná sekce
 # Context: section_controls
-theme-editor-section-controls-surface-opacity = Neprůhlednost povrchu
-# Context: show
-theme-editor-show-additional-colors-app-controls-and-sharing-details = Další barvy, ovládací prvky aplikace a podrobnosti o sdílení.
-# Context: show
-theme-editor-show-advanced = Moderní
-# Context: show
-theme-editor-show-app-background = Pozadí aplikace
 # Context: show
 # Context: show
-theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Smíchejte dvě barvy za povrchy aplikace.
-# Context: show
-theme-editor-show-blur = Rozmazat
-# Context: show
-theme-editor-show-card-cover = Kryt karty
-# Context: show
-theme-editor-show-choose-an-image-to-adjust-the-top-bar-lists-and = Vyberte obrázek pro úpravu horní lišty, seznamů a oblasti zpráv.
-# Context: show
-theme-editor-show-choose-the-image-shown-on-your-theme-card-in-themes = Vyberte obrázek zobrazený na kartě motivu v Tématech.
-# Context: show
-theme-editor-show-click-a-swatch-to-choose-a-color-or-enter-its = Klepnutím na políčko vyberte barvu nebo zadejte její hexadecimální hodnotu.
-# Context: show
-theme-editor-show-conversation-colors = Barvy konverzace
-# Context: show
-theme-editor-show-created-by = Vytvořil
-# Context: show
-theme-editor-show-creator-name-is-required = Jméno tvůrce je povinné.
-# Context: show
-theme-editor-show-export-theme = Export motivu
-# Context: show
-theme-editor-show-fill-area = Vyplňte oblast
-# Context: show
-theme-editor-show-fit-entire-image = Přizpůsobit celý obrázek
-# Context: show
-theme-editor-show-how-your-theme-appears-in-the-gallery = Jak se váš motiv zobrazuje v galerii.
-# Context: show
-theme-editor-show-image-opacity = Neprůhlednost obrazu
 # Context: show
 # Context: show
-theme-editor-show-license = Licence
 # Context: show
-theme-editor-show-license-and-version-are-required = Vyžaduje se licence a verze.
 # Context: show
-theme-editor-show-more-colors = Více barev
 # Context: show
-theme-editor-show-only-share-images-you-own-or-have-permission-to-use = Sdílejte pouze obrázky, které vlastníte nebo máte oprávnění k použití. Ponechte požadovanou atribuci.
 # Context: show
-theme-editor-show-override-the-default-appearance-setting-for-this-theme = Přepsat výchozí nastavení vzhledu pro tento motiv.
 # Context: show
-theme-editor-show-requires-transparency-blur-in-appearance-then-an-app-restart = Vyžaduje průhlednost a rozmazání ve vzhledu a poté restartování aplikace.
 # Context: show
-theme-editor-show-section-opacity = Neprůhlednost sekce
 # Context: show
-theme-editor-show-select-an-area-then-choose-how-much-of-the-image = Vyberte oblast a poté zvolte, jak velká část obrázku bude prosvítat.
 # Context: show
-theme-editor-show-sharing-export = Sdílení a export
 # Context: show
-theme-editor-show-source-url = URL zdroje
 # Context: show
-theme-editor-show-text-spacing-corners = Text, mezery a rohy
 # Context: show
-theme-editor-show-the-license-and-version-are-required-a-source-url-is = Licence a verze jsou povinné. Zdrojová adresa URL je pro místní motivy volitelná.
 # Context: show
-theme-editor-show-theme-details = Detaily tématu
 # Context: show
-theme-editor-show-theme-name = Název motivu
 # Context: show
-theme-editor-show-theme-name-is-required = Název motivu je povinný.
 # Context: show
-theme-editor-show-these-settings-apply-to-dark-and-light-appearances = Tato nastavení platí pro tmavé a světlé vzhledy.
 # Context: show
-theme-editor-show-this-older-theme-uses-its-original-image-placement = Toto starší téma využívá své původní umístění obrázku.
 # Context: show
-theme-editor-show-transparency = Průhlednost
 # Context: show
-theme-editor-show-transparency-blur = Průhlednost a rozostření
 # Context: show
-theme-editor-show-use-a-gradient = Použijte přechod
 # Context: show
-theme-editor-show-use-a-valid-https-source-url-or-leave-this-blank = Použijte platnou adresu URL zdroje HTTPS nebo ponechte toto pole prázdné.
 # Context: show
-theme-editor-show-use-image-across-the-app = Použijte obrázek v celé aplikaci
 # Context: show
-theme-editor-show-use-one-image-behind-your-conversations-and-sidebars = Použijte jeden obrázek za konverzacemi a postranními panely.
 # Context: show
-theme-editor-show-use-rrggbb-or-rrggbbaa = Použijte #RRGGBB nebo #RRGGBBAA.
 # Context: show
-theme-editor-show-version = Verze
 # Context: show
-theme-editor-show-window-effects = Efekty oken
 # Context: show
-theme-editor-show-window-gradient = Přechod okna
 # Context: show
-theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Vaše primární barva ve Vzhledu má přednost před tímto akcentem.
 # Context: show
-theme-editor-show-the-system-applies-its-standard-blur-strength = Systém použije svou standardní sílu rozostření.
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
 # Context: key
-theme-editor-tab-advanced = Moderní
 # Context: key
-theme-editor-tab-background = Pozadí
 # Context: key
-theme-editor-tab-basics = Základy
 # Context: key
-theme-editor-tab-colors = Barvy
 # Context: toolbar
-theme-editor-toolbar-back = Zpět
 # Context: toolbar
-theme-editor-toolbar-preview-in-app = Náhled v aplikaci
 # Context: toolbar
-theme-editor-toolbar-save-and-apply = Uložit a použít
 # Context: toolbar
-theme-editor-toolbar-unsaved-changes = Neuložené změny
 # Context: toolbar
 theme-editor-toolbar-working = Pracovní…
 
@@ -3892,11 +3730,8 @@ timeline-message-actions-delete-message = Smazat zprávu…
 # Context: message_actions
 timeline-message-actions-edit-message = Upravit zprávu
 # Context: message_actions
-timeline-message-actions-extensions = Rozšíření
 # Context: menu
-extensions-ui-menu-group-user = Uživatel
 # Context: menu
-extensions-ui-menu-group-conversation = Konverzace
 # Context: message_actions
 timeline-message-actions-forward = Přeposlat
 # Context: message_actions

@@ -6,7 +6,6 @@ language-label = Ekran dili
 language-description = DTEW Cord'in dilini seçin. Discord içeriği asla çevrilmez.
 section-user = Kullanıcı ayarları
 section-app = Uygulama ayarları
-section-customization = Özelleştirme
 page-account = Hesabım
 page-profile = Profil
 page-general = Genel
@@ -19,8 +18,6 @@ page-voice = Ses ve Video
 page-keybinds = Tuş bağlantıları
 page-storage = Veri ve Gizlilik
 page-updates = Güncellemeler
-page-extensions = Uzantılar
-page-themes = Temalar
 description-account = Bu cihazda Discord hesabıyla oturum açıldı.
 description-profile = Discord'da nasıl görüneceğinizi seçin.
 description-general = Bu cihazdaki başlatma, pencere ve grafik davranışı.
@@ -33,10 +30,6 @@ description-voice = Mikrofon, hoparlörler, kamera ve ses işleme.
 description-keybinds = DTEW Cord için klavye kısayolları.
 description-storage = DTEW Cord'in bu cihazda sakladıkları.
 description-updates = Bu cihazda DTEW Cord'i güncel tutun.
-description-extensions = Topluluk eklentilerini yönetin.
-description-themes = Bir topluluk teması seçin.
-theme-maker = Tema oluşturucu
-theme-maker-description = Senin olsun. Konuşmalarınızdaki değişiklikleri önizleyin.
 search = Aramak
 no-settings-found = Hiçbir ayar bulunamadı
 search-suggestion = Temayı, bildirimleri, sesi veya önbelleği deneyin.
@@ -894,131 +887,68 @@ emoji-picker-unicode-button-with-search-emoji = Emoji ara
 
 ## crates/ui/src/extensions_ui.rs
 # Context: card_body
-extensions-ui-card-body-active = Aktif
 # Context: card_body
-extensions-ui-card-body-apply-this-installed-theme-to-the-app = Bu yüklü temayı uygulamaya uygulayın.
 # Context: card_body
-extensions-ui-card-body-by = ile
 # Context: card_body
-extensions-ui-card-body-cleanup-pending = Temizleme bekleniyor
 # Context: card_body
-extensions-ui-card-body-enabled = Etkinleştirilmiş
 # Context: card_body
-extensions-ui-card-body-finish-removing-this-extension-and-its-local-data = Bu uzantıyı ve yerel verilerini kaldırmayı tamamlayın.
 # Context: card_body
-extensions-ui-card-body-open-tool = Aracı aç
 # Context: card_body
-extensions-ui-card-body-plugin = Eklenti
 # Context: card_body
-extensions-ui-card-body-remove = Kaldırmak
 # Context: card_body
-extensions-ui-card-body-remove-this-theme-and-delete-its-local-data = Bu temayı kaldırın ve yerel verilerini silin.
 # Context: card_body
-extensions-ui-card-body-removes-this-extension-and-deletes-its-local-data = Bu uzantıyı kaldırır ve yerel verilerini siler.
 # Context: card_body
-extensions-ui-card-body-review-the-new-release-before-it-replaces-this-version = Bu sürümün yerini almadan önce yeni sürümü inceleyin.
 # Context: card_body
-extensions-ui-card-body-update = Güncelleme
 # Context: composer_menu
-extensions-ui-composer-menu-tools = Aletler
 # Context: consent_modal
-extensions-ui-consent-modal-allow-every-listed-permission-to-continue = Listelenen her iznin devam etmesine izin verin.
 # Context: consent_modal
-extensions-ui-consent-modal-allow-this-extension-to = Bu uzantıya izin ver
 # Context: consent_modal
-extensions-ui-consent-modal-by = ile
 # Context: consent_modal
-extensions-ui-consent-modal-cancel = İptal etmek
 # Context: consent_modal
-extensions-ui-consent-modal-disabling-removes-the-extension-and-its-local-data-re-enabling = Devre dışı bırakıldığında uzantı ve yerel verileri kaldırılır. Yeniden etkinleştirme yeniden başlar.
 # Context: consent_modal
-extensions-ui-consent-modal-enable = Olanak vermek
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-extension = Bu uzantıyı etkinleştir
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-theme = Bu temayı etkinleştir
 # Context: consent_modal
-extensions-ui-consent-modal-everything-it-may-touch-is-listed-below = Dokunabileceği her şey aşağıda listelenmiştir.
 # Context: consent_modal
-extensions-ui-consent-modal-no-access-to-conversations-or-composer-text = Konuşmalara veya besteci metnine erişim yok.
 # Context: consent_modal
-extensions-ui-consent-modal-reviewed = İncelendi
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed = İncelenmedi
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed-package-its-source-has-not-been-reviewed-for-the = İncelenmemiş paket — kaynağı katalog için incelenmemiştir.
 # Context: consent_modal
-extensions-ui-consent-modal-view-source = Kaynağı görüntüle
 # Context: preview_image
-extensions-ui-preview-image-preview = Önizleme
 # Context: preview_image
-extensions-ui-preview-image-view-preview = Önizlemeyi görüntüle
 # Context: preview_modal
-extensions-ui-preview-modal-close-preview = Önizlemeyi kapat
 # Context: preview_modal
-extensions-ui-preview-modal-creator-preview = Yaratıcı önizlemesi
 # Context: preview_modal
-extensions-ui-preview-modal-example-deleted-message-appearance = Örnek silinmiş mesaj görünümü
 # Context: preview_modal
 extensions-ui-preview-modal-selecting-artwork-sends-it-as-an-image-attachment = Resim seçildiğinde resim eki olarak gönderilir.
-extensions-ui-preview-modal-unavailable-artwork-falls-back-to-images = Kullanılamayan emojiler ve çıkartmalar bunun yerine resim eki olarak gönderilir.
 # Context: settings
-extensions-ui-settings-no-extensions-yet = Henüz uzantı yok
 # Context: settings
-extensions-ui-settings-no-matches = Eşleşme yok
 # Context: settings
-extensions-ui-settings-no-themes-yet = Henüz tema yok
 # Context: settings
-extensions-ui-settings-refresh-the-catalog-or-import-a-creator-s-package-to = Başlamak için kataloğu yenileyin veya bir yaratıcının paketini içe aktarın.
 # Context: settings
-extensions-ui-settings-try-a-different-name-or-creator = Farklı bir ad veya yaratıcı deneyin.
 # Context: show_result
-extensions-ui-show-result-apply-to-draft = Taslağa Uygula
 # Context: show_result
-extensions-ui-show-result-close = Kapat
 # Context: show_result
-extensions-ui-show-result-dismiss = Kapat
 # Context: show_result
-extensions-ui-show-result-extension-error = Uzantı hatası
 # Context: show_result
-extensions-ui-show-result-proposed-app-action = Önerilen uygulama eylemi
 # Context: show_result
-extensions-ui-show-result-proposed-composer-text = Önerilen besteci metni
 # Context: show_result
-extensions-ui-show-result-review-the-result-app-actions-and-draft-changes-need-your = Sonucu inceleyin. Uygulama işlemleri ve taslak değişiklikleri için onayınız gerekiyor.
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-theme-editor = Tema düzenleyicisine geri dön
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-themes = Temalara geri dön
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-changes-are-not-saved-yet = Değişiklikler henüz kaydedilmedi
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-customize = Özelleştirmek
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-previewing-theme = Tema önizleniyor
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-theme-preview = Tema önizlemesi
 # Context: toolbar
-extensions-ui-toolbar-checking-for-packages-and-updates = Paketleri ve güncellemeleri kontrol etme
 # Context: toolbar
-extensions-ui-toolbar-clear-search = Aramayı temizle
 # Context: toolbar
-extensions-ui-toolbar-dismiss = Kapat
 # Context: toolbar
-extensions-ui-toolbar-import-theme = Temayı içe aktar…
 # Context: toolbar
-extensions-ui-toolbar-look-for-new-packages-and-updates-nothing-installs-on-its = Yeni paketler ve güncellemeler arayın. Hiçbir şey kendi kendine kurulmuyor.
 # Context: toolbar
-extensions-ui-toolbar-open-a-package-file-from-this-computer = Bu bilgisayardan bir paket dosyası açın.
 # Context: toolbar
-extensions-ui-toolbar-refresh-catalog = Kataloğu yenile
 # Context: toolbar
-extensions-ui-toolbar-search-extensions = Uzantıları ara
 # Context: toolbar
-extensions-ui-toolbar-search-themes = Temaları arayın
 # Context: toolbar
-extensions-ui-toolbar-working-on-your-last-action = Son eyleminiz üzerinde çalışıyorum
-
 ## crates/ui/src/fonts.rs
 # Context: show
 fonts-show-import-font = Yazı tipini içe aktar…
@@ -1615,11 +1545,9 @@ lib-ime-updates-text-wait-for-readable-current-message-history = Okunabilir, gü
 # Context: mention_switch
 lib-mention-switch-ping-the-original-author = Orijinal yazara ping atın
 # Context: title_bar
-lib-title-bar-offline-preview = ÇEVRİMDIŞI ÖNİZLEME
 # Context: title_bar
 lib-title-bar-sign-in-again = Tekrar oturum açın
 # Context: title_bar
-lib-title-bar-synthetic-data-no-network-or-local-storage = Sentetik veriler · ağ veya yerel depolama yok
 
 ## apps/desktop/src/main.rs
 # Context: restoring
@@ -3632,191 +3560,101 @@ switcher-show-where-would-you-like-to-go = Nereye gitmek istersin?
 
 ## crates/ui/src/theme_editor.rs
 # Context: appearance_switch
-theme-editor-appearance-switch-colors-and-opacity-are-saved-separately-for-dark-and-light = Renkler ve opaklık, koyu ve açık görünüm için ayrı ayrı kaydedilir.
 # Context: appearance_switch
 theme-editor-appearance-switch-dark = Koyu
 # Context: appearance_switch
-theme-editor-appearance-switch-editing = Düzenleme
 # Context: appearance_switch
 theme-editor-appearance-switch-light = Açık
 # Context: color_input
-theme-editor-color-input-use-rrggbb-or-rrggbbaa = #RRGGBB veya #RRGGBBAA kullanın
 # Context: color_override
-theme-editor-color-override-reset = Sıfırla
 # Context: color_override
-theme-editor-color-override-use-rrggbb-or-rrggbbaa = #RRGGBB veya #RRGGBBAA kullanın.
 # Context: color_override
-theme-editor-color-override-use-the-default-color-for-this-appearance = Bu görünüm için varsayılan rengi kullanın
 # Context: cover_card
-theme-editor-cover-card-automatic-preview = Otomatik önizleme
 # Context: cover_card
-theme-editor-cover-card-choose-cover = Kapak seç
 # Context: cover_card
-theme-editor-cover-card-custom-cover = Özel kapak
 # Context: cover_card
-theme-editor-cover-card-png-or-jpeg-up-to-2-mib-this-image-does = PNG veya JPEG, 2 MiB'a kadar. Bu resim sohbet arka planını değiştirmez.
 # Context: cover_card
-theme-editor-cover-card-remove = Kaldırmak
 # Context: cover_card
-theme-editor-cover-card-replace-cover = Kapağı değiştirin
 # Context: description
-theme-editor-description-direct-messages-and-channel-navigation = Doğrudan mesajlar ve kanalda gezinme
 # Context: description
-theme-editor-description-the-area-around-the-message-box = Mesaj kutusunun etrafındaki alan
 # Context: description
-theme-editor-description-the-conversation-timeline = Konuşma zaman çizelgesi
 # Context: description
-theme-editor-description-the-left-server-rail = Sol sunucu rayı
 # Context: description
-theme-editor-description-the-member-and-search-pane-on-the-right = Sağdaki üye ve arama bölmesi
 # Context: description
-theme-editor-description-window-title-and-conversation-header = Pencere başlığı ve konuşma başlığı
 # Context: image_card
-theme-editor-image-card-background-image = Arka plan resmi
 # Context: image_card
-theme-editor-image-card-choose-image = Resim seç
 # Context: image_card
-theme-editor-image-card-no-image-selected = Resim seçilmedi
 # Context: image_card
-theme-editor-image-card-pixels = piksel
 # Context: image_card
-theme-editor-image-card-png-or-jpeg-up-to-2-mib = PNG veya JPEG, 2 MiB'a kadar
 # Context: image_card
-theme-editor-image-card-remove = Kaldırmak
 # Context: image_card
-theme-editor-image-card-replace-image = Resmi değiştir
 # Context: label
-theme-editor-label-member-list = Üye listesi
 # Context: label
-theme-editor-label-message-input-area = Mesaj giriş alanı
 # Context: label
-theme-editor-label-message-list = Mesaj listesi
 # Context: label
-theme-editor-label-people-channels = Kişiler ve kanallar
 # Context: label
-theme-editor-label-server-list = Sunucu listesi
 # Context: label
-theme-editor-label-top-bars = Üst çubuklar
 # Context: metric_label
-theme-editor-metric-label-reset = Sıfırla
 # Context: metric_label
-theme-editor-metric-label-use-the-built-in-value = Yerleşik değeri kullan
 # Context: section_controls
-theme-editor-section-controls-0-shows-the-image-100-is-a-solid-section-color = %0 görüntüyü gösterir. %100 düz bir kesit rengidir.
 # Context: section_controls
-theme-editor-section-controls-selected-section = Seçilen bölüm
 # Context: section_controls
-theme-editor-section-controls-surface-opacity = Yüzey opaklığı
-# Context: show
-theme-editor-show-additional-colors-app-controls-and-sharing-details = Ek renkler, uygulama kontrolleri ve paylaşım ayrıntıları.
-# Context: show
-theme-editor-show-advanced = Gelişmiş
-# Context: show
-theme-editor-show-app-background = Uygulama arka planı
 # Context: show
 # Context: show
-theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Uygulamanın yüzeylerinin arkasında iki rengi karıştırın.
-# Context: show
-theme-editor-show-blur = Bulanıklık
-# Context: show
-theme-editor-show-card-cover = Kart kapağı
-# Context: show
-theme-editor-show-choose-an-image-to-adjust-the-top-bar-lists-and = Üst çubuğu, listeleri ve mesaj alanını ayarlamak için bir resim seçin.
-# Context: show
-theme-editor-show-choose-the-image-shown-on-your-theme-card-in-themes = Temalar'da tema kartınızda gösterilen resmi seçin.
-# Context: show
-theme-editor-show-click-a-swatch-to-choose-a-color-or-enter-its = Bir renk seçmek için bir renk örneğini tıklayın veya onaltılık değerini girin.
-# Context: show
-theme-editor-show-conversation-colors = Konuşma renkleri
-# Context: show
-theme-editor-show-created-by = Tarafından oluşturuldu
-# Context: show
-theme-editor-show-creator-name-is-required = Yaratıcının adı gerekli.
-# Context: show
-theme-editor-show-export-theme = Temayı dışa aktar
-# Context: show
-theme-editor-show-fill-area = Alanı doldur
-# Context: show
-theme-editor-show-fit-entire-image = Resmin tamamını sığdır
-# Context: show
-theme-editor-show-how-your-theme-appears-in-the-gallery = Temanızın galeride nasıl göründüğü.
-# Context: show
-theme-editor-show-image-opacity = Görüntü opaklığı
 # Context: show
 # Context: show
-theme-editor-show-license = Lisans
 # Context: show
-theme-editor-show-license-and-version-are-required = Lisans ve sürüm gereklidir.
 # Context: show
-theme-editor-show-more-colors = Daha fazla renk
 # Context: show
-theme-editor-show-only-share-images-you-own-or-have-permission-to-use = Yalnızca sahip olduğunuz veya kullanma izniniz olan görselleri paylaşın. Gerekli ilişkilendirmeyi koruyun.
 # Context: show
-theme-editor-show-override-the-default-appearance-setting-for-this-theme = Bu tema için varsayılan Görünüm ayarını geçersiz kılın.
 # Context: show
-theme-editor-show-requires-transparency-blur-in-appearance-then-an-app-restart = Görünümde Şeffaflık ve bulanıklık, ardından uygulamanın yeniden başlatılması gerekir.
 # Context: show
-theme-editor-show-section-opacity = Bölüm opaklığı
 # Context: show
-theme-editor-show-select-an-area-then-choose-how-much-of-the-image = Bir alan seçin, ardından görüntünün ne kadarının görüneceğini seçin.
 # Context: show
-theme-editor-show-sharing-export = Paylaşma ve dışa aktarma
 # Context: show
-theme-editor-show-source-url = Kaynak URL'si
 # Context: show
-theme-editor-show-text-spacing-corners = Metin, aralık ve köşeler
 # Context: show
-theme-editor-show-the-license-and-version-are-required-a-source-url-is = Lisans ve sürüm gereklidir. Yerel temalar için kaynak URL'si isteğe bağlıdır.
 # Context: show
-theme-editor-show-theme-details = Tema ayrıntıları
 # Context: show
-theme-editor-show-theme-name = Tema adı
 # Context: show
-theme-editor-show-theme-name-is-required = Tema adı gerekli.
 # Context: show
-theme-editor-show-these-settings-apply-to-dark-and-light-appearances = Bu ayarlar koyu ve açık görünümler için geçerlidir.
 # Context: show
-theme-editor-show-this-older-theme-uses-its-original-image-placement = Bu eski tema, orijinal resim yerleşimini kullanır.
 # Context: show
-theme-editor-show-transparency = Şeffaflık
 # Context: show
-theme-editor-show-transparency-blur = Şeffaflık ve bulanıklık
 # Context: show
-theme-editor-show-use-a-gradient = Degrade kullanma
 # Context: show
-theme-editor-show-use-a-valid-https-source-url-or-leave-this-blank = Geçerli bir HTTPS kaynak URL'si kullanın veya bunu boş bırakın.
 # Context: show
-theme-editor-show-use-image-across-the-app = Uygulama genelinde görseli kullanın
 # Context: show
-theme-editor-show-use-one-image-behind-your-conversations-and-sidebars = Konuşmalarınızın ve kenar çubuklarınızın arkasında tek bir resim kullanın.
 # Context: show
-theme-editor-show-use-rrggbb-or-rrggbbaa = #RRGGBB veya #RRGGBBAA kullanın.
 # Context: show
-theme-editor-show-version = Sürüm
 # Context: show
-theme-editor-show-window-effects = Pencere efektleri
 # Context: show
-theme-editor-show-window-gradient = Pencere gradyanı
 # Context: show
-theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Görünümdeki ana renginiz bu vurguya göre önceliklidir.
 # Context: show
-theme-editor-show-the-system-applies-its-standard-blur-strength = Sistem standart bulanıklık gücünü uygular.
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
 # Context: key
-theme-editor-tab-advanced = Gelişmiş
 # Context: key
-theme-editor-tab-background = Arka plan
 # Context: key
-theme-editor-tab-basics = Temel bilgiler
 # Context: key
-theme-editor-tab-colors = Renkler
 # Context: toolbar
-theme-editor-toolbar-back = Geri
 # Context: toolbar
-theme-editor-toolbar-preview-in-app = Uygulamada önizleme
 # Context: toolbar
-theme-editor-toolbar-save-and-apply = Kaydet ve uygula
 # Context: toolbar
-theme-editor-toolbar-unsaved-changes = Kaydedilmemiş değişiklikler
 # Context: toolbar
 theme-editor-toolbar-working = Çalışma…
 
@@ -3856,11 +3694,8 @@ timeline-message-actions-delete-message = Mesajı sil…
 # Context: message_actions
 timeline-message-actions-edit-message = Mesajı düzenle
 # Context: message_actions
-timeline-message-actions-extensions = Uzantılar
 # Context: menu
-extensions-ui-menu-group-user = Kullanıcı
 # Context: menu
-extensions-ui-menu-group-conversation = Sohbet
 # Context: message_actions
 timeline-message-actions-forward = İlet
 # Context: message_actions

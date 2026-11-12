@@ -764,33 +764,25 @@ impl MessagingUi {
 							}
 						}
 						CachedRow::Requests(count, collapsed) => {
-							// A plugin may hide request counts: badge, tooltip and label alike.
-							let hidden = crate::interface_tweaks::on(
-								ui.ctx(),
-								extensions::InterfaceTweak::HiddenRequestCounts,
-							);
 							let response = category_header(
 								ui,
 								"message-requests",
 								&crate::i18n::translate(Heading::MessageRequests.key()),
-								(!hidden).then_some(count),
+								Some(count),
 								collapsed,
 								row_height,
 								false,
 							);
-							// The count stays visible while folded, so a hidden list still reports,
-							// unless a plugin hides request counts.
-							if !hidden {
-								crate::notifications::badge(
-									ui,
-									egui::pos2(
-										response.rect.right() - 16.0,
-										response.rect.bottom() - 13.0,
-									),
-									u32::try_from(count).unwrap_or(u32::MAX),
-									colors.sidebar,
-								);
-							}
+							// The count stays visible while folded, so a hidden list still reports.
+							crate::notifications::badge(
+								ui,
+								egui::pos2(
+									response.rect.right() - 16.0,
+									response.rect.bottom() - 13.0,
+								),
+								u32::try_from(count).unwrap_or(u32::MAX),
+								colors.sidebar,
+							);
 							if response.clicked() {
 								self.message_requests_collapsed = !collapsed;
 								self.channel_cache.key = None;

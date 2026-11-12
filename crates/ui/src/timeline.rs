@@ -39,12 +39,6 @@ pub struct TimelineView {
 	pub(super) component_action: Option<crate::components::Action>,
 	/// A private command response the reader dismissed this frame.
 	pub(super) dismiss_ephemeral: Option<Id>,
-	pub(super) extension_actions: std::sync::Arc<Vec<crate::extensions_ui::MenuAction>>,
-	pub(super) extension_request: Option<(
-		crate::extensions_ui::MenuAction,
-		String,
-		crate::extensions_ui::MessageTarget,
-	)>,
 	pub(super) user_action: Option<crate::user_menu::Action>,
 	pub(super) restore_pending: Option<String>,
 	/// A failed own row the reader dismissed this frame.
@@ -1721,21 +1715,11 @@ fn deleted_message_actions(popup: egui::Popup<'_>, action: &mut Option<DeletedLo
 		}
 	});
 }
-/// Fills a message's action menu, including plugin message actions, and records the chosen
-/// plugin action with the message it applies to.
+/// Fills a message's action menu.
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn message_actions(
 	popup: egui::Popup<'_>,
-	(message, link, extension_actions, extension_request): (
-		&Message,
-		Option<&str>,
-		&[crate::extensions_ui::MenuAction],
-		&mut Option<(
-			crate::extensions_ui::MenuAction,
-			String,
-			crate::extensions_ui::MessageTarget,
-		)>,
-	),
+	(message, link): (&Message, Option<&str>),
 	actions: (bool, bool, bool, bool),
 	selection: (
 		Option<&mut Option<Id>>,
@@ -1759,28 +1743,6 @@ fn message_actions(
 	let (can_thread, thread_request) = thread;
 	popup.show(|ui| {
 		ui.set_min_width(160.0);
-		if !extension_actions.is_empty() {
-			ui.menu_button(
-				crate::i18n::translate("timeline-message-actions-extensions"),
-				|ui| {
-					for action in extension_actions {
-						if ui.button(&action.label).clicked() {
-							*extension_request = Some((
-								action.clone(),
-								message.display_text().into_owned(),
-								crate::extensions_ui::MessageTarget {
-									channel: message.channel,
-									message: message.id,
-									author: message.author.id,
-								},
-							));
-							ui.close();
-						}
-					}
-				},
-			);
-			ui.separator();
-		}
 		if crate::select::has_selection(ui.ctx())
 			&& ui
 				.button(crate::i18n::translate("timeline-message-actions-copy"))
@@ -2274,9 +2236,7 @@ fn show_system(
 impl TimelineView {
 	pub(super) fn show_fullscreen_video(&mut self, ctx: &egui::Context, state: &State) -> bool {
 		if self.video.is_fullscreen() {
-			// Runs before the timeline lays out, so the tweak is read directly.
-			let hide_blocked =
-				crate::interface_tweaks::on(ctx, extensions::InterfaceTweak::HiddenBlockedMessages);
+			let hide_blocked = false;
 			let current = self
 				.video
 				.active
@@ -2485,7 +2445,6 @@ impl TimelineView {
 			let restored = state.selected.and_then(|id| state.reading(id));
 			let following = restored.is_none_or(|cursor| cursor.message.is_none());
 			*self = Self {
-				extension_actions: self.extension_actions.clone(),
 				quick_reactions: self.quick_reactions,
 				double_click_reaction: self.double_click_reaction,
 				compact_messages: self.compact_messages,
@@ -2601,10 +2560,7 @@ impl TimelineView {
 		let dimensions_changed = width_changed || content_dimensions_changed;
 		self.applied_hide_media_links = self.hide_media_links;
 		self.applied_compact_messages = self.compact_messages;
-		let hide_blocked = crate::interface_tweaks::on(
-			ui.ctx(),
-			extensions::InterfaceTweak::HiddenBlockedMessages,
-		);
+		let hide_blocked = false;
 		// A thread's starter joins the rows only once the whole thread history is loaded, and
 		// like other rows is left out when its author is blocked and the tweak hides them.
 		let starter = state
@@ -4356,23 +4312,6 @@ impl TimelineView {
 							&& ui.is_enabled()
 					});
 					if double_click.is_some()
-						&& crate::interface_tweaks::on(
-							ui.ctx(),
-							extensions::InterfaceTweak::DoubleClickReplyEdit,
-						) {
-						let own = state
-							.user
-							.as_ref()
-							.is_some_and(|u| u.id == message.author.id);
-						if own && !message.unsupported && state.can_edit(message.channel, id) {
-							crate::select::clear(ui.ctx());
-							*editing = Some((message.channel, id, message.content.clone()));
-							self.edit_started = true;
-						} else if !own && state.can_send(message.channel) && !message.ephemeral {
-							crate::select::clear(ui.ctx());
-							selected_reply = Some(id);
-						}
-					} else if double_click.is_some()
 						&& let Some(text) = self.double_click_reaction
 					{
 						let (emoji, reacted, enabled) = quick_reaction(state, message, text);
@@ -4854,12 +4793,7 @@ impl TimelineView {
 							}
 							message_actions(
 								popup,
-								(
-									message,
-									link.as_deref(),
-									&self.extension_actions,
-									&mut self.extension_request,
-								),
+								(message, link.as_deref()),
 								(own, can_reply, can_edit, can_delete),
 								(
 									can_mark_read.then_some(&mut self.mark_read),
@@ -6509,7 +6443,7 @@ mod tests {
 						let menu = action_button(ui, crate::icons::Icon::More, "More");
 						message_actions(
 							egui::Popup::menu(&menu),
-							(&message, None, &[], &mut None),
+							(&message, None),
 							(own, true, true, can_delete),
 							(None, None, &mut reply),
 							(&mut editing, &mut edit_started),
@@ -6996,111 +6930,6 @@ mod tests {
 				"missing {label}: {painted:?}"
 			);
 		}
-	}
-	/// Checks that the hidden-blocked-messages tweak leaves a blocked author's thread starter out
-	/// of the rows, as it does their ordinary messages, and that it returns without the tweak.
-	#[test]
-	fn hidden_blocked_messages_tweak_leaves_out_a_blocked_thread_starter() {
-		let ctx = egui::Context::default();
-		crate::design::apply(&ctx);
-		let mut state = test_support::chat_demo_state();
-		state
-			.permissions
-			.replace(test_support::permission_snapshot(&state))
-			.unwrap();
-		let (thread, parent) = state
-			.channels
-			.iter()
-			.find(|c| {
-				matches!(c.kind, 10..=12)
-					&& c.parent_id
-						.and_then(|id| state.channel(id))
-						.is_some_and(|p| matches!(p.kind, 0 | 5))
-			})
-			.map(|c| (c.id, c.parent_id.unwrap()))
-			.expect("fixture thread under a text channel");
-		state.select(thread);
-		state
-			.timeline
-			.insert(test_support::message(thread.0 + 10, thread), false, false)
-			.unwrap();
-		state.history_pending = false;
-		state.freshness = model::Freshness::Fresh;
-		state.older_exhausted = true;
-		let Some(client_core::Command::ThreadStarter { request, .. }) =
-			state.request_thread_starter()
-		else {
-			panic!("thread requests its starter");
-		};
-		let mut starter = test_support::message(thread.0, parent);
-		starter.author.id = Id(777);
-		state.apply(client_core::Envelope {
-			generation: state.generation,
-			event: client_core::Event::ThreadStarter {
-				thread,
-				request,
-				result: Ok(starter),
-			},
-		});
-		state.apply(client_core::Envelope {
-			generation: state.generation,
-			event: client_core::Event::UserAction(client_core::user_actions::Event::Relationship {
-				user: Id(777),
-				blocked: true,
-			}),
-		});
-		let mut view = TimelineView::default();
-		let mut avatars = crate::avatars::Avatars::default();
-		let mut rows = |view: &mut TimelineView, state: &mut State, hide: bool| {
-			for _ in 0..4 {
-				let output = ctx.run_ui(
-					egui::RawInput {
-						screen_rect: Some(egui::Rect::from_min_size(
-							egui::Pos2::ZERO,
-							egui::vec2(900.0, 1400.0),
-						)),
-						..Default::default()
-					},
-					|ui| {
-						crate::interface_tweaks::publish(
-							ui.ctx(),
-							&std::sync::Arc::new(
-								hide.then_some(extensions::InterfaceTweak::HiddenBlockedMessages)
-									.into_iter()
-									.collect(),
-							),
-						);
-						view.show(
-							ui,
-							state,
-							&mut None,
-							&mut None,
-							(
-								&mut avatars,
-								&mut crate::profiles::ProfileSession::default(),
-							),
-							None,
-						);
-					},
-				);
-				output.drop_without_applying_deltas();
-			}
-			view.rows.iter().map(|(id, _)| *id).collect::<Vec<_>>()
-		};
-		assert!(rows(&mut view, &mut state, false).contains(&thread));
-		assert_eq!(view.starter_row, Some(thread));
-		let hidden = rows(&mut view, &mut state, true);
-		assert!(
-			!hidden.contains(&thread),
-			"blocked starter left out: {hidden:?}"
-		);
-		assert_eq!(view.starter_row, None);
-		assert!(hidden.contains(&Id(thread.0 + 10)), "other rows stay");
-		// Turning the tweak off on the same view brings the starter back.
-		let shown = rows(&mut view, &mut state, false);
-		assert!(shown.contains(&thread), "starter restored: {shown:?}");
-		assert_eq!(view.starter_row, Some(thread));
-		assert!(shown.contains(&Id(thread.0 + 10)));
 	}
 	#[test]
 	fn an_unloaded_thread_starter_offers_its_thread_card() {
@@ -9616,234 +9445,6 @@ mod tests {
 		assert_eq!(anchor_offset(&neighbors, Id(3), -100.0), 0.0);
 		assert_eq!(anchor_offset(&neighbors, Id(3), 200.0), 140.0);
 		assert_eq!(anchor_offset(&[], Id(2), 25.0), 0.0);
-	}
-
-	/// Checks that the hidden-blocked-messages tweak leaves out a blocked user's messages,
-	/// keeps everyone else's, and restores them when the tweak is switched off.
-	#[test]
-	fn hidden_blocked_messages_tweak_leaves_out_blocked_authors() {
-		/// Collects the text of every painted shape, recursing into shape groups.
-		fn texts(shape: &egui::Shape, out: &mut Vec<String>) {
-			match shape {
-				egui::Shape::Text(text) => out.push(text.galley.job.text.clone()),
-				egui::Shape::Vec(shapes) => {
-					for shape in shapes {
-						texts(shape, out);
-					}
-				}
-				_ => {}
-			}
-		}
-		let mut state = test_support::demo_state();
-		state.read_state.reset();
-		state.timeline.clear();
-		let channel = state.selected.unwrap();
-		for (id, author, body) in [
-			(41, 701, "Visible synthetic body"),
-			(42, 777, "Blocked synthetic body"),
-			(43, 701, "Later synthetic body"),
-		] {
-			let mut message = text_message(id);
-			message.channel = channel;
-			message.author.id = Id(author);
-			message.author.name = format!("Synthetic author {author}");
-			message.content = body.into();
-			state.timeline.insert(message, false, false).unwrap();
-		}
-		state.apply(client_core::Envelope {
-			generation: state.generation,
-			event: client_core::Event::UserAction(client_core::user_actions::Event::Relationship {
-				user: Id(777),
-				blocked: true,
-			}),
-		});
-		assert_eq!(state.user_blocked(Id(777)), Some(true));
-		let ctx = egui::Context::default();
-		let mut view = TimelineView::default();
-		let mut avatars = crate::avatars::Avatars::default();
-		let mut render = |view: &mut TimelineView, state: &mut State, hide: bool| {
-			let mut labels = Vec::new();
-			for _ in 0..3 {
-				let output = ctx.run_ui(
-					egui::RawInput {
-						screen_rect: Some(egui::Rect::from_min_size(
-							egui::Pos2::ZERO,
-							egui::vec2(600.0, 600.0),
-						)),
-						..Default::default()
-					},
-					|ui| {
-						crate::interface_tweaks::publish(
-							ui.ctx(),
-							&std::sync::Arc::new(
-								hide.then_some(extensions::InterfaceTweak::HiddenBlockedMessages)
-									.into_iter()
-									.collect(),
-							),
-						);
-						view.show(
-							ui,
-							state,
-							&mut None,
-							&mut None,
-							(
-								&mut avatars,
-								&mut crate::profiles::ProfileSession::default(),
-							),
-							None,
-						);
-					},
-				);
-				labels.clear();
-				for shape in &output.shapes {
-					texts(&shape.shape, &mut labels);
-				}
-				output.drop_without_applying_deltas();
-			}
-			labels
-		};
-		let shown = |labels: &[String], body: &str| labels.iter().any(|text| text.contains(body));
-		let all = render(&mut view, &mut state, false);
-		assert!(
-			shown(&all, "Blocked synthetic body"),
-			"shown without the tweak"
-		);
-		let hidden = render(&mut view, &mut state, true);
-		assert!(
-			!shown(&hidden, "Blocked synthetic body"),
-			"hidden with the tweak"
-		);
-		assert!(shown(&hidden, "Visible synthetic body") && shown(&hidden, "Later synthetic body"));
-		let restored = render(&mut view, &mut state, false);
-		assert!(
-			shown(&restored, "Blocked synthetic body"),
-			"switching off restores it"
-		);
-	}
-
-	/// Checks that with the double-click tweak, double-clicking beside your own message starts
-	/// editing it and beside someone else's starts a reply, while the reaction preset stays idle.
-	#[test]
-	fn double_click_tweak_edits_own_message_and_replies_to_others() {
-		let mut state = test_support::demo_state();
-		state.read_state.reset();
-		state.timeline.clear();
-		let channel = state.selected.unwrap();
-		let me = state.user.as_ref().unwrap().clone();
-		for (id, author, body) in [
-			(51, Id(701), "Their synthetic body"),
-			(52, me.id, "Own synthetic body"),
-		] {
-			let mut message = text_message(id);
-			message.channel = channel;
-			message.author.id = author;
-			message.content = body.into();
-			state.timeline.insert(message, false, false).unwrap();
-		}
-		let ctx = egui::Context::default();
-		let mut view = TimelineView {
-			double_click_reaction: Some("🎉"),
-			..Default::default()
-		};
-		let mut avatars = crate::avatars::Avatars::default();
-		let mut editing = None;
-		let mut time = 0.0;
-		let mut render = |view: &mut TimelineView,
-		                  state: &mut State,
-		                  editing: &mut Option<(Id, Id, String)>,
-		                  events: Vec<egui::Event>| {
-			time += 1.0 / 60.0;
-			let output = ctx.run_ui(
-				egui::RawInput {
-					screen_rect: Some(egui::Rect::from_min_size(
-						egui::Pos2::ZERO,
-						egui::vec2(700.0, 600.0),
-					)),
-					time: Some(time),
-					events,
-					..Default::default()
-				},
-				|ui| {
-					crate::interface_tweaks::publish(
-						ui.ctx(),
-						&std::sync::Arc::new(
-							[extensions::InterfaceTweak::DoubleClickReplyEdit].into(),
-						),
-					);
-					view.show(
-						ui,
-						state,
-						editing,
-						&mut None,
-						(
-							&mut avatars,
-							&mut crate::profiles::ProfileSession::default(),
-						),
-						None,
-					);
-				},
-			);
-			let mut rows = Vec::new();
-			let mut stack: Vec<&egui::Shape> = output.shapes.iter().map(|s| &s.shape).collect();
-			while let Some(shape) = stack.pop() {
-				match shape {
-					egui::Shape::Text(text) => rows.push((
-						text.galley.job.text.clone(),
-						text.pos.y + text.galley.size().y * 0.5,
-					)),
-					egui::Shape::Vec(shapes) => stack.extend(shapes),
-					_ => {}
-				}
-			}
-			output.drop_without_applying_deltas();
-			rows
-		};
-		let mut double_click = |view: &mut TimelineView,
-		                        state: &mut State,
-		                        editing: &mut Option<(Id, Id, String)>,
-		                        body: &str| {
-			let mut rows = Vec::new();
-			for _ in 0..30 {
-				rows = render(view, state, editing, vec![]);
-			}
-			let y = rows
-				.iter()
-				.find_map(|(text, y)| (text == body).then_some(*y))
-				.expect("message laid out");
-			let pos = egui::pos2(650.0, y);
-			for _ in 0..2 {
-				for pressed in [true, false] {
-					render(
-						view,
-						state,
-						editing,
-						vec![
-							egui::Event::PointerMoved(pos),
-							egui::Event::PointerButton {
-								pos,
-								button: egui::PointerButton::Primary,
-								pressed,
-								modifiers: egui::Modifiers::NONE,
-							},
-						],
-					);
-				}
-			}
-		};
-		double_click(&mut view, &mut state, &mut editing, "Their synthetic body");
-		assert_eq!(state.reply_target(), Some(Id(51)));
-		assert!(editing.is_none(), "someone else's message is not edited");
-		state.reply = None;
-		double_click(&mut view, &mut state, &mut editing, "Own synthetic body");
-		assert_eq!(
-			editing.as_ref().map(|(_, id, text)| (*id, text.as_str())),
-			Some((Id(52), "Own synthetic body"))
-		);
-		assert!(
-			state.reply.is_none(),
-			"your own message is edited, not replied to"
-		);
-		assert!(view.reaction.is_none(), "the reaction preset stays idle");
 	}
 
 	#[test]

@@ -34,12 +34,10 @@ enum Page {
 	LanguageTime,
 	Storage,
 	Updates,
-	Extensions,
-	Themes,
 }
 impl Page {
 	/// Every page in sidebar order; the narrow-window page picker lists them the same way.
-	const ALL: [Self; 15] = [
+	const ALL: [Self; 13] = [
 		Self::Account,
 		Self::Profile,
 		Self::MessagingPermissions,
@@ -53,12 +51,9 @@ impl Page {
 		Self::LanguageTime,
 		Self::General,
 		Self::Updates,
-		Self::Themes,
-		Self::Extensions,
 	];
-	/// Sidebar sections: account-level choices first, then how this app looks and behaves,
-	/// then community add-ons.
-	const SECTIONS: [(&'static str, &'static [Self]); 3] = [
+	/// Sidebar sections: account-level choices first, then how this app looks and behaves.
+	const SECTIONS: [(&'static str, &'static [Self]); 2] = [
 		(
 			"section-user",
 			&[
@@ -82,7 +77,6 @@ impl Page {
 				Self::Updates,
 			],
 		),
-		("section-customization", &[Self::Themes, Self::Extensions]),
 	];
 	fn label_key(self) -> &'static str {
 		match self {
@@ -99,8 +93,6 @@ impl Page {
 			Self::Keybinds => "page-keybinds",
 			Self::Storage => "page-storage",
 			Self::Updates => "page-updates",
-			Self::Extensions => "page-extensions",
-			Self::Themes => "page-themes",
 		}
 	}
 	fn label(self, language: Language) -> String {
@@ -121,8 +113,6 @@ impl Page {
 			Self::Keybinds => "description-keybinds",
 			Self::Storage => "description-storage",
 			Self::Updates => "description-updates",
-			Self::Extensions => "description-extensions",
-			Self::Themes => "description-themes",
 		}
 	}
 	fn description(self, language: Language) -> String {
@@ -163,8 +153,6 @@ impl Page {
 			Self::Keybinds => {
 				"system keybinds keyboard shortcuts custom default formatting navigation"
 			}
-			Self::Extensions => "extensions plugins shop store catalog import community tools",
-			Self::Themes => "themes shop store catalog import community appearance colors",
 		};
 		keywords.contains(query)
 			|| self.label(language).to_lowercase().contains(query)
@@ -197,46 +185,6 @@ fn gpu_description(language: Language, preference: model::GpuPreference) -> Stri
 }
 
 impl MessagingUi {
-	pub(super) fn open_extension_settings(&mut self, view: extensions::AppView) {
-		self.settings.page = match view {
-			extensions::AppView::Settings => Page::General,
-			extensions::AppView::Account => Page::Account,
-			extensions::AppView::ProfileSettings => Page::Profile,
-			extensions::AppView::Appearance => Page::Appearance,
-			extensions::AppView::MessagingPermissions => Page::MessagingPermissions,
-			extensions::AppView::Notifications => Page::Notifications,
-			extensions::AppView::Activity => Page::Activity,
-			extensions::AppView::Extensions => Page::Extensions,
-			extensions::AppView::Themes => Page::Themes,
-			extensions::AppView::VoiceSettings => Page::Voice,
-			extensions::AppView::Keybinds => Page::Keybinds,
-			extensions::AppView::Storage => Page::Storage,
-			extensions::AppView::Updates => Page::Updates,
-			_ => return,
-		};
-		self.settings.query.clear();
-		self.settings.open = true;
-	}
-
-	pub(super) fn theme_preview_navigation(&mut self, ui: &mut egui::Ui) {
-		if self.extensions.begin_gallery_preview(ui.ctx()) {
-			self.settings.open = false;
-		}
-		if self.settings.open {
-			self.extensions.stop_theme_preview(ui.ctx());
-		} else if self.extensions.theme_preview_bar(
-			ui,
-			if self.shows_title_bar() {
-				design::TRAFFIC_LIGHT_INSET
-			} else {
-				0.0
-			},
-		) {
-			self.settings.open = true;
-			self.settings.page = Page::Themes;
-			self.settings.query.clear();
-		}
-	}
 	/// Opens settings on the last viewed page, as the macOS Settings menu item does.
 	pub fn open_settings(&mut self) {
 		self.settings.open = true;
@@ -270,17 +218,6 @@ impl MessagingUi {
 		}
 	}
 
-	pub fn extension_settings_page(&self) -> Option<extensions::ExtensionKind> {
-		if !self.settings.open {
-			return None;
-		}
-		match self.settings.page {
-			Page::Themes => Some(extensions::ExtensionKind::Theme),
-			Page::Extensions => Some(extensions::ExtensionKind::Plugin),
-			_ => None,
-		}
-	}
-
 	pub fn voice_settings_open(&self) -> bool {
 		self.settings.open && self.settings.page == Page::Voice
 	}
@@ -291,12 +228,6 @@ impl MessagingUi {
 		self.settings.query.clear();
 	}
 
-	/// Fixture-only entry point: opens the theme maker on the requested editor tab.
-	#[cfg(feature = "demo")]
-	pub fn preview_theme_maker(&mut self, tab: &str) {
-		self.preview_settings("themes");
-		self.extensions.preview_theme_maker(tab);
-	}
 	/// Fixture-only entry point for the native offline settings preview.
 	pub fn preview_settings(&mut self, page: &str) {
 		self.settings.open = true;
@@ -370,18 +301,8 @@ impl MessagingUi {
 						bottom: 24,
 					}))
 					.show(ui, |ui| {
-						let editing_theme =
-							self.settings.page == Page::Themes && self.extensions.editing_theme();
-						let heading = if editing_theme {
-							self.language.text("theme-maker")
-						} else {
-							self.settings.page.label(self.language)
-						};
-						let description = if editing_theme {
-							self.language.text("theme-maker-description")
-						} else {
-							self.settings.page.description(self.language)
-						};
+						let heading = self.settings.page.label(self.language);
+						let description = self.settings.page.description(self.language);
 						ui.horizontal_top(|ui| {
 							ui.vertical(|ui| {
 								ui.spacing_mut().item_spacing.y = 2.0;
@@ -420,16 +341,8 @@ impl MessagingUi {
 								});
 						}
 						ui.add_space(16.0);
-						if self.settings.page == Page::Themes && self.extensions.editing_theme() {
-							self.extensions.theme_editor_toolbar(ui);
-							ui.add_space(12.0);
-						}
 						egui::ScrollArea::vertical()
-							.id_salt((
-								"settings-content",
-								self.settings.page as u8,
-								self.extensions.theme_editor_tab_key(),
-							))
+							.id_salt(("settings-content", self.settings.page as u8))
 							.auto_shrink([false, false])
 							.show(ui, |ui| {
 								crate::dialog::page_fade(
@@ -495,11 +408,6 @@ impl MessagingUi {
 										&mut self.keybind_capture,
 										self.global_keybind_status,
 									),
-									Page::Extensions | Page::Themes => {
-										self.extensions
-											.select_themes(self.settings.page == Page::Themes);
-										self.extensions.settings(ui, state);
-									}
 								}
 								if state.demo {
 									ui.add_space(20.0);
@@ -1185,54 +1093,32 @@ impl MessagingUi {
 		);
 	}
 
-	/// Built-in presets plus enabled community themes, one swatch each.
+	/// Built-in presets, one swatch each.
 	pub(crate) fn colour_preset_settings(&mut self, ui: &mut egui::Ui) {
 		let current = design::variant();
-		let mut presets: Vec<_> = design::Variant::ALL
+		let presets: Vec<_> = design::Variant::ALL
 			.into_iter()
 			.map(|variant| {
 				(
-					Some(variant),
-					None,
+					variant,
 					variant.label().to_owned(),
 					design::builtin_colors(ui.visuals().dark_mode, variant),
 				)
 			})
 			.collect();
-		presets.extend(self.extensions.entries.iter().filter_map(|entry| {
-			if !entry.enabled || entry.manifest.kind != extensions::ExtensionKind::Theme {
-				return None;
-			}
-			Some((
-				None,
-				Some(entry.manifest.id.clone()),
-				entry.manifest.name.clone(),
-				design::theme_preview_palette(ui, entry.theme_preview.as_ref()?),
-			))
-		}));
 		design::group(
 			ui,
 			&crate::i18n::translate("settings-colour-preset-settings-colour-preset"),
 			|ui| {
 				ui.horizontal_wrapped(|ui| {
 					ui.spacing_mut().item_spacing = egui::vec2(12.0, 10.0);
-					for (variant, id, label, swatch) in presets {
-						let selected = if let Some(active) = &self.extensions.active_theme {
-							id.as_ref() == Some(active)
-						} else {
-							variant == Some(current)
-						};
+					for (variant, label, swatch) in presets {
+						let selected = variant == current;
 						let response = preset_swatch(ui, &label, &swatch, selected);
-						if response.on_hover_text(&label).clicked()
-							&& !selected && !self.extensions.busy
-						{
-							if let Some(variant) = variant {
-								design::set_variant(variant);
-								design::apply(ui.ctx());
-								self.theme_variant_changed = Some(variant);
-							}
-							self.extensions
-								.queue(ui.ctx(), crate::ExtensionRequest::SelectTheme { id });
+						if response.on_hover_text(&label).clicked() && !selected {
+							design::set_variant(variant);
+							design::apply(ui.ctx());
+							self.theme_variant_changed = Some(variant);
 						}
 					}
 				});
