@@ -1,26 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
   <title>DTEW Cord app icon</title>
-  <desc>DTEW Cord plug-bubble mark: a speech bubble asking a question, trailing a power cord and plug. Original artwork; no embedded raster images or fonts.</desc>
+  <desc>DTEW Cord monoline mark: a hexagon framed by two arms, with an interlaced 7 and loop. Original artwork; no embedded raster images or fonts.</desc>
   <defs>
-    <linearGradient id="dtewcord-plate-gradient" x1="0" y1="0" x2="1024" y2="1024" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#3EE6C1"/>
-      <stop offset="0.5" stop-color="#1A9BD8"/>
-      <stop offset="1" stop-color="#1D3A9E"/>
+    <linearGradient id="dtewcord-plate-gradient" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#27334A"/>
+      <stop offset="1" stop-color="#1A2233"/>
     </linearGradient>
   </defs>
   <rect id="dtewcord-plate" width="1024" height="1024" rx="230" fill="url(#dtewcord-plate-gradient)"/>
-  <g transform="translate(8 -30)">
-  <rect id="dtewcord-bubble" x="196" y="170" width="632" height="456" rx="200" fill="#FFFFFF"/>
-  <path id="dtewcord-cord" d="M 420 590 C 420 690 340 670 306 736" stroke="#FFFFFF" stroke-width="76" stroke-linecap="round" fill="none"/>
-  <g id="dtewcord-plug" transform="translate(306 736) rotate(27)" fill="#FFFFFF">
-    <rect x="-88" y="-8" width="176" height="118" rx="36"/>
-    <rect x="-56" y="96" width="34" height="88" rx="17"/>
-    <rect x="22" y="96" width="34" height="88" rx="17"/>
-  </g>
-  <g id="dtewcord-question">
-    <path d="M 444 336 a 68 68 0 1 1 108 55 q -40 24 -40 62 v 6" stroke="#1B86CC" stroke-width="60" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="512" cy="540" r="36" fill="#1B86CC"/>
-  </g>
+  <g transform="translate(512 512) scale(1.316) translate(-350 -252.5)">
+    <g fill="none" stroke="#FFFFFF" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+      <path id="dtewcord-hexagon" d="M 452 388 L 489.9 363.2 Q 510 350 510.0 326.0 L 510.0 174.0 Q 510 150 489.1 138.2 L 370.9 71.8 Q 350 60 329.1 71.8 L 210.9 138.2 Q 190 150 190.0 174.0 L 190.0 314.0 Q 190 338 211.0 349.7 L 251 372"/>
+      <path id="dtewcord-left-arm" d="M 440 170 L 176.4 452.5 Q 160 470 136.5 465.0 L 113.5 460.0 Q 90 455 80.5 432.9 L 69.5 407.1 Q 60 385 66.0 361.8 L 134.0 98.2 Q 140 75 160.4 62.4 L 184.6 47.6 Q 205 35 219.8 53.9 L 262 108"/>
+      <path id="dtewcord-seven-bar" d="M 265 170 L 440 170"/>
+      <path id="dtewcord-right-arm" d="M 438 108 L 480.2 53.9 Q 495 35 515.4 47.6 L 539.6 62.4 Q 560 75 566.0 98.2 L 634.0 361.8 Q 640 385 630.5 407.1 L 619.5 432.9 Q 610 455 586.5 460.0 L 563.5 465.0 Q 540 470 522.4 453.6 L 452 388"/>
+      <path id="dtewcord-loop" d="M 345 290 C 420 270 455 330 432 372 C 410 420 335 440 282 398"/>
+    </g>
   </g>
 </svg>
