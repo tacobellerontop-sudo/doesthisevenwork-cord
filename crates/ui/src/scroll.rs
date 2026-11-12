@@ -1,20 +1,81 @@
 use crate::design;
 use egui::{AsIdSalt, IdSalt, Pos2, Rect, ScrollArea, Shape, Stroke, pos2};
 
+/// How long one wheel notch takes to glide when smooth scrolling is on. egui's own
+/// smoothing reaches 90% of a notch in 0.1 s, which reads as a jump; this matches the
+/// Slint client's 180 ms wheel animation.
+pub const WHEEL_GLIDE_SECS: f32 = 0.18;
+
+/// Point deltas at least this long are wheel notches in disguise (egui uses the same cut).
+const COARSE_POINT_DELTA: f32 = 8.0;
+
 /// Apply once before rendering the app's scroll areas. Zoom gestures remain unchanged.
 pub fn apply_preferences(ctx: &egui::Context, preferences: model::ReadingPreferences) {
 	if !preferences.is_valid() {
 		return;
 	}
 	let options = ctx.options(|options| options.input_options);
+	let glide_id = egui::Id::unique("dtewcord-wheel-glide");
+	let mut pending = ctx
+		.data(|data| data.get_temp::<egui::Vec2>(glide_id))
+		.unwrap_or_default();
 	ctx.input_mut(|input| {
+		let page_height = input.viewport_rect().height();
 		let delta = if preferences.smooth_scrolling {
-			input.smooth_scroll_delta()
+			let (coarse, fine) = split_wheel_delta(&input.raw.events, options, page_height);
+			pending += coarse;
+			let dt = input.stable_dt.clamp(1.0 / 240.0, 0.05);
+			glide_step(&mut pending, dt) + fine
 		} else {
-			instant_wheel_delta(&input.raw.events, options, input.viewport_rect().height())
+			pending = egui::Vec2::ZERO;
+			instant_wheel_delta(&input.raw.events, options, page_height)
 		};
 		input.smooth_scroll_delta = delta * (f32::from(preferences.scroll_speed_percent) / 100.0);
 	});
+	ctx.data_mut(|data| data.insert_temp(glide_id, pending));
+	if pending != egui::Vec2::ZERO {
+		ctx.request_repaint();
+	}
+}
+
+/// Release part of the distance still owed by earlier wheel notches: fast at first, easing
+/// out, about 95% of it within [`WHEEL_GLIDE_SECS`]. Notches that arrive mid-glide add to
+/// what is owed, so a quick spin keeps one continuous motion.
+pub(super) fn glide_step(pending: &mut egui::Vec2, dt: f32) -> egui::Vec2 {
+	let share = egui::emath::exponential_smooth_factor(0.95, WHEEL_GLIDE_SECS, dt);
+	let mut step = egui::Vec2::ZERO;
+	for axis in 0..2 {
+		let left = pending[axis] * (1.0 - share);
+		if left.abs() < 0.5 {
+			step[axis] = pending[axis];
+			pending[axis] = 0.0;
+		} else {
+			step[axis] = pending[axis] - left;
+			pending[axis] = left;
+		}
+	}
+	step
+}
+
+/// This frame's wheel movement in points, split into coarse mouse wheel notches (which
+/// glide) and fine trackpad or high resolution movement (already smooth, so applied as is).
+pub(super) fn split_wheel_delta(
+	events: &[egui::Event],
+	options: egui::InputOptions,
+	page_height: f32,
+) -> (egui::Vec2, egui::Vec2) {
+	wheel_deltas(events, options, page_height).fold(
+		(egui::Vec2::ZERO, egui::Vec2::ZERO),
+		|(coarse, fine), (unit, delta)| {
+			let is_fine =
+				unit == egui::MouseWheelUnit::Point && delta.length() < COARSE_POINT_DELTA;
+			if is_fine {
+				(coarse, fine + delta)
+			} else {
+				(coarse + delta, fine)
+			}
+		},
+	)
 }
 
 pub(super) fn instant_wheel_delta(
@@ -22,38 +83,46 @@ pub(super) fn instant_wheel_delta(
 	options: egui::InputOptions,
 	page_height: f32,
 ) -> egui::Vec2 {
-	events
-		.iter()
-		.filter_map(|event| {
-			let egui::Event::MouseWheel {
-				unit,
-				delta,
-				phase,
-				modifiers,
-				..
-			} = event
-			else {
-				return None;
-			};
-			if *phase != egui::TouchPhase::Move || modifiers.matches_any(options.zoom_modifier) {
-				return None;
-			}
-			let mut delta = match unit {
-				egui::MouseWheelUnit::Point => *delta,
-				egui::MouseWheelUnit::Line => options.line_scroll_speed * *delta,
-				egui::MouseWheelUnit::Page => page_height * *delta,
-			};
-			let horizontal = modifiers.matches_any(options.horizontal_scroll_modifier);
-			let vertical = modifiers.matches_any(options.vertical_scroll_modifier);
-			if horizontal && !vertical {
-				delta = egui::vec2(delta.x + delta.y, 0.0);
-			}
-			if !horizontal && vertical {
-				delta = egui::vec2(0.0, delta.x + delta.y);
-			}
-			Some(delta)
-		})
-		.fold(egui::Vec2::ZERO, |total, delta| total + delta)
+	wheel_deltas(events, options, page_height)
+		.fold(egui::Vec2::ZERO, |total, (_, delta)| total + delta)
+}
+
+/// Each scroll wheel event of the frame in points, with its original unit. Zoom gestures
+/// are left out.
+fn wheel_deltas(
+	events: &[egui::Event],
+	options: egui::InputOptions,
+	page_height: f32,
+) -> impl Iterator<Item = (egui::MouseWheelUnit, egui::Vec2)> + '_ {
+	events.iter().filter_map(move |event| {
+		let egui::Event::MouseWheel {
+			unit,
+			delta,
+			phase,
+			modifiers,
+			..
+		} = event
+		else {
+			return None;
+		};
+		if *phase != egui::TouchPhase::Move || modifiers.matches_any(options.zoom_modifier) {
+			return None;
+		}
+		let mut delta = match unit {
+			egui::MouseWheelUnit::Point => *delta,
+			egui::MouseWheelUnit::Line => options.line_scroll_speed * *delta,
+			egui::MouseWheelUnit::Page => page_height * *delta,
+		};
+		let horizontal = modifiers.matches_any(options.horizontal_scroll_modifier);
+		let vertical = modifiers.matches_any(options.vertical_scroll_modifier);
+		if horizontal && !vertical {
+			delta = egui::vec2(delta.x + delta.y, 0.0);
+		}
+		if !horizontal && vertical {
+			delta = egui::vec2(0.0, delta.x + delta.y);
+		}
+		Some((*unit, delta))
+	})
 }
 /// Chromium / Discord default: 3 wheel lines times 40 px. winit reports one notch as `LineDelta` 1.0.
 pub const DISCORD_LINE_SCROLL_SPEED: f32 = 120.0;
@@ -321,4 +390,97 @@ impl Session {
 
 fn clamped_away(requested: f32, current: f32, next: f32) -> bool {
 	(requested - current).abs() > 0.5 && (next - current).signum() == (requested - current).signum()
+}
+
+#[cfg(test)]
+mod glide_tests {
+	use super::*;
+
+	fn wheel(unit: egui::MouseWheelUnit, y: f32) -> egui::Event {
+		egui::Event::MouseWheel {
+			unit,
+			delta: egui::vec2(0.0, y),
+			modifiers: egui::Modifiers::NONE,
+			phase: egui::TouchPhase::Move,
+			source: egui::MouseWheelSource::Unknown,
+		}
+	}
+
+	#[test]
+	fn a_wheel_notch_glides_the_whole_distance_over_the_glide_time() {
+		let mut pending = egui::vec2(0.0, -DISCORD_LINE_SCROLL_SPEED);
+		let dt = 1.0 / 60.0;
+		let first = glide_step(&mut pending, dt);
+		// Not a jump: the first frame moves well under half a notch.
+		assert!(first.y < 0.0 && first.y.abs() < DISCORD_LINE_SCROLL_SPEED * 0.5);
+		let mut moved = first.y;
+		let mut frames = 1;
+		while pending != egui::Vec2::ZERO {
+			moved += glide_step(&mut pending, dt).y;
+			frames += 1;
+			assert!(frames < 120, "glide never settles");
+		}
+		assert!((moved + DISCORD_LINE_SCROLL_SPEED).abs() < 1e-3);
+		// Settles within a few glide times, not instantly.
+		assert!(frames as f32 * dt > WHEEL_GLIDE_SECS * 0.5);
+		assert!((frames as f32 * dt) < WHEEL_GLIDE_SECS * 3.0);
+	}
+
+	#[test]
+	fn trackpad_movement_skips_the_glide() {
+		let options = egui::InputOptions::default();
+		let (coarse, fine) = split_wheel_delta(
+			&[
+				wheel(egui::MouseWheelUnit::Point, 3.0),
+				wheel(egui::MouseWheelUnit::Line, -1.0),
+				wheel(egui::MouseWheelUnit::Point, 40.0),
+			],
+			options,
+			600.0,
+		);
+		assert_eq!(fine, egui::vec2(0.0, 3.0));
+		assert_eq!(coarse, egui::vec2(0.0, 40.0 - options.line_scroll_speed));
+	}
+
+	#[test]
+	fn smooth_preference_spreads_a_notch_over_frames() {
+		let ctx = egui::Context::default();
+		let preferences = model::ReadingPreferences::default();
+		assert!(preferences.smooth_scrolling);
+		ctx.options_mut(|options| {
+			options.input_options.line_scroll_speed = DISCORD_LINE_SCROLL_SPEED;
+		});
+		let mut deltas = Vec::new();
+		for frame in 0..30 {
+			let events = if frame == 0 {
+				vec![wheel(egui::MouseWheelUnit::Line, -1.0)]
+			} else {
+				Vec::new()
+			};
+			let output = ctx.run_ui(
+				egui::RawInput {
+					time: Some(f64::from(frame) / 60.0),
+					predicted_dt: 1.0 / 60.0,
+					events,
+					..Default::default()
+				},
+				|ui| {
+					apply_preferences(ui.ctx(), preferences);
+					deltas.push(ui.input(|input| input.smooth_scroll_delta().y));
+				},
+			);
+			output.drop_without_applying_deltas();
+		}
+		let moving = deltas.iter().filter(|delta| **delta != 0.0).count();
+		assert!(moving > 3, "{deltas:?}");
+		assert!(
+			deltas[0].abs() < DISCORD_LINE_SCROLL_SPEED * 0.5,
+			"{deltas:?}"
+		);
+		let total: f32 = deltas.iter().sum();
+		assert!(
+			(total + DISCORD_LINE_SCROLL_SPEED).abs() < 1e-2,
+			"{deltas:?}"
+		);
+	}
 }

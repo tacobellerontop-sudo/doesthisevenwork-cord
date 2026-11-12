@@ -354,6 +354,8 @@ impl Desktop {
 		egui::CentralPanel::default()
 			.frame(egui::Frame::NONE.fill(ui::design::window_palette(ui).canvas))
 			.show(ui, |ui| {
+				// Nothing here is worth selecting; a press anywhere but the buttons moves the window.
+				ui.style_mut().interaction.selectable_labels = false;
 				ui::design::window_drag(ui, ui.max_rect());
 				egui::Frame::NONE
 					.inner_margin(egui::Margin {
@@ -472,11 +474,17 @@ impl Desktop {
 		egui::CentralPanel::default()
 			.frame(egui::Frame::NONE.fill(ui::design::window_palette(ui).canvas))
 			.show(ui, |ui| {
+				// The whole canvas moves the window, as on the restore screen. The header has no
+				// fill or separator, so nothing marks it as the only place to grab; the form and
+				// header widgets are added later and still win hit testing.
+				ui::design::window_drag(ui, ui.max_rect());
 				egui::Panel::top("sign-in-header")
 					.exact_size(SIGN_IN_HEADER_HEIGHT)
 					.show_separator_line(false)
 					.frame(egui::Frame::NONE)
 					.show(ui, |ui| {
+						// Caption text belongs to the window drag region, not text selection.
+						ui.style_mut().interaction.selectable_labels = false;
 						// Drag first: later widgets win hit testing, so the header buttons stay clickable.
 						ui::design::window_drag(ui, ui.max_rect());
 						ui.horizontal_centered(|ui| {
@@ -560,6 +568,8 @@ impl Desktop {
 					.show_separator_line(false)
 					.frame(egui::Frame::NONE)
 					.show(ui, |ui| {
+						// The note sits on the drag region; a press on it should move the window.
+						ui.style_mut().interaction.selectable_labels = false;
 						ui.vertical_centered(|ui| {
 							ui.add_space(12.0);
 							ui.label(
