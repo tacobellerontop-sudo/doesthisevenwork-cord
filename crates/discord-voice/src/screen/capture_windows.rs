@@ -24,6 +24,8 @@ use windows_capture::{
 
 #[path = "audio_windows.rs"]
 mod audio;
+#[path = "gpu_windows.rs"]
+mod gpu;
 
 fn monitor_id(monitor: &Monitor) -> u64 {
 	u64::try_from(monitor.as_raw_hmonitor() as usize).unwrap_or(0)
@@ -96,20 +98,155 @@ pub(crate) fn sources() -> Result<Vec<Source>, &'static str> {
 #[derive(Clone)]
 struct Flags {
 	frames: SyncSender<RawFrame>,
+	spare: crate::screen::Spare,
 	stop: Arc<AtomicBool>,
 	pending: Arc<AtomicBool>,
 	next_frame: Instant,
 	interval: Duration,
+	/// Stream picture size; the GPU path scales to it before read-back.
+	target: (u32, u32),
+	fps: u32,
 }
 
-struct Handler(Flags);
+/// GPU conversion state: the converter for the current source size, or why it is off.
+#[derive(Default)]
+struct Gpu {
+	converter: Option<gpu::Converter>,
+	disabled: bool,
+}
+
+struct Handler(Flags, Gpu);
+
+/// The interface pointer inside `windows-capture`'s own `windows` crate types, which are a
+/// different crate version from ours but the same transparent COM pointer.
+fn raw_interface<T>(interface: &T) -> *mut core::ffi::c_void {
+	const { assert!(std::mem::size_of::<T>() == std::mem::size_of::<*mut core::ffi::c_void>()) };
+	// SAFETY: COM interface wrappers are `repr(transparent)` over one non-null pointer.
+	#[allow(unsafe_code)]
+	unsafe {
+		*(interface as *const T).cast::<*mut core::ffi::c_void>()
+	}
+}
+
+fn diagnostics(message: &str) {
+	if std::env::var_os("DTEWCORD_VOICE_DIAGNOSTICS").is_some_and(|value| value == "1") {
+		eprintln!("[DTEW Cord voice Screen] {message}");
+	}
+}
+
+impl Handler {
+	/// Scale and convert on the GPU, reading back only the stream-sized NV12 picture. Hands
+	/// the buffer back when the GPU path is unavailable for this frame.
+	fn gpu_frame(&mut self, frame: &mut Frame, spare: Vec<u8>) -> Result<RawFrame, Vec<u8>> {
+		if self.1.disabled {
+			return Err(spare);
+		}
+		let source = (frame.width(), frame.height());
+		if self
+			.1
+			.converter
+			.as_ref()
+			.is_none_or(|converter| !converter.matches(source))
+		{
+			self.1.converter = None;
+			self.1.converter = gpu::Converter::new(
+				raw_interface(frame.device()),
+				raw_interface(frame.device_context()),
+				source,
+				self.0.target,
+				self.0.fps,
+			);
+			if self.1.converter.is_none() {
+				diagnostics("gpu_convert=unavailable");
+				self.1.disabled = true;
+				return Err(spare);
+			}
+		}
+		let converter = self.1.converter.as_mut().expect("GPU converter");
+		let Some(picture) = converter.convert(raw_interface(frame.as_raw_texture()), spare) else {
+			diagnostics("gpu_convert=failed");
+			self.1 = Gpu {
+				converter: None,
+				disabled: true,
+			};
+			return Err(Vec::new());
+		};
+		if !converter.verified {
+			// Check the driver's first picture against the CPU conversion of the same frame.
+			let row_bytes = frame.width() as usize * 4;
+			let data_len = row_bytes * frame.height() as usize;
+			let Ok(bgra) = self.cpu_frame(frame, Vec::new(), row_bytes, data_len) else {
+				return Ok(picture);
+			};
+			let converter = self.1.converter.as_mut().expect("GPU converter");
+			if !converter.agrees(&bgra, &picture) {
+				diagnostics("gpu_convert=mismatch");
+				self.1 = Gpu {
+					converter: None,
+					disabled: true,
+				};
+				return Ok(bgra);
+			}
+			converter.verified = true;
+			diagnostics("gpu_convert=on");
+		}
+		Ok(picture)
+	}
+
+	/// Read the whole BGRA frame back and pack its rows; the encoder converts it on the CPU.
+	fn cpu_frame(
+		&mut self,
+		frame: &mut Frame,
+		mut data: Vec<u8>,
+		row_bytes: usize,
+		data_len: usize,
+	) -> Result<RawFrame, &'static str> {
+		let height = frame.height();
+		let width = frame.width();
+		let mut buffer = frame.buffer().map_err(|_| {
+			self.0.stop.store(true, Ordering::Release);
+			"Captured frame could not be read"
+		})?;
+		let stride = buffer.row_pitch() as usize;
+		let Some(source_len) = stride.checked_mul(height as usize) else {
+			self.0.stop.store(true, Ordering::Release);
+			return Err("Captured frame stride is invalid");
+		};
+		if stride < row_bytes || source_len > MAX_RAW_BYTES {
+			self.0.stop.store(true, Ordering::Release);
+			return Err("Captured frame stride exceeds the 4K limit");
+		}
+		let source = buffer.as_raw_buffer();
+		if source.len() < source_len {
+			self.0.stop.store(true, Ordering::Release);
+			return Err("Captured frame buffer is incomplete");
+		}
+		// Refill the encoder's previous frame instead of a fresh multi-megabyte allocation.
+		data.clear();
+		data.reserve_exact(data_len);
+		if stride == row_bytes {
+			data.extend_from_slice(&source[..data_len]);
+		} else {
+			for row in source[..source_len].chunks_exact(stride) {
+				data.extend_from_slice(&row[..row_bytes]);
+			}
+		}
+		Ok(RawFrame {
+			width,
+			height,
+			stride: row_bytes,
+			format: crate::screen::FrameFormat::Bgra,
+			data,
+		})
+	}
+}
 
 impl GraphicsCaptureApiHandler for Handler {
 	type Flags = Flags;
 	type Error = &'static str;
 
 	fn new(context: Context<Self::Flags>) -> Result<Self, Self::Error> {
-		Ok(Self(context.flags))
+		Ok(Self(context.flags, Gpu::default()))
 	}
 
 	fn on_frame_arrived(
@@ -149,40 +286,24 @@ impl GraphicsCaptureApiHandler for Handler {
 			control.stop();
 			return Err("Captured frame exceeds the 4K limit");
 		}
-		let mut buffer = frame.buffer().map_err(|_| {
-			self.0.stop.store(true, Ordering::Release);
-			"Captured frame could not be read"
-		})?;
-		let stride = buffer.row_pitch() as usize;
-		let Some(source_len) = stride.checked_mul(height as usize) else {
-			self.0.stop.store(true, Ordering::Release);
-			return Err("Captured frame stride is invalid");
-		};
-		if stride < row_bytes || source_len > MAX_RAW_BYTES {
-			self.0.stop.store(true, Ordering::Release);
-			return Err("Captured frame stride exceeds the 4K limit");
-		}
-		let source = buffer.as_raw_buffer();
-		if source.len() < source_len {
-			self.0.stop.store(true, Ordering::Release);
-			return Err("Captured frame buffer is incomplete");
-		}
-		let mut data = Vec::with_capacity(data_len);
-		for row in source[..source_len].chunks_exact(stride) {
-			data.extend_from_slice(&row[..row_bytes]);
-		}
-		if self
+		let spare = self
 			.0
-			.frames
-			.try_send(RawFrame {
-				width,
-				height,
-				stride: row_bytes,
-				data,
-			})
-			.is_err()
+			.spare
+			.lock()
+			.ok()
+			.and_then(|mut spare| spare.take())
+			.unwrap_or_default();
+		let picture = match self.gpu_frame(frame, spare) {
+			Ok(picture) => picture,
+			Err(spare) => self.cpu_frame(frame, spare, row_bytes, data_len)?,
+		};
+		if let Err(
+			std::sync::mpsc::TrySendError::Full(picture)
+			| std::sync::mpsc::TrySendError::Disconnected(picture),
+		) = self.0.frames.try_send(picture)
 		{
 			self.0.pending.store(false, Ordering::Release);
+			crate::screen::give_back(&self.0.spare, picture.data);
 		}
 		Ok(())
 	}
@@ -205,6 +326,7 @@ impl Capture {
 	pub(crate) fn start(
 		settings: CaptureSettings,
 		frames: SyncSender<RawFrame>,
+		spare: crate::screen::Spare,
 		audio: Option<tokio::sync::mpsc::Sender<AudioChunk>>,
 		stop: Arc<AtomicBool>,
 		ready: Arc<AtomicBool>,
@@ -230,7 +352,15 @@ impl Capture {
 					.into_iter()
 					.find(|monitor| monitor_id(monitor) == id)
 					.ok_or("Selected display is no longer available")?;
-				start_item(settings, monitor, frames, stop.clone(), pending, cancel)
+				start_item(
+					settings,
+					monitor,
+					frames,
+					spare,
+					stop.clone(),
+					pending,
+					cancel,
+				)
 			}
 			SourceId::Window(id) => {
 				let window = Window::enumerate()
@@ -239,7 +369,15 @@ impl Capture {
 					.find(|window| window_id(window) == id)
 					.ok_or("Selected window is no longer available")?;
 				window_process = window.process_id().ok();
-				start_item(settings, window, frames, stop.clone(), pending, cancel)
+				start_item(
+					settings,
+					window,
+					frames,
+					spare,
+					stop.clone(),
+					pending,
+					cancel,
+				)
 			}
 			#[allow(unreachable_patterns)] // Portal may be absent from platform-scoped models.
 			_ => return Err("The desktop screen picker is available only on Linux".into()),
@@ -314,6 +452,7 @@ fn start_item<T>(
 	settings: CaptureSettings,
 	item: T,
 	frames: SyncSender<RawFrame>,
+	spare: crate::screen::Spare,
 	stop: Arc<AtomicBool>,
 	pending: Arc<AtomicBool>,
 	cancel: Arc<AtomicBool>,
@@ -334,10 +473,13 @@ where
 	item.probe()?;
 	let flags = Flags {
 		frames,
+		spare,
 		stop,
 		pending,
 		next_frame: Instant::now(),
 		interval: Duration::from_secs_f64(1.0 / f64::from(settings.fps)),
+		target: (settings.width, settings.height),
+		fps: settings.fps,
 	};
 	let cursor =
 		if settings.cursor && GraphicsCaptureApi::is_cursor_settings_supported().unwrap_or(false) {

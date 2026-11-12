@@ -25,11 +25,35 @@ use std::time::{Duration, Instant};
 pub const MAX_RAW_BYTES: usize = 3840 * 2160 * 4;
 pub const MAX_ENCODED_BYTES: usize = 2 * 1024 * 1024;
 
+/// One captured frame's pixels handed back from the encoder for the capture to refill.
+pub(crate) type Spare = Arc<Mutex<Option<Vec<u8>>>>;
+
+/// Keep `data` for the next capture unless one buffer is already waiting.
+pub(crate) fn give_back(spare: &Spare, data: Vec<u8>) {
+	if let Ok(mut spare) = spare.lock()
+		&& spare.is_none()
+	{
+		*spare = Some(data);
+	}
+}
+
 pub struct RawFrame {
 	pub width: u32,
 	pub height: u32,
+	/// Bytes per row of the first (or only) plane.
 	pub stride: usize,
+	pub format: FrameFormat,
 	pub data: Vec<u8>,
+}
+
+/// Pixel layout of a [`RawFrame`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrameFormat {
+	/// Packed BGRA at the captured source size, converted on the CPU before encoding.
+	Bgra,
+	/// Limited-range BT.601 NV12 already scaled and letterboxed to the stream size by the
+	/// GPU: tightly packed luma (`stride == width`), then interleaved Cb/Cr.
+	Nv12,
 }
 
 pub struct EncodedFrame {
@@ -235,9 +259,11 @@ fn encode_loop(
 	let (raw_send, raw) = mpsc::sync_channel(1);
 	let capture_stop = Arc::new(AtomicBool::new(false));
 	let raw_pending = Arc::new(AtomicBool::new(false));
+	let spare: Spare = Arc::default();
 	let _native = capture::Capture::start(
 		settings,
 		raw_send,
+		spare.clone(),
 		audio,
 		capture_stop.clone(),
 		ready.clone(),
@@ -251,6 +277,9 @@ fn encode_loop(
 	let mut next_frame = Instant::now();
 	let mut latest_frame = None;
 	let mut preview_shown = preview_visible.load(Ordering::Acquire);
+	let mut next_preview = Instant::now();
+	// A captured change was skipped for pacing and the preview has not shown it yet.
+	let mut preview_behind = false;
 
 	while !stop.load(Ordering::Acquire) && !send.is_closed() {
 		if _native.failed() {
@@ -292,21 +321,36 @@ fn encode_loop(
 				if let Ok(mut slot) = preview.try_lock() {
 					slot.take();
 				}
-			} else {
+			} else if now >= next_preview {
+				next_preview = now + PREVIEW_INTERVAL;
+				preview_behind = false;
 				let image = preview_frame(frame)?;
 				if let Ok(mut slot) = preview.try_lock() {
 					*slot = Some(image);
 				}
 				wake();
+			} else {
+				preview_behind = true;
 			}
-		} else if resumed && let Some(frame) = &latest_frame {
-			// A change-driven capture does not emit again while the picture is still.
+		} else if visible
+			&& (resumed || preview_behind)
+			&& let Some(frame) = &latest_frame
+		{
+			// A change-driven capture does not emit again while the picture is still, so
+			// show the retained frame on return or when the last change arrived too soon.
 			// The encode path already kept that frame.
+			next_preview = now + PREVIEW_INTERVAL;
+			preview_behind = false;
 			let image = preview_frame(frame)?;
 			if let Ok(mut slot) = preview.try_lock() {
 				*slot = Some(image);
 			}
 			wake();
+		}
+		if frame.is_some()
+			&& let Some(old) = latest_frame.take()
+		{
+			give_back(&spare, old.data);
 		}
 		let encode = retain_screen_frame(
 			&mut latest_frame,
@@ -597,6 +641,21 @@ fn encode_yuv(
 }
 
 fn validate_frame(frame: &RawFrame) -> Result<(usize, usize), &'static str> {
+	if frame.format == FrameFormat::Nv12 {
+		let (width, height) = (frame.width as usize, frame.height as usize);
+		if width == 0
+			|| height == 0
+			|| width > 3840
+			|| height > 2160
+			|| !width.is_multiple_of(2)
+			|| !height.is_multiple_of(2)
+			|| frame.stride != width
+			|| frame.data.len() != width * height * 3 / 2
+		{
+			return Err("Screen capture returned an unsupported frame size");
+		}
+		return Ok((width, frame.data.len()));
+	}
 	let row_bytes = (frame.width as usize)
 		.checked_mul(4)
 		.ok_or("Screen capture returned an unsupported frame size")?;
@@ -618,18 +677,84 @@ fn validate_frame(frame: &RawFrame) -> Result<(usize, usize), &'static str> {
 	Ok((row_bytes, required))
 }
 
+/// The local preview is a tile on screen, never the full desktop: bound it so a 4K share
+/// does not convert, allocate and upload 33 MB per frame just to show itself.
+const PREVIEW_MAX_WIDTH: u32 = 960;
+const PREVIEW_MAX_HEIGHT: u32 = 540;
+/// The local preview refreshes at most this often; each refresh costs a full UI frame.
+const PREVIEW_INTERVAL: Duration = Duration::from_millis(33);
+
 pub(super) fn preview_frame(frame: &RawFrame) -> Result<image::RgbaImage, &'static str> {
-	let (row_bytes, _) = validate_frame(frame)?;
-	let mut image = image::RgbaImage::new(frame.width, frame.height);
-	for (y, row) in image.chunks_mut(frame.width as usize * 4).enumerate() {
-		let start = y * frame.stride;
-		let (dst_pixels, _) = row.as_chunks_mut::<4>();
-		let (src_pixels, _) = frame.data[start..start + row_bytes].as_chunks::<4>();
-		for (dst, src) in dst_pixels.iter_mut().zip(src_pixels) {
-			*dst = [src[2], src[1], src[0], 255];
+	validate_frame(frame)?;
+	if frame.format == FrameFormat::Nv12 {
+		return preview_nv12(frame);
+	}
+	// Integer reduction: each preview pixel averages four samples spread over its block.
+	let factor = frame
+		.width
+		.div_ceil(PREVIEW_MAX_WIDTH)
+		.max(frame.height.div_ceil(PREVIEW_MAX_HEIGHT))
+		.max(1) as usize;
+	let (width, height) = (
+		(frame.width as usize / factor).max(1),
+		(frame.height as usize / factor).max(1),
+	);
+	let half = factor / 2;
+	let (last_x, last_y) = (frame.width as usize - 1, frame.height as usize - 1);
+	let mut pixels = Vec::with_capacity(width * height * 4);
+	for y in 0..height {
+		let top = (y * factor).min(last_y) * frame.stride;
+		let bottom = (y * factor + half).min(last_y) * frame.stride;
+		for x in 0..width {
+			let (left, right) = (
+				(x * factor).min(last_x) * 4,
+				(x * factor + half).min(last_x) * 4,
+			);
+			let mut sum = [0u32; 3];
+			for at in [top + left, top + right, bottom + left, bottom + right] {
+				let source = &frame.data[at..at + 4];
+				// BGRA in, RGB out.
+				sum[0] += u32::from(source[2]);
+				sum[1] += u32::from(source[1]);
+				sum[2] += u32::from(source[0]);
+			}
+			pixels.extend(sum.map(|total| ((total + 2) / 4) as u8));
+			pixels.push(255);
 		}
 	}
-	Ok(image)
+	image::RgbaImage::from_raw(width as u32, height as u32, pixels).ok_or("Invalid screen frame")
+}
+
+/// Preview of a GPU-converted NV12 frame: point samples (one per preview pixel) through
+/// the same limited-range BT.601 matrix the stream uses.
+fn preview_nv12(frame: &RawFrame) -> Result<image::RgbaImage, &'static str> {
+	let (width, height) = (frame.width as usize, frame.height as usize);
+	let factor = frame
+		.width
+		.div_ceil(PREVIEW_MAX_WIDTH)
+		.max(frame.height.div_ceil(PREVIEW_MAX_HEIGHT))
+		.max(1) as usize;
+	let (out_width, out_height) = ((width / factor).max(1), (height / factor).max(1));
+	let (luma, chroma) = frame.data.split_at(width * height);
+	let mut pixels = Vec::with_capacity(out_width * out_height * 4);
+	for y in 0..out_height {
+		let source_y = (y * factor + factor / 2).min(height - 1);
+		for x in 0..out_width {
+			let source_x = (x * factor + factor / 2).min(width - 1);
+			let c = i32::from(luma[source_y * width + source_x]) - 16;
+			let at = (source_y / 2) * width + (source_x / 2) * 2;
+			let (d, e) = (i32::from(chroma[at]) - 128, i32::from(chroma[at + 1]) - 128);
+			let channel = |value: i32| ((value + 128) >> 8).clamp(0, 255) as u8;
+			pixels.extend([
+				channel(298 * c + 409 * e),
+				channel(298 * c - 100 * d - 208 * e),
+				channel(298 * c + 516 * d),
+				255,
+			]);
+		}
+	}
+	image::RgbaImage::from_raw(out_width as u32, out_height as u32, pixels)
+		.ok_or("Invalid screen frame")
 }
 
 #[cfg(test)]
@@ -683,6 +808,7 @@ mod tests {
 			width: 2,
 			height: 2,
 			stride: 8,
+			format: crate::screen::FrameFormat::Bgra,
 			data: vec![value; 16],
 		};
 		let mut latest = None;
@@ -708,6 +834,7 @@ mod tests {
 			width: 1,
 			height: 2,
 			stride: 8,
+			format: crate::screen::FrameFormat::Bgra,
 			data: vec![1, 2, 3, 0, 9, 9, 9, 9, 4, 5, 6, 0, 9, 9, 9, 9],
 		})
 		.unwrap();
@@ -728,17 +855,60 @@ mod tests {
 				width,
 				height,
 				stride: width as usize * 4,
+				format: crate::screen::FrameFormat::Bgra,
 				data: vec![0; width as usize * height as usize * 4],
 			};
 			let preview = preview_frame(&frame).unwrap();
-			assert_eq!((preview.width(), preview.height()), (width, height));
-			assert_eq!(preview.as_raw().len(), width as usize * height as usize * 4);
+			assert!(preview.width() <= PREVIEW_MAX_WIDTH && preview.height() <= PREVIEW_MAX_HEIGHT);
+			assert!(preview.width() >= 1 && preview.height() >= 1);
+			assert_eq!(
+				preview.as_raw().len(),
+				preview.width() as usize * preview.height() as usize * 4
+			);
 		}
+		// A 4K desktop previews at a quarter size, averaging each block.
+		let mut frame = RawFrame {
+			width: 3840,
+			height: 2160,
+			stride: 3840 * 4,
+			format: crate::screen::FrameFormat::Bgra,
+			data: vec![0; 3840 * 2160 * 4],
+		};
+		// Top-left block: one white sample of the four taps (0,0),(2,0),(0,2),(2,2).
+		frame.data[..4].copy_from_slice(&[255, 255, 255, 255]);
+		let preview = preview_frame(&frame).unwrap();
+		assert_eq!((preview.width(), preview.height()), (960, 540));
+		assert_eq!(&preview.as_raw()[..4], &[64, 64, 64, 255]);
+		// GPU NV12 frames preview through the same limited-range BT.601 matrix.
+		let mut nv12 = vec![235; 4 * 4];
+		nv12.extend([128; 8]);
+		let preview = preview_frame(&RawFrame {
+			width: 4,
+			height: 4,
+			stride: 4,
+			format: FrameFormat::Nv12,
+			data: nv12,
+		})
+		.unwrap();
+		assert_eq!((preview.width(), preview.height()), (4, 4));
+		assert_eq!(&preview.as_raw()[..4], &[255, 255, 255, 255]);
+		// A short or mis-strided NV12 frame is refused.
+		assert!(
+			preview_frame(&RawFrame {
+				width: 4,
+				height: 4,
+				stride: 8,
+				format: FrameFormat::Nv12,
+				data: vec![0; 24],
+			})
+			.is_err()
+		);
 		assert!(
 			preview_frame(&RawFrame {
 				width: 2,
 				height: 2,
 				stride: 4,
+				format: crate::screen::FrameFormat::Bgra,
 				data: vec![0; 8],
 			})
 			.is_err()
@@ -751,6 +921,7 @@ mod tests {
 			width: 2,
 			height: 2,
 			stride: 12,
+			format: crate::screen::FrameFormat::Bgra,
 			data: vec![255; 24],
 		};
 		let pixels = fit_frame(frame, 1280, 720).unwrap();
@@ -778,6 +949,7 @@ mod tests {
 					width: 2,
 					height: 2,
 					stride: 4,
+					format: crate::screen::FrameFormat::Bgra,
 					data: vec![0; 8],
 				},
 				1280,
