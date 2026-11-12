@@ -21,14 +21,48 @@ env:
   CARGO_PROFILE_TEST_DEBUG: "0"
 
 jobs:
+  # Formatting needs no Windows runner or build, so it runs on its own and fails in seconds.
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Format
+        run: cargo fmt --all -- --check
+
   windows:
     runs-on: windows-2022
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+      # A ReFS Dev Drive skips most of NTFS's and Defender's per-file overhead, which dominates
+      # cargo's many small reads and writes on Windows runners. The build runs from the copy.
+      - uses: samypr100/setup-dev-drive@v4
+        with:
+          drive-size: 30GB
+          workspace-copy: true
+          trusted-dev-drive: true
       - uses: ilammy/setup-nasm@v1
-      - uses: Swatinem/rust-cache@v2
-      - name: Format
-        run: cargo fmt --all -- --check
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+      - id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ci
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          # Pull request caches can't be restored by other branches, so only main saves one.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+      # An exact cache hit means Cargo.lock is unchanged and every dependency is already on disk,
+      # so skip the ~30 s crates.io index refresh.
+      - name: Go offline on an exact cache hit
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "CARGO_NET_OFFLINE=true" >> $env:GITHUB_ENV
+      # nextest runs test binaries in parallel instead of one after another.
       - name: Test
-        run: cargo test --workspace --locked --no-fail-fast
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: cargo nextest run --workspace --locked --no-fail-fast
+      # nextest doesn't run doctests.
+      - name: Doctests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: cargo test --workspace --locked --doc --no-fail-fast

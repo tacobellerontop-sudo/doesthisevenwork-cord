@@ -1,0 +1,55 @@
+# Keeps a warm release-profile dependency cache on main for release.yml. GitHub only lets a tag
+# or release/v* branch restore caches saved on its own ref or on main, so without this every
+# release compiled all dependencies from scratch.
+#
+# The job name, shared-key and CARGO_* environment must match release.yml's windows job, or the
+# cache keys won't line up.
+name: Release cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Cargo.lock
+      - Cargo.toml
+      - rust-toolchain.toml
+      - "vendor/**"
+      - ".github/workflows/release.yml"
+      - ".github/workflows/release-cache.yml"
+  # GitHub evicts caches unused for 7 days; restoring it every few days keeps it alive between
+  # releases without rebuilding.
+  schedule:
+    - cron: "17 5 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-cache
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: samypr100/setup-dev-drive@v4
+        with:
+          drive-size: 30GB
+          workspace-copy: true
+          trusted-dev-drive: true
+      - uses: ilammy/setup-nasm@v1
+      - id: cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: release
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+      - name: Build release dependencies
+        if: github.event_name != 'schedule' || steps.cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        run: cargo build --release --locked -p dtewcord --no-default-features
