@@ -25,6 +25,8 @@ impl Selection {
 			Some(value) => {
 				if let Some(builtin) = Builtin::from_key(value) {
 					selection.builtin = builtin;
+				} else if let Some(entry) = theme::find_bundled(value) {
+					selection.custom = Some(entry.theme.clone());
 				} else {
 					match std::fs::read_to_string(value)
 						.map_err(|error| error.to_string())
@@ -172,6 +174,7 @@ mod tests {
 		assert!(dark.dark && dark.custom.is_none() && dark.builtin == Builtin::Standard);
 		assert!(!Selection::from_env(Some("light")).dark);
 		assert_eq!(Selection::from_env(Some("slate")).builtin, Builtin::Slate);
+		assert!(Selection::from_env(Some("latte")).custom.is_some());
 		assert_eq!(
 			Selection::from_env(Some("nope.json")).builtin,
 			Builtin::Standard

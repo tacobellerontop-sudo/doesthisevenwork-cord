@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "name": "Golden",
+  "author": "a1.lol",
+  "base": "standard",
+  "dark": {
+    "colors": {
+      "accent": "#f3a712",
+      "accent_text": "#1a1405",
+      "base": "#100f0e",
+      "border": "#36332f",
+      "chat": "#1c1b19",
+      "danger": "#bf616a",
+      "hover": "#302e2b",
+      "link": "#e8c373",
+      "mention_bg": "#332612",
+      "mention_text": "#f3d899",
+      "muted": "#968e82",
+      "positive": "#a3be8c",
+      "raised": "#252321",
+      "selected": "#3c3a36",
+      "sidebar": "#161514",
+      "text": "#d9d2c5",
+      "text_strong": "#f5efe6",
+      "warning": "#ebcb8b"
+    },
+    "backdrop": [
+      "#0a0909",
+      "#1a1816"
+    ]
+  },
+  "light": {
+    "colors": {
+      "accent": "#b67b0f",
+      "accent_text": "#ffffff",
+      "base": "#fdfbf7",
+      "border": "#cfc6b3",
+      "chat": "#ffffff",
+      "danger": "#a42c36",
+      "hover": "#eae5da",
+      "link": "#996306",
+      "mention_bg": "#fcebc4",
+      "mention_text": "#825505",
+      "muted": "#8a8170",
+      "positive": "#4f8a4b",
+      "raised": "#ffffff",
+      "selected": "#dcd5c6",
+      "sidebar": "#f4f1e9",
+      "text": "#4a4335",
+      "text_strong": "#2b261c",
+      "warning": "#b88a00"
+    }
+  }
+}

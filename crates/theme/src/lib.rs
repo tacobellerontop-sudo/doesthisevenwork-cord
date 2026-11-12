@@ -6,12 +6,14 @@
 //! The toolkit-specific code in each client only maps tokens onto its own widgets.
 
 mod builtin;
+mod bundled;
 mod color;
 mod custom;
 mod library;
 mod tokens;
 
 pub use builtin::{Builtin, DARK_DANGER, DEFAULT_ACCENT};
+pub use bundled::{BUNDLED_PREFIX, bundled, find_bundled};
 pub use color::{Color, ColorError};
 pub use custom::{CustomTheme, FORMAT, MAX_FILE_BYTES, MAX_NAME, Overrides, ThemeError};
 pub use library::{

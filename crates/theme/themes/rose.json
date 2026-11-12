@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "name": "Rose",
+  "author": "Serein contributors",
+  "base": "standard",
+  "dark": {
+    "colors": {
+      "accent": "#f1a9cf",
+      "accent_text": "#35162a",
+      "base": "#21151e",
+      "border": "#715068",
+      "chat": "#352332",
+      "danger": "#ff9797",
+      "hover": "#50364a",
+      "link": "#f8bdda",
+      "mention_bg": "#653653",
+      "mention_text": "#ffe2f0",
+      "muted": "#c7a7bc",
+      "positive": "#80d2a0",
+      "raised": "#422c3d",
+      "selected": "#63455b",
+      "sidebar": "#2a1c28",
+      "text": "#efd6e6",
+      "text_strong": "#fceef6",
+      "warning": "#f0c674"
+    }
+  },
+  "light": {
+    "colors": {
+      "accent": "#a23670",
+      "accent_text": "#ffffff",
+      "base": "#f0dfe8",
+      "border": "#cfaabb",
+      "chat": "#fff6fa",
+      "danger": "#b83039",
+      "hover": "#f1dfe8",
+      "link": "#962b64",
+      "mention_bg": "#f7d5e7",
+      "mention_text": "#812856",
+      "muted": "#866274",
+      "positive": "#237c48",
+      "raised": "#ffffff",
+      "selected": "#eacdde",
+      "sidebar": "#f7eaf0",
+      "text": "#654154",
+      "text_strong": "#482b3c",
+      "warning": "#966500"
+    }
+  }
+}
