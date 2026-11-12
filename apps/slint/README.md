@@ -15,7 +15,7 @@ cargo run -p dtewcord-slint --features demo -- --demo
 cargo run -p dtewcord-slint
 ```
 
-Set `DTEWCORD_THEME=light` to start in the light theme. The button next to the account name switches themes at runtime.
+Colours come from the shared `theme` crate, so this client and the desktop app use the same themes. `DTEWCORD_THEME` picks one at startup: `light` or `dark`, a built-in theme such as `slate` or `nightfall`, or the path of a custom theme `.json` file. The button next to the account name switches between dark and light.
 
 ## What milestone 1 covers
 
@@ -32,7 +32,8 @@ The egui app remains the complete client: voice and video, forums, threads, reac
 
 | File | Purpose |
 |---|---|
-| `ui/app.slint` | All views, the theme and input handling |
+| `ui/app.slint` | All views, the theme colour slots and input handling |
+| `src/theming.rs` | Fills the theme colour slots from DTEW Cord's theme tokens |
 | `src/main.rs` | Wires `client-core` state, the session and sign-in to the window |
 | `src/session.rs` | One Discord session: `discord-api` for REST, `discord-gateway` for live events |
 | `src/view.rs` | Pure mapping from `client_core::State` to the rows the views render (unit tested) |

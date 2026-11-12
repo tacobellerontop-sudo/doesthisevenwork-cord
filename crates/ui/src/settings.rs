@@ -924,11 +924,9 @@ impl MessagingUi {
 			ui.spacing_mut().item_spacing = egui::vec2(0.0, 4.0);
 			for variant in design::Variant::ALL {
 				let swatch = design::builtin_colors(ui.visuals().dark_mode, variant);
-				let selected = variant == current;
+				let selected = variant == current && !design::custom_theme_active();
 				if preset_swatch(ui, variant.label(), &swatch, selected).clicked() && !selected {
-					design::set_variant(variant);
-					design::apply(ui.ctx());
-					self.theme_variant_changed = Some(variant);
+					self.themes.select_builtin(ui.ctx(), variant);
 				}
 			}
 		});
@@ -1093,37 +1091,9 @@ impl MessagingUi {
 		);
 	}
 
-	/// Built-in presets, one swatch each.
+	/// Built-in and custom themes, one swatch each, with the custom theme actions.
 	pub(crate) fn colour_preset_settings(&mut self, ui: &mut egui::Ui) {
-		let current = design::variant();
-		let presets: Vec<_> = design::Variant::ALL
-			.into_iter()
-			.map(|variant| {
-				(
-					variant,
-					variant.label().to_owned(),
-					design::builtin_colors(ui.visuals().dark_mode, variant),
-				)
-			})
-			.collect();
-		design::group(
-			ui,
-			&crate::i18n::translate("settings-colour-preset-settings-colour-preset"),
-			|ui| {
-				ui.horizontal_wrapped(|ui| {
-					ui.spacing_mut().item_spacing = egui::vec2(12.0, 10.0);
-					for (variant, label, swatch) in presets {
-						let selected = variant == current;
-						let response = preset_swatch(ui, &label, &swatch, selected);
-						if response.on_hover_text(&label).clicked() && !selected {
-							design::set_variant(variant);
-							design::apply(ui.ctx());
-							self.theme_variant_changed = Some(variant);
-						}
-					}
-				});
-			},
-		);
+		self.themes.picker(ui);
 	}
 
 	fn activity_settings(&mut self, ui: &mut egui::Ui, state: &State) {
@@ -1501,7 +1471,7 @@ pub(super) fn close_control(ui: &mut egui::Ui) -> egui::Response {
 
 /// Dark, light or system cards with a miniature of each palette and a radio marker.
 /// One colour-preset cell: the palette circles, the selection ring and the caption.
-fn preset_swatch(
+pub(crate) fn preset_swatch(
 	ui: &mut egui::Ui,
 	label: &str,
 	swatch: &design::Palette,

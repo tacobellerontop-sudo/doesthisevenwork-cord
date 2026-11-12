@@ -48,26 +48,34 @@ export struct MessageItem {
     mentions-me: bool,
 }
 
+// Colours come from DTEW Cord's theme crate (`theme::Tokens`); `src/theme.rs` sets them.
+// The defaults are the DTEW Cord dark theme so previews render without the Rust side.
 export global Theme {
     in-out property <bool> dark: true;
-    out property <color> rail: dark ? #1e1f22 : #e3e5e8;
-    out property <color> sidebar: dark ? #2b2d31 : #f2f3f5;
-    out property <color> chat: dark ? #313338 : #ffffff;
-    out property <color> raised: dark ? #383a40 : #ebedef;
-    out property <color> hover: dark ? #35373c : #f2f3f5;
-    out property <color> selected: dark ? #404249 : #d7d9dc;
-    out property <color> input: dark ? #383a40 : #ebedef;
-    out property <color> border: dark ? #1f2023 : #e1e2e4;
-    out property <color> text: dark ? #dbdee1 : #313338;
-    out property <color> strong: dark ? #f2f3f5 : #060607;
-    out property <color> muted: dark ? #949ba4 : #5c5e66;
-    out property <color> faint: dark ? #6d6f78 : #80848e;
-    out property <color> accent: #5865f2;
-    out property <color> accent-hover: #4752c4;
-    out property <color> danger: #f23f43;
-    out property <color> success: #23a55a;
-    out property <color> mention: dark ? #444037 : #fdf5e1;
-    out property <color> mention-bar: #f0b232;
+    in property <color> rail: #0e0e10;
+    in property <color> sidebar: #141416;
+    in property <color> chat: #18181b;
+    in property <color> raised: #202023;
+    in property <color> panel: #111113;
+    in property <color> hover: #242427;
+    in property <color> selected: #2e2e32;
+    in property <color> input: #202023;
+    in property <color> border: #27272a;
+    in property <color> text: #cfcfd4;
+    in property <color> strong: #ededef;
+    in property <color> muted: #94949c;
+    in property <color> faint: #6b6b72;
+    in property <color> link: #54abff;
+    in property <color> accent: #1a72e8;
+    in property <color> accent-hover: #155ebf;
+    in property <color> accent-text: #ffffff;
+    in property <color> danger: #ef5561;
+    in property <color> success: #2fb87a;
+    in property <color> warning: #e8a33d;
+    in property <color> warning-surface: #3a2f20;
+    in property <color> mention: #1a72e84c;
+    in property <color> mention-bar: #1a72e8;
+    in property <color> message-hover: #1c1c1f;
     out property <string> font: "Inter";
 }
 
@@ -123,7 +131,7 @@ component Button inherits Rectangle {
         padding-right: 16px;
         Text {
             text: root.text;
-            color: root.primary ? white : Theme.text;
+            color: root.primary ? Theme.accent-text : Theme.text;
             font-family: Theme.font;
             font-weight: 500;
             font-size: 14px;
@@ -195,7 +203,7 @@ component RailTile inherits Rectangle {
             index: root.icon;
             width: 26px;
             height: 26px;
-            tint: root.selected || touch.has-hover ? white : Theme.text;
+            tint: root.selected || touch.has-hover ? (root.icon >= 0 ? Theme.accent-text : white) : Theme.text;
         }
         if root.icon < 0: Text {
             text: root.initials;
@@ -310,7 +318,7 @@ component ChannelRow inherits Rectangle {
 component MessageView inherits Rectangle {
     in property <MessageItem> item;
     callback open-link(string);
-    background: item.mentions-me ? Theme.mention : touch.has-hover ? (Theme.dark ? #2e3035 : #f7f7f8) : transparent;
+    background: item.mentions-me ? Theme.mention : touch.has-hover ? Theme.message-hover : transparent;
     touch := TouchArea { }
     if item.mentions-me: Rectangle {
         x: 0;
@@ -405,7 +413,7 @@ component MessageView inherits Rectangle {
                     default-color: item.delivery == 2 ? Theme.danger : item.delivery == 1 || item.delivery == 3 ? Theme.muted : item.system ? Theme.muted : Theme.text;
                     default-font-family: Theme.font;
                     default-font-size: 15px;
-                    link-color: #00a8fc;
+                    link-color: Theme.link;
                     accessible-role: text;
                     accessible-label: item.author + ": " + item.content;
                     link-clicked(link) => { root.open-link(link); }
@@ -431,7 +439,7 @@ component SignInScreen inherits Rectangle {
     in property <bool> busy;
     in property <bool> restoring;
     callback sign-in();
-    background: Theme.dark ? #1e1f22 : #e3e5e8;
+    background: Theme.rail;
     Rectangle {
         width: min(480px, parent.width - 32px);
         height: card.preferred-height;
@@ -478,7 +486,7 @@ component SignInScreen inherits Rectangle {
             }
             Rectangle {
                 border-radius: 4px;
-                background: Theme.dark ? #3d3528 : #fdf5e1;
+                background: Theme.warning-surface;
                 warning := VerticalLayout {
                     padding: 12px;
                     Text {
@@ -667,7 +675,7 @@ export component AppWindow inherits Window {
                 // Account panel
                 Rectangle {
                     height: 52px;
-                    background: Theme.dark ? #232428 : #ebedef;
+                    background: Theme.panel;
                     HorizontalLayout {
                         padding-left: 8px;
                         padding-right: 8px;

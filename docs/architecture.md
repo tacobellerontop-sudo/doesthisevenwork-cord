@@ -13,7 +13,7 @@ DTEW Cord is a Rust Discord client organized as a Cargo workspace. Its backend i
 - **`local-store`** — SQLite-backed local persistence and worker-based storage operations.
 - **`platform`** — operating-system integrations such as credential storage and native dialogs. Some APIs are desktop-oriented and need adapters for a TUI.
 - **`discord-voice`** — voice transport and audio/media processing. Device selection and call controls need a terminal interaction design.
-- **`extensions`** — theme palette types only, kept until DTEW Cord's own theming system replaces them. The extension (plugin) system inherited from Serein was removed.
+- **`theme`** — DTEW Cord's theming system: the colour tokens every surface draws from, the built-in themes, and custom themes stored as JSON files in `<data dir>/themes`. The egui app maps tokens onto its palette in `crates/ui/src/design.rs` and edits custom themes in `crates/ui/src/themes.rs`; the Slint client maps them in `apps/slint/src/theming.rs`. The extension (plugin) system inherited from Serein was removed.
 - **`diagnostics`** — diagnostic and logging facilities.
 - **`ui`** — egui presentation components. This is not required by a terminal frontend.
 - **`apps/desktop`** — desktop composition root: startup, authentication lifecycle, worker wiring, native UI setup and application shutdown.

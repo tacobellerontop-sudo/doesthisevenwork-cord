@@ -17,53 +17,6 @@ pub fn icon_source(
 	}
 }
 
-pub fn theme_background_source(
-	parent: Arc<winit::window::Window>,
-) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
-	let dialog = rfd::AsyncFileDialog::new()
-		.set_parent(parent.as_ref())
-		.set_title("Choose theme background")
-		.add_filter("Static images", &["png", "jpg", "jpeg"])
-		.pick_file();
-	async move {
-		let file = dialog.await?;
-		drop(parent);
-		Some(file.path().to_owned())
-	}
-}
-
-pub fn theme_cover_source(
-	parent: Arc<winit::window::Window>,
-) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
-	let dialog = rfd::AsyncFileDialog::new()
-		.set_parent(parent.as_ref())
-		.set_title("Choose theme card cover")
-		.add_filter("Static images", &["png", "jpg", "jpeg"])
-		.pick_file();
-	async move {
-		let file = dialog.await?;
-		drop(parent);
-		Some(file.path().to_owned())
-	}
-}
-
-pub fn theme_destination(
-	parent: Arc<winit::window::Window>,
-	filename: &str,
-) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
-	let dialog = rfd::AsyncFileDialog::new()
-		.set_parent(parent.as_ref())
-		.set_title("Export DTEW Cord theme")
-		.set_file_name(safe_filename(filename))
-		.add_filter("DTEW Cord theme", &["dtewcord-extension"])
-		.save_file();
-	async move {
-		let file = dialog.await?;
-		drop(parent);
-		Some(file.path().to_owned())
-	}
-}
-
 pub fn emoji_sources(
 	parent: Arc<winit::window::Window>,
 ) -> impl std::future::Future<Output = Option<Vec<PathBuf>>> + Send + 'static {
@@ -143,6 +96,40 @@ pub fn text_destination(
 		.add_filter("Text file", &["txt"])
 		.add_filter("All files", &["*"])
 		.set_file_name(filename)
+		.save_file();
+	async move {
+		let file = dialog.await?;
+		drop(parent);
+		Some(file.path().to_owned())
+	}
+}
+
+/// A DTEW Cord theme file to import.
+pub fn theme_file_source(
+	parent: Arc<winit::window::Window>,
+) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
+	let dialog = rfd::AsyncFileDialog::new()
+		.set_parent(parent.as_ref())
+		.set_title("Import DTEW Cord theme")
+		.add_filter("DTEW Cord theme", &["json"])
+		.pick_file();
+	async move {
+		let file = dialog.await?;
+		drop(parent);
+		Some(file.path().to_owned())
+	}
+}
+
+/// Where to save a copy of a DTEW Cord theme file.
+pub fn theme_file_destination(
+	parent: Arc<winit::window::Window>,
+	filename: &str,
+) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
+	let dialog = rfd::AsyncFileDialog::new()
+		.set_parent(parent.as_ref())
+		.set_title("Export DTEW Cord theme")
+		.set_file_name(safe_filename(filename))
+		.add_filter("DTEW Cord theme", &["json"])
 		.save_file();
 	async move {
 		let file = dialog.await?;

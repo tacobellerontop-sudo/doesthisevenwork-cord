@@ -1930,6 +1930,7 @@ dependencies = [
  "sha2 0.10.9",
  "symphonia",
  "test-support",
+ "theme",
  "time",
  "tokio",
  "tokio-tungstenite",
@@ -1953,6 +1954,7 @@ dependencies = [
  "slint",
  "slint-build",
  "test-support",
+ "theme",
  "time",
  "tokio",
  "url",
@@ -2299,14 +2301,6 @@ name = "extended"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af9673d8203fcb076b19dfd17e38b3d4ae9f44959416ea532ce72415a6020365"
-
-[[package]]
-name = "extensions"
-version = "0.1.0"
-dependencies = [
- "serde",
- "thiserror 2.0.20",
-]
 
 [[package]]
 name = "fallible-iterator"
@@ -7428,6 +7422,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f18aa187839b2bdb1ad2fa35ead8c4c2976b64e4363c386d45ac0f7ee85c9233"
 
 [[package]]
+name = "theme"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7948,7 +7950,6 @@ dependencies = [
  "client-core",
  "diagnostics",
  "egui",
- "extensions",
  "fluent-templates",
  "image",
  "model",
@@ -7957,6 +7958,7 @@ dependencies = [
  "skrifa",
  "sys-locale",
  "test-support",
+ "theme",
  "time",
  "unicode-bidi",
  "unicode-segmentation",

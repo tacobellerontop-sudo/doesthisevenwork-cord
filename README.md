@@ -20,7 +20,7 @@ DTEW Cord (short for *doesthisevenwork-cord*) is an unofficial Discord client wr
 | `crates/local-store` | Local SQLite persistence |
 | `crates/platform` | OS-specific credential and native platform integrations |
 | `crates/discord-voice` | Voice transport, audio processing and media support |
-| `crates/extensions` | Theme palette types only; to be replaced by DTEW Cord's own theming system |
+| `crates/theme` | DTEW Cord's theme tokens, built-in themes and custom theme files, shared by both clients |
 | `crates/diagnostics` | Diagnostics and logging support |
 | `crates/ui` | Existing egui desktop presentation layer |
 | `crates/test-support` | Test fixtures and synthetic support utilities |
