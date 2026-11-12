@@ -240,9 +240,13 @@ mod tests {
 	impl TempDir {
 		fn new(name: &str) -> Self {
 			let dir = std::env::temp_dir().join(format!(
-				"dtewcord-theme-{name}-{}-{:?}",
+				// Debug output of SystemTime contains ':', which Windows paths reject.
+				"dtewcord-theme-{name}-{}-{}",
 				std::process::id(),
 				std::time::SystemTime::now()
+					.duration_since(std::time::UNIX_EPOCH)
+					.unwrap_or_default()
+					.as_nanos()
 			));
 			let _ = std::fs::remove_dir_all(&dir);
 			Self(dir)
