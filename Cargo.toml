@@ -12,6 +12,7 @@ license = "MIT OR Apache-2.0"
 [workspace.dependencies]
 diagnostics = { path = "crates/diagnostics" }
 extensions = { path = "crates/extensions" }
+theme = { path = "crates/theme" }
 discord-voice = { path = "crates/discord-voice" }
 model = { path = "crates/model" }
 client-core = { path = "crates/client-core" }
