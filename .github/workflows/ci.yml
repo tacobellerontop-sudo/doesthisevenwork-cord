@@ -46,18 +46,15 @@ jobs:
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-nextest
-      - id: cache
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
         with:
           shared-key: ci
           workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
           # Pull request caches can't be restored by other branches, so only main saves one.
           save-if: ${{ github.ref == 'refs/heads/main' }}
-      # An exact cache hit means Cargo.lock is unchanged and every dependency is already on disk,
-      # so skip the ~30 s crates.io index refresh.
-      - name: Go offline on an exact cache hit
-        if: steps.cache.outputs.cache-hit == 'true'
-        run: echo "CARGO_NET_OFFLINE=true" >> $env:GITHUB_ENV
+      # Cargo stays online even on an exact cache hit: rust-cache's key ignores workspace crate
+      # versions, so a version bump hits the cache while cargo still has to re-resolve Cargo.lock
+      # against the crates.io index, which the cache doesn't fully keep.
       # nextest runs test binaries in parallel instead of one after another.
       - name: Test
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
