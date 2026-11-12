@@ -46,25 +46,33 @@ struct Scheduled {
 	latest: Slot,
 	pending: std::collections::VecDeque<(platform::video::Picture, discord_voice::Presentation)>,
 	bytes: usize,
+	/// A displaced picture's planes, refilled by the next decoded picture so steady playback
+	/// stops allocating (and zero-faulting) a frame-sized buffer for every picture.
+	spare: Option<Vec<u8>>,
 }
 impl Scheduled {
-	fn store(&mut self, frame: discord_voice::RemoteFrame<'_>) -> bool {
+	/// Keep a decoded picture; returns how long until it is due on screen, or `None` when
+	/// it was dropped. The UI only needs to wake then, not on every decoded picture.
+	fn store(&mut self, frame: discord_voice::RemoteFrame<'_>) -> Option<Duration> {
 		let Some(presentation) = frame.presentation.clone() else {
-			return store_frame(&mut self.latest, frame);
+			return store_frame(&mut self.latest, frame).then_some(Duration::ZERO);
 		};
 		if !presentation.is_current() || !frame.picture.is_valid() {
-			return false;
+			return None;
 		}
 		let length = frame.picture.data.len();
 		if length > DECODED_BUDGET {
-			return false;
+			return None;
 		}
-		let old = if self.latest.as_ref().is_some_and(|(_, fresh)| !*fresh) {
-			self.latest.take()
-		} else {
-			None
+		let mut data = match self.spare.take() {
+			Some(spare) => spare,
+			None if self.latest.as_ref().is_some_and(|(_, fresh)| !*fresh) => self
+				.latest
+				.take()
+				.map(|(picture, _)| picture.data)
+				.unwrap_or_default(),
+			None => Vec::new(),
 		};
-		let mut data = old.map(|(picture, _)| picture.data).unwrap_or_default();
 		if data.capacity() > length.saturating_mul(4) {
 			data = Vec::new();
 		}
@@ -77,18 +85,18 @@ impl Scheduled {
 				.map_or(0, |(picture, _)| picture.data.capacity())
 				> DECODED_BUDGET
 		{
-			let Some((old, _)) = self.pending.pop_front() else {
-				return false;
-			};
+			let (old, _) = self.pending.pop_front()?;
 			self.bytes -= old.data.capacity();
 		}
 		data.clear();
 		data.reserve_exact(length);
 		data.extend_from_slice(frame.picture.data);
 		self.bytes += data.capacity();
+		let now = Instant::now();
+		let due = presentation.deadline(now).saturating_duration_since(now);
 		self.pending
 			.push_back((frame.picture.with_data(data), presentation));
-		true
+		Some(due)
 	}
 	fn advance(&mut self, now: Instant) -> Option<Instant> {
 		while let Some((_, stamp)) = self.pending.front() {
@@ -97,8 +105,15 @@ impl Scheduled {
 			}
 			let (picture, stamp) = self.pending.pop_front().expect("front exists");
 			self.bytes -= picture.data.capacity();
-			if stamp.is_current() {
-				self.latest = Some((picture, true));
+			let displaced = if stamp.is_current() {
+				self.latest
+					.replace((picture, true))
+					.map(|(old, _)| old.data)
+			} else {
+				Some(picture.data)
+			};
+			if self.spare.is_none() {
+				self.spare = displaced;
 			}
 		}
 		None
@@ -410,8 +425,10 @@ impl Watch {
 			if frame.user != streamer {
 				return;
 			}
-			if slot.lock().is_ok_and(|mut slot| slot.store(frame)) {
-				wake.request_repaint();
+			// Wake the UI when the picture is due, not as soon as it is decoded: early
+			// pictures would otherwise cost a full extra UI frame each.
+			if let Some(due) = slot.lock().ok().and_then(|mut slot| slot.store(frame)) {
+				wake.request_repaint_after(due);
 			}
 		});
 		let (send, events) = watch::channel(None);
@@ -623,7 +640,7 @@ mod tests {
 			picture.presentation = Some(discord_voice::Presentation::new(
 				now + Duration::from_millis(100 + n * 16),
 			));
-			assert!(queue.store(picture));
+			assert!(queue.store(picture).is_some());
 		}
 		assert_eq!(queue.pending.len(), 8);
 		assert!(queue.bytes <= DECODED_BUDGET);
@@ -643,7 +660,7 @@ mod tests {
 			picture.presentation = Some(discord_voice::Presentation::new(
 				now + Duration::from_millis(100 + n * 16),
 			));
-			assert!(queue.store(picture));
+			assert!(queue.store(picture).is_some());
 		}
 		assert_eq!(queue.pending.len(), 4);
 		assert!(queue.bytes <= DECODED_BUDGET);
@@ -651,5 +668,32 @@ mod tests {
 		assert!(queue.pending.is_empty());
 		assert_eq!(queue.bytes, 0);
 		assert!(queue.latest.as_ref().unwrap().1);
+	}
+
+	#[test]
+	fn scheduled_playback_recycles_displaced_planes_and_reports_when_pictures_are_due() {
+		let now = Instant::now();
+		let mut queue = Scheduled::default();
+		let pixels = i420(64, 64, 1);
+		let scheduled = |at: Duration| {
+			let mut picture = frame(64, 64, &pixels);
+			picture.presentation = Some(discord_voice::Presentation::new(now + at));
+			picture
+		};
+		// A picture due later only asks the UI to wake then, not straight away.
+		let due = queue.store(scheduled(Duration::from_secs(60))).unwrap();
+		assert!(due > Duration::from_secs(50), "{due:?}");
+		queue.advance(now + Duration::from_secs(61));
+		let first = queue.latest.as_ref().unwrap().0.data.as_ptr();
+		assert!(queue.store(scheduled(Duration::ZERO)).is_some());
+		queue.advance(now + Duration::from_secs(62));
+		// The displaced picture's planes refill the next decoded picture.
+		assert!(queue.spare.is_some());
+		assert!(queue.store(scheduled(Duration::ZERO)).is_some());
+		assert!(queue.spare.is_none());
+		assert_eq!(queue.pending.back().unwrap().0.data.as_ptr(), first);
+		assert_eq!(queue.pending.back().unwrap().0.data, pixels);
+		// Unscheduled pictures are due immediately.
+		assert_eq!(queue.store(frame(64, 64, &pixels)), Some(Duration::ZERO));
 	}
 }

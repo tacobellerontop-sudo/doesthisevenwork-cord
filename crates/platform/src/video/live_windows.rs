@@ -266,12 +266,11 @@ impl H264Decoder {
 			let Some(sample) = sample else {
 				return Ok(());
 			};
-			let bytes = sample_bytes(&sample)?;
 			let tag = unsafe { sample.GetSampleTime() }.map_err(|_| INVALID)?;
-			(self.sink)(
-				crop_nv12(&bytes, format)?,
-				u64::try_from(tag).map_err(|_| INVALID)? / 10_000,
-			);
+			let tag = u64::try_from(tag).map_err(|_| INVALID)? / 10_000;
+			// Crop straight out of the locked buffer: no intermediate full-frame copy.
+			let picture = with_sample_bytes(&sample, |bytes| crop_nv12(bytes, format))?;
+			(self.sink)(picture, tag);
 		}
 	}
 }
@@ -302,10 +301,14 @@ unsafe fn hardware(
 	}
 }
 
-fn sample_bytes(sample: &IMFSample) -> Result<Vec<u8>, &'static str> {
-	// SAFETY: Native length is checked before allocating; Lock's pointer is borrowed only
-	// until Unlock and the copy length is validated against the reported capacity. For DXGI
-	// buffers Media Foundation performs the GPU read-back inside Lock.
+/// Lend the sample's contiguous bytes to `read` while the buffer is locked.
+fn with_sample_bytes<T>(
+	sample: &IMFSample,
+	read: impl FnOnce(&[u8]) -> Result<T, &'static str>,
+) -> Result<T, &'static str> {
+	// SAFETY: Native length is checked first; Lock's pointer is borrowed only until Unlock
+	// (the slice does not escape `read`) and its length is validated against the reported
+	// capacity. For DXGI buffers Media Foundation performs the GPU read-back inside Lock.
 	unsafe {
 		if sample.GetTotalLength().map_err(|_| INVALID)? as usize > MAX_OUTPUT_BYTES {
 			return Err(INVALID);
@@ -323,7 +326,12 @@ fn sample_bytes(sample: &IMFSample) -> Result<Vec<u8>, &'static str> {
 		{
 			Err(INVALID)
 		} else {
-			Ok(std::slice::from_raw_parts(data, length as usize).to_vec())
+			let bytes = if length == 0 {
+				&[][..]
+			} else {
+				std::slice::from_raw_parts(data, length as usize)
+			};
+			read(bytes)
 		};
 		buffer.Unlock().map_err(|_| INVALID)?;
 		result

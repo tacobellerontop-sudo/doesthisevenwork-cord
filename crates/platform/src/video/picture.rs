@@ -8,6 +8,9 @@
 pub enum Layout {
 	/// One plane of 4-byte RGBA pixels (alpha is always opaque).
 	Rgba,
+	/// One plane of 4-byte BGRA pixels, as Windows video processors emit them. The GPU
+	/// samples it as-is; only the CPU fallback swaps the channels.
+	Bgra,
 	/// Full-size luma, then half-size interleaved Cb/Cr pairs.
 	Nv12,
 	/// Full-size luma, then half-size Cb, then half-size Cr.
@@ -97,7 +100,7 @@ pub struct Picture<D = Vec<u8>> {
 	pub width: u32,
 	pub height: u32,
 	pub layout: Layout,
-	/// Ignored for [`Layout::Rgba`].
+	/// Ignored for the packed [`Layout::Rgba`] and [`Layout::Bgra`].
 	pub color: Color,
 	/// Clockwise quarter turns the display applies: 0, 90, 180 or 270.
 	pub rotation: u16,
@@ -111,7 +114,7 @@ impl Layout {
 		let luma = width.checked_mul(height)?;
 		let chroma = width.div_ceil(2).checked_mul(height.div_ceil(2))?;
 		match self {
-			Self::Rgba => luma.checked_mul(4),
+			Self::Rgba | Self::Bgra => luma.checked_mul(4),
 			Self::Nv12 | Self::I420 => luma.checked_add(chroma.checked_mul(2)?),
 		}
 	}
@@ -174,6 +177,12 @@ impl<D: AsRef<[u8]>> Picture<D> {
 		let (width, height) = (self.width as usize, self.height as usize);
 		let rgba = match self.layout {
 			Layout::Rgba => data.to_vec(),
+			Layout::Bgra => data
+				.as_chunks::<4>()
+				.0
+				.iter()
+				.flat_map(|[b, g, r, _]| [*r, *g, *b, 255])
+				.collect(),
 			Layout::Nv12 | Layout::I420 => {
 				let rows = self.color.coefficients();
 				let (chroma_width, chroma_height) = (width.div_ceil(2), height.div_ceil(2));
@@ -346,6 +355,7 @@ mod tests {
 			.is_valid()
 		);
 		assert_eq!(Layout::Rgba.len(u32::MAX, u32::MAX), None);
+		assert_eq!(Layout::Bgra.len(u32::MAX, u32::MAX), None);
 	}
 
 	#[test]
@@ -403,5 +413,23 @@ mod tests {
 		assert_eq!(out, [1, 2, 3, 4]);
 		assert!(pack_plane(&mut out, &[1, 2, 0, 3], 3, 2, 2).is_none());
 		assert!(pack_plane(&mut out, &[1, 2], 1, 2, 1).is_none());
+	}
+
+	#[test]
+	fn bgra_converts_and_rotates_on_the_cpu_fallback() {
+		// Two pixels side by side: blue then red, rotated a quarter turn clockwise.
+		let picture = Picture {
+			width: 2,
+			height: 1,
+			layout: Layout::Bgra,
+			color: Color::WEBRTC,
+			rotation: 90,
+			data: vec![255, 0, 0, 0, 0, 0, 255, 0],
+		};
+		assert!(picture.is_valid());
+		assert_eq!(picture.display_size(), (1, 2));
+		let (width, height, rgba) = picture.to_rgba().unwrap();
+		assert_eq!((width, height), (1, 2));
+		assert_eq!(rgba, [0, 0, 255, 255, 255, 0, 0, 255]);
 	}
 }
