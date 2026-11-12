@@ -6,7 +6,6 @@ language-label = Отображаемый язык
 language-description = Выберите язык Серейн. Контент Discord никогда не переводится.
 section-user = Пользовательские настройки
 section-app = Приложение
-section-customization = Кастомизация
 page-account = Аккаунт
 page-profile = Профиль
 page-general = Другое
@@ -19,8 +18,6 @@ page-voice = Голос и видео
 page-keybinds = Сочетания клавиш
 page-storage = Данные и конфиденциальность
 page-updates = Обновления
-page-extensions = Расширения
-page-themes = Темы
 description-account = Учетная запись Discord, используемая на этом устройстве.
 description-profile = Выберите, как вы будете выглядеть в Discord.
 description-general = Запуск, поведение окон и графики на этом устройстве.
@@ -33,10 +30,6 @@ description-voice = Микрофон, динамики, камера и обра
 description-keybinds = Сочетания клавиш для Серейн.
 description-storage = Что Серейн хранит на этом устройстве.
 description-updates = Держите Серейн в курсе событий на этом устройстве.
-description-extensions = Управляйте плагинами сообщества.
-description-themes = Выберите тему сообщества.
-theme-maker = Создатель тем
-theme-maker-description = Сделайте это своим. Предварительный просмотр изменений в ваших разговорах.
 search = Поиск
 no-settings-found = Настройки не найдены
 search-suggestion = Попробуйте тему, уведомления, голос или кеш.
@@ -894,131 +887,68 @@ emoji-picker-unicode-button-with-search-emoji = Поиск смайликов
 
 ## crates/ui/src/extensions_ui.rs
 # Context: card_body
-extensions-ui-card-body-active = Активный
 # Context: card_body
-extensions-ui-card-body-apply-this-installed-theme-to-the-app = Примените эту установленную тему к приложению.
 # Context: card_body
-extensions-ui-card-body-by = к
 # Context: card_body
-extensions-ui-card-body-cleanup-pending = Ожидается очистка
 # Context: card_body
-extensions-ui-card-body-enabled = Включено
 # Context: card_body
-extensions-ui-card-body-finish-removing-this-extension-and-its-local-data = Завершите удаление этого расширения и его локальных данных.
 # Context: card_body
-extensions-ui-card-body-open-tool = Открыть инструмент
 # Context: card_body
-extensions-ui-card-body-plugin = Плагин
 # Context: card_body
-extensions-ui-card-body-remove = Удалять
 # Context: card_body
-extensions-ui-card-body-remove-this-theme-and-delete-its-local-data = Удалите эту тему и удалите ее локальные данные.
 # Context: card_body
-extensions-ui-card-body-removes-this-extension-and-deletes-its-local-data = Удаляет это расширение и удаляет его локальные данные.
 # Context: card_body
-extensions-ui-card-body-review-the-new-release-before-it-replaces-this-version = Просмотрите новый выпуск, прежде чем он заменит эту версию.
 # Context: card_body
-extensions-ui-card-body-update = Обновлять
 # Context: composer_menu
-extensions-ui-composer-menu-tools = Инструменты
 # Context: consent_modal
-extensions-ui-consent-modal-allow-every-listed-permission-to-continue = Разрешите каждому перечисленному разрешению продолжить работу.
 # Context: consent_modal
-extensions-ui-consent-modal-allow-this-extension-to = Разрешить этому расширению
 # Context: consent_modal
-extensions-ui-consent-modal-by = к
 # Context: consent_modal
-extensions-ui-consent-modal-cancel = Отмена
 # Context: consent_modal
-extensions-ui-consent-modal-disabling-removes-the-extension-and-its-local-data-re-enabling = Отключение удаляет расширение и его локальные данные. Повторное включение начинается заново.
 # Context: consent_modal
-extensions-ui-consent-modal-enable = Давать возможность
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-extension = Включить это расширение
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-theme = Включить эту тему
 # Context: consent_modal
-extensions-ui-consent-modal-everything-it-may-touch-is-listed-below = Все, чего он может коснуться, перечислено ниже.
 # Context: consent_modal
-extensions-ui-consent-modal-no-access-to-conversations-or-composer-text = Нет доступа к разговорам или тексту композитора.
 # Context: consent_modal
-extensions-ui-consent-modal-reviewed = Рассмотрено
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed = Непроверенный
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed-package-its-source-has-not-been-reviewed-for-the = Непроверенный пакет — его исходный код не был проверен для каталога.
 # Context: consent_modal
-extensions-ui-consent-modal-view-source = Посмотреть источник
 # Context: preview_image
-extensions-ui-preview-image-preview = Предварительный просмотр
 # Context: preview_image
-extensions-ui-preview-image-view-preview = Посмотреть предварительный просмотр
 # Context: preview_modal
-extensions-ui-preview-modal-close-preview = Закрыть предварительный просмотр
 # Context: preview_modal
-extensions-ui-preview-modal-creator-preview = Предварительный просмотр для создателя
 # Context: preview_modal
-extensions-ui-preview-modal-example-deleted-message-appearance = Пример появления удаленного сообщения
 # Context: preview_modal
 extensions-ui-preview-modal-selecting-artwork-sends-it-as-an-image-attachment = При выборе изображения оно отправляется как вложение изображения.
-extensions-ui-preview-modal-unavailable-artwork-falls-back-to-images = Недоступные эмодзи и стикеры отправляются как вложения с изображениями.
 # Context: settings
-extensions-ui-settings-no-extensions-yet = Расширений пока нет
 # Context: settings
-extensions-ui-settings-no-matches = Нет совпадений
 # Context: settings
-extensions-ui-settings-no-themes-yet = Пока нет тем
 # Context: settings
-extensions-ui-settings-refresh-the-catalog-or-import-a-creator-s-package-to = Чтобы начать работу, обновите каталог или импортируйте пакет автора.
 # Context: settings
-extensions-ui-settings-try-a-different-name-or-creator = Попробуйте другое имя или создателя.
 # Context: show_result
-extensions-ui-show-result-apply-to-draft = Подать заявку на черновик
 # Context: show_result
-extensions-ui-show-result-close = Закрыть
 # Context: show_result
-extensions-ui-show-result-dismiss = Закрыть
 # Context: show_result
-extensions-ui-show-result-extension-error = Ошибка расширения
 # Context: show_result
-extensions-ui-show-result-proposed-app-action = Предлагаемое действие приложения
 # Context: show_result
-extensions-ui-show-result-proposed-composer-text = Предлагаемый текст композитора
 # Context: show_result
-extensions-ui-show-result-review-the-result-app-actions-and-draft-changes-need-your = Просмотрите результат. Действия приложения и проекты изменений требуют вашего одобрения.
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-theme-editor = Вернуться к редактору тем
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-themes = Вернуться к темам
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-changes-are-not-saved-yet = Изменения еще не сохранены
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-customize = Настроить
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-previewing-theme = Предварительный просмотр темы
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-theme-preview = Предварительный просмотр темы
 # Context: toolbar
-extensions-ui-toolbar-checking-for-packages-and-updates = Проверка пакетов и обновлений
 # Context: toolbar
-extensions-ui-toolbar-clear-search = Очистить поиск
 # Context: toolbar
-extensions-ui-toolbar-dismiss = Закрыть
 # Context: toolbar
-extensions-ui-toolbar-import-theme = Импортировать тему…
 # Context: toolbar
-extensions-ui-toolbar-look-for-new-packages-and-updates-nothing-installs-on-its = Ищите новые пакеты и обновления. Ничего не устанавливается само по себе.
 # Context: toolbar
-extensions-ui-toolbar-open-a-package-file-from-this-computer = Откройте файл пакета с этого компьютера.
 # Context: toolbar
-extensions-ui-toolbar-refresh-catalog = Обновить каталог
 # Context: toolbar
-extensions-ui-toolbar-search-extensions = Поиск расширений
 # Context: toolbar
-extensions-ui-toolbar-search-themes = Поиск тем
 # Context: toolbar
-extensions-ui-toolbar-working-on-your-last-action = Работа над последним действием
-
 ## crates/ui/src/fonts.rs
 # Context: show
 fonts-show-import-font = Импортировать шрифт…
@@ -1615,11 +1545,9 @@ lib-ime-updates-text-wait-for-readable-current-message-history = Дождите�
 # Context: mention_switch
 lib-mention-switch-ping-the-original-author = Пингните оригинального автора
 # Context: title_bar
-lib-title-bar-offline-preview = ОФЛАЙН-ПРОСМОТР
 # Context: title_bar
 lib-title-bar-sign-in-again = Войдите снова
 # Context: title_bar
-lib-title-bar-synthetic-data-no-network-or-local-storage = Синтетические данные · нет сети или локального хранилища
 
 ## apps/desktop/src/main.rs
 # Context: restoring
@@ -3637,191 +3565,101 @@ switcher-show-where-would-you-like-to-go = Куда бы вы хотели по�
 
 ## crates/ui/src/theme_editor.rs
 # Context: appearance_switch
-theme-editor-appearance-switch-colors-and-opacity-are-saved-separately-for-dark-and-light = Цвета и непрозрачность сохраняются отдельно для темного и светлого вида.
 # Context: appearance_switch
 theme-editor-appearance-switch-dark = Темная
 # Context: appearance_switch
-theme-editor-appearance-switch-editing = Редактирование
 # Context: appearance_switch
 theme-editor-appearance-switch-light = Светлая
 # Context: color_input
-theme-editor-color-input-use-rrggbb-or-rrggbbaa = Используйте #RRGGBB или #RRGGBBAA.
 # Context: color_override
-theme-editor-color-override-reset = Сбросить
 # Context: color_override
-theme-editor-color-override-use-rrggbb-or-rrggbbaa = Используйте #RRGGBB или #RRGGBBAA.
 # Context: color_override
-theme-editor-color-override-use-the-default-color-for-this-appearance = Используйте цвет по умолчанию для этого внешнего вида.
 # Context: cover_card
-theme-editor-cover-card-automatic-preview = Автоматический предварительный просмотр
 # Context: cover_card
-theme-editor-cover-card-choose-cover = Выбрать обложку
 # Context: cover_card
-theme-editor-cover-card-custom-cover = Пользовательская обложка
 # Context: cover_card
-theme-editor-cover-card-png-or-jpeg-up-to-2-mib-this-image-does = PNG или JPEG, до 2 МБ. Это изображение не меняет фон чата.
 # Context: cover_card
-theme-editor-cover-card-remove = Удалять
 # Context: cover_card
-theme-editor-cover-card-replace-cover = Замените крышку
 # Context: description
-theme-editor-description-direct-messages-and-channel-navigation = Личные сообщения и навигация по каналам
 # Context: description
-theme-editor-description-the-area-around-the-message-box = Область вокруг окна сообщения
 # Context: description
-theme-editor-description-the-conversation-timeline = График беседы
 # Context: description
-theme-editor-description-the-left-server-rail = Левая серверная направляющая
 # Context: description
-theme-editor-description-the-member-and-search-pane-on-the-right = Панель участников и поиска справа
 # Context: description
-theme-editor-description-window-title-and-conversation-header = Заголовок окна и заголовок беседы
 # Context: image_card
-theme-editor-image-card-background-image = Фоновое изображение
 # Context: image_card
-theme-editor-image-card-choose-image = Выбрать изображение
 # Context: image_card
-theme-editor-image-card-no-image-selected = Изображение не выбрано
 # Context: image_card
-theme-editor-image-card-pixels = пиксели
 # Context: image_card
-theme-editor-image-card-png-or-jpeg-up-to-2-mib = PNG или JPEG, до 2 МБ
 # Context: image_card
-theme-editor-image-card-remove = Удалять
 # Context: image_card
-theme-editor-image-card-replace-image = Заменить изображение
 # Context: label
-theme-editor-label-member-list = Список участников
 # Context: label
-theme-editor-label-message-input-area = Область ввода сообщения
 # Context: label
-theme-editor-label-message-list = Список сообщений
 # Context: label
-theme-editor-label-people-channels = Люди и каналы
 # Context: label
-theme-editor-label-server-list = Список серверов
 # Context: label
-theme-editor-label-top-bars = Лучшие бары
 # Context: metric_label
-theme-editor-metric-label-reset = Сбросить
 # Context: metric_label
-theme-editor-metric-label-use-the-built-in-value = Используйте встроенное значение
 # Context: section_controls
-theme-editor-section-controls-0-shows-the-image-100-is-a-solid-section-color = 0% показывает изображение. 100% — это сплошной цвет раздела.
 # Context: section_controls
-theme-editor-section-controls-selected-section = Выбранный раздел
 # Context: section_controls
-theme-editor-section-controls-surface-opacity = Непрозрачность поверхности
-# Context: show
-theme-editor-show-additional-colors-app-controls-and-sharing-details = Дополнительные цвета, элементы управления приложением и сведения о совместном использовании.
-# Context: show
-theme-editor-show-advanced = Передовой
-# Context: show
-theme-editor-show-app-background = Фон приложения
 # Context: show
 # Context: show
-theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Смешайте два цвета за поверхностями приложения.
-# Context: show
-theme-editor-show-blur = Размытие
-# Context: show
-theme-editor-show-card-cover = Обложка карты
-# Context: show
-theme-editor-show-choose-an-image-to-adjust-the-top-bar-lists-and = Выберите изображение, чтобы настроить верхнюю панель, списки и область сообщений.
-# Context: show
-theme-editor-show-choose-the-image-shown-on-your-theme-card-in-themes = Выберите изображение, показанное на карточке темы в разделе «Темы».
-# Context: show
-theme-editor-show-click-a-swatch-to-choose-a-color-or-enter-its = Щелкните образец, чтобы выбрать цвет, или введите его шестнадцатеричное значение.
-# Context: show
-theme-editor-show-conversation-colors = Цвета разговора
-# Context: show
-theme-editor-show-created-by = Создано
-# Context: show
-theme-editor-show-creator-name-is-required = Требуется имя создателя.
-# Context: show
-theme-editor-show-export-theme = Экспортировать тему
-# Context: show
-theme-editor-show-fill-area = Заполнить область
-# Context: show
-theme-editor-show-fit-entire-image = Поместить все изображение
-# Context: show
-theme-editor-show-how-your-theme-appears-in-the-gallery = Как ваша тема отображается в галерее.
-# Context: show
-theme-editor-show-image-opacity = Непрозрачность изображения
 # Context: show
 # Context: show
-theme-editor-show-license = Лицензия
 # Context: show
-theme-editor-show-license-and-version-are-required = Требуются лицензия и версия.
 # Context: show
-theme-editor-show-more-colors = Больше цветов
 # Context: show
-theme-editor-show-only-share-images-you-own-or-have-permission-to-use = Делитесь только изображениями, которыми вы владеете или имеете разрешение на использование. Сохраняйте требуемое указание авторства.
 # Context: show
-theme-editor-show-override-the-default-appearance-setting-for-this-theme = Переопределить настройку внешнего вида по умолчанию для этой темы.
 # Context: show
-theme-editor-show-requires-transparency-blur-in-appearance-then-an-app-restart = Требуется прозрачность и размытие во внешнем виде, а затем перезапуск приложения.
 # Context: show
-theme-editor-show-section-opacity = Непрозрачность раздела
 # Context: show
-theme-editor-show-select-an-area-then-choose-how-much-of-the-image = Выберите область, затем выберите, какая часть изображения будет видна.
 # Context: show
-theme-editor-show-sharing-export = Совместное использование и экспорт
 # Context: show
-theme-editor-show-source-url = URL-адрес источника
 # Context: show
-theme-editor-show-text-spacing-corners = Текст, интервалы и углы
 # Context: show
-theme-editor-show-the-license-and-version-are-required-a-source-url-is = Требуются лицензия и версия. URL-адрес источника не является обязательным для локальных тем.
 # Context: show
-theme-editor-show-theme-details = Подробности темы
 # Context: show
-theme-editor-show-theme-name = Название темы
 # Context: show
-theme-editor-show-theme-name-is-required = Укажите название темы.
 # Context: show
-theme-editor-show-these-settings-apply-to-dark-and-light-appearances = Эти настройки применяются к темным и светлым изображениям.
 # Context: show
-theme-editor-show-this-older-theme-uses-its-original-image-placement = В этой старой теме используется оригинальное размещение изображений.
 # Context: show
-theme-editor-show-transparency = Прозрачность
 # Context: show
-theme-editor-show-transparency-blur = Прозрачность и размытие
 # Context: show
-theme-editor-show-use-a-gradient = Используйте градиент
 # Context: show
-theme-editor-show-use-a-valid-https-source-url-or-leave-this-blank = Используйте действительный URL-адрес источника HTTPS или оставьте это поле пустым.
 # Context: show
-theme-editor-show-use-image-across-the-app = Используйте изображение в приложении
 # Context: show
-theme-editor-show-use-one-image-behind-your-conversations-and-sidebars = Используйте одно изображение позади своих разговоров и боковых панелей.
 # Context: show
-theme-editor-show-use-rrggbb-or-rrggbbaa = Используйте #RRGGBB или #RRGGBBAA.
 # Context: show
-theme-editor-show-version = Версия
 # Context: show
-theme-editor-show-window-effects = Эффекты окна
 # Context: show
-theme-editor-show-window-gradient = Градиент окна
 # Context: show
-theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Ваш основной цвет во Внешности имеет приоритет над этим акцентом.
 # Context: show
-theme-editor-show-the-system-applies-its-standard-blur-strength = Система применяет стандартную силу размытия.
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
 # Context: key
-theme-editor-tab-advanced = Передовой
 # Context: key
-theme-editor-tab-background = Фон
 # Context: key
-theme-editor-tab-basics = Основы
 # Context: key
-theme-editor-tab-colors = Цвета
 # Context: toolbar
-theme-editor-toolbar-back = Назад
 # Context: toolbar
-theme-editor-toolbar-preview-in-app = Предварительный просмотр в приложении
 # Context: toolbar
-theme-editor-toolbar-save-and-apply = Сохраните и примените
 # Context: toolbar
-theme-editor-toolbar-unsaved-changes = Несохраненные изменения
 # Context: toolbar
 theme-editor-toolbar-working = Работающий…
 
@@ -3861,11 +3699,8 @@ timeline-message-actions-delete-message = Удалить сообщение…
 # Context: message_actions
 timeline-message-actions-edit-message = Редактировать сообщение
 # Context: message_actions
-timeline-message-actions-extensions = Расширения
 # Context: menu
-extensions-ui-menu-group-user = Пользователь
 # Context: menu
-extensions-ui-menu-group-conversation = Беседа
 # Context: message_actions
 timeline-message-actions-forward = Переслать
 # Context: message_actions

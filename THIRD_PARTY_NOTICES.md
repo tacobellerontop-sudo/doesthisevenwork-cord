@@ -89,15 +89,6 @@ excluding obsolete Linux dependencies; backend sources are unchanged. Provenance
 vendor/wry/SEREIN-PATCH.md. Component notices and hashes in assets/licenses/login are staged
 in licenses/login.
 
-The independent extension ports under `extensions/plugins/offline-composer-tools`,
-`text-commands`, `view-raw-message`, and `external-search-tools` adapt workflows from
-**Equicord/Vencord** at upstream `Equicord/Equicord` commit
-`200dba124066146a8f043fde7fc8b05e3dc5e68e`. They retain the original Vendicated/contributor
-notices and **GPL-3.0-or-later** terms; DTEW Cord's MIT/Apache source license does not replace those
-terms. The full GPL text is `extensions/licenses/Equicord-GPL-3.0.txt`, and each plugin README
-records its safe adaptations. No Equicord JavaScript monkey patches or remote downloads are bundled.
-The ports are separately distributed WebAssembly packages rather than linked host dependencies.
-
 Original DTEW Cord code is MIT OR Apache-2.0. Dependencies retain their own copyrights and licenses. The full resolved host dependency/license inventory is in [docs/dependency-versions.md](docs/dependency-versions.md), derived from Cargo metadata. Cargo.lock includes target-specific packages too; final distributors must ship the license texts/notices for the exact binaries they build.
 
 `cargo xtask licenses` enforces the declared-license policy in `deny.toml` with pinned
@@ -220,19 +211,10 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
-# Community extension runtime (September 12, 2026)
+# Hash table crates
 
-Wasmi 2.0.0 and its core, collections and IR crates are MIT OR Apache-2.0.
-The upstream license texts at commit `2970aa871cc1001b57b267ccecdcd1e42306199e`
-are bundled under `assets/licenses/files/wasmi-2.0.0-LICENSE-*`.
-Wasmparser 0.228.0 is used under its MIT option; its upstream license at
-`e66235859a6ec0502bf6f9dcc358953eda4cafcc` is bundled alongside it.
-New transitive foldhash 0.1.5, hashbrown 0.15.5, spin 0.9.9 and
-string-interner 0.19.0 license texts are copied from their registry packages.
-Test-only WAT/WAST/wasm-encoder/wasmparser 0.245.1 use the wasm-tools MIT
-license at `76927bf4bdbddf4b15f835c5eddfffbdfe3bdbd5` (`wat-1.245.1-LICENSE-MIT`);
-leb128fmt license texts are also bundled. These test tools are not a plugin
-compiler shipped to end users. Creator packages carry their own license metadata.
+foldhash 0.1.5 and hashbrown 0.15.5 license texts are copied from their registry packages
+and bundled under `assets/licenses/files`.
 
 Scalable bundled Twemoji artwork uses **resvg 0.48.1** and **usvg 0.48.1**
 (MIT OR Apache-2.0), with default features disabled: no text shaping, font discovery,

@@ -122,13 +122,6 @@ impl ChannelMenu {
 				&& !state.channel_action_pending()
 				&& state.can_view(channel.id);
 			let mut intent = None;
-			crate::extensions_ui::context_menu_items(
-				ui,
-				extensions::MenuTarget::Channel {
-					channel_id: channel.id.to_string(),
-					guild_id: Some(guild.to_string()),
-				},
-			);
 			if row(
 				ui,
 				"channel-menu-context-mark-as-read",
@@ -315,12 +308,6 @@ impl ChannelMenu {
 		.show(|ui| {
 			ui.set_width(232.0);
 			ui.spacing_mut().button_padding = egui::vec2(12.0, 8.0);
-			crate::extensions_ui::context_menu_items(
-				ui,
-				extensions::MenuTarget::Server {
-					guild_id: guild.to_string(),
-				},
-			);
 			if toggle_row(
 				ui,
 				"channel-menu-sidebar-context-hide-muted-channels",

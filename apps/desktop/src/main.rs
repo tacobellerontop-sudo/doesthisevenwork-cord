@@ -19,14 +19,6 @@ mod credentials;
 mod dm_demo;
 mod downloads;
 mod emoji_upload;
-mod extension_app;
-mod extension_bridge;
-mod extension_data_events;
-mod extension_events;
-mod extension_forum_data;
-mod extension_member_details;
-mod extension_message_content;
-mod extensions;
 mod font_import;
 mod game_activity;
 mod game_mentions;
@@ -43,7 +35,6 @@ mod pointer;
 mod polls_demo;
 #[cfg(feature = "demo")]
 mod post_menu_demo;
-mod proxy_auth;
 mod reading_settings;
 mod registered_games;
 #[cfg(feature = "demo")]
@@ -500,11 +491,6 @@ fn main() -> eframe::Result {
 		return Ok(());
 	}
 	#[cfg(feature = "demo")]
-	if demo && std::env::args().any(|arg| arg == "--demo-check-extensions") {
-		demo_check_extensions();
-		return Ok(());
-	}
-	#[cfg(feature = "demo")]
 	if demo && std::env::args().any(|arg| arg == "--demo-check-updates") {
 		demo_check_updates();
 		return Ok(());
@@ -673,130 +659,6 @@ fn demo_check_updates() {
 	}
 	println!("Offline update flow, preference compatibility, and settings rendering passed.");
 }
-/// One offline debug path through the shipped Wasm, reducer, and egui rows.
-#[cfg(feature = "demo")]
-fn demo_check_extensions() {
-	let _ = extensions::demo_check_examples().expect("starter packages activate with consent");
-	let mut state = test_support::demo_state();
-	state.set_preserve_deleted_messages(true);
-	let channel = state.selected.expect("demo conversation");
-	state.timeline.clear();
-	let mut message = test_support::message(600, channel);
-	message.content = "A useful message stays readable".into();
-	message.attachments.clear();
-	message.embeds.clear();
-	state.timeline.insert(message.clone(), true, false).unwrap();
-	state.apply(Envelope {
-		generation: state.generation,
-		event: Event::Delete {
-			channel,
-			id: message.id,
-		},
-	});
-	assert!(state.timeline.is_deleted(message.id));
-	assert!(
-		state.timeline.get(message.id).is_none(),
-		"deleted messages cannot receive service actions"
-	);
-	assert_eq!(
-		state.timeline.get_display(message.id).unwrap().content,
-		message.content
-	);
-	state
-		.timeline
-		.insert(message.clone(), false, false)
-		.unwrap();
-	assert!(
-		state.timeline.get(message.id).is_none(),
-		"stale history cannot resurrect a deletion"
-	);
-	let ctx = egui::Context::default();
-	ui::fonts::install(&ctx);
-	ui::design::apply(&ctx);
-	let mut messaging = ui::MessagingUi::default();
-	let mut saw_deleted = false;
-	let mut saw_author = false;
-	let mut saw_avatar = false;
-	for _ in 0..3 {
-		let mut deleted_color = egui::Color32::TRANSPARENT;
-		let frame = ctx.run_ui(
-			egui::RawInput {
-				screen_rect: Some(egui::Rect::from_min_size(
-					egui::Pos2::ZERO,
-					egui::vec2(1120.0, 760.0),
-				)),
-				..Default::default()
-			},
-			|ui| {
-				deleted_color = ui::design::palette(ui).danger;
-				let _ = messaging.show(ui, &mut state);
-			},
-		);
-		let body_left = frame.shapes.iter().find_map(|shape| match &shape.shape {
-			egui::Shape::Text(text) if text.galley.text() == message.content => Some(text.pos.x),
-			_ => None,
-		});
-		for shape in &frame.shapes {
-			if let egui::Shape::Text(text) = &shape.shape {
-				assert!(
-					!text
-						.galley
-						.text()
-						.contains("Deleted - kept by Message delete protector")
-				);
-				if text.galley.text() == message.content {
-					assert!(
-						text.galley
-							.job
-							.sections
-							.iter()
-							.all(|section| section.format.color == deleted_color)
-					);
-					saw_deleted = true;
-				}
-				saw_author |= text.galley.text() == message.author.name
-					&& body_left.is_some_and(|left| (text.pos.x - left).abs() < 0.1);
-			}
-			if let egui::Shape::Rect(image) = &shape.shape
-				&& image.brush.is_some()
-			{
-				let rect = image.rect;
-				saw_avatar |= (rect.width() - 40.0).abs() < 0.1
-					&& (rect.height() - 40.0).abs() < 0.1
-					&& body_left.is_some_and(|left| (rect.right() + 16.0 - left).abs() < 0.1);
-			}
-		}
-		frame.drop_without_applying_deltas();
-	}
-	assert!(
-		saw_deleted && saw_author && saw_avatar,
-		"retained row renders red text ({saw_deleted}), author ({saw_author}), and a normal 40-pixel avatar ({saw_avatar})"
-	);
-	state.discard_preserved_deleted(message.id);
-	assert!(
-		state.timeline.get_display(message.id).is_none(),
-		"local remove drops the retained payload"
-	);
-	state.set_preserve_deleted_messages(false);
-	let next = test_support::message(601, channel);
-	state.timeline.insert(next.clone(), true, false).unwrap();
-	state.apply(Envelope {
-		generation: state.generation,
-		event: Event::Delete {
-			channel,
-			id: next.id,
-		},
-	});
-	assert!(
-		state.timeline.get_display(next.id).is_none(),
-		"loaded deletes disappear with the extension disabled"
-	);
-	assert!(state.timeline.get(next.id).is_none());
-	println!(
-		"Extension debug check passed: starter packages, consent, retained deleted row, stale-history rejection and local remove."
-	);
-}
-
 fn parse_frame_sample(demo: bool, value: &str) -> Result<(Duration, Duration), &'static str> {
 	let invalid = "Use --demo --demo-friends --demo-frame-sample=WARMUP,SAMPLE (whole seconds, warmup 1..600, sample 1..600)";
 	let (warmup, sample) = value
@@ -972,10 +834,6 @@ impl SessionEnd {
 /// Window placement, scale, monitor size and focus; any change re-reads the monitor's refresh rate.
 type MonitorKey = (Option<egui::Rect>, Option<f32>, Option<egui::Vec2>, bool);
 struct Desktop {
-	proxy_auth: proxy_auth::Authentication,
-	api_proxy: tokio::sync::watch::Sender<Option<discord_api::proxy::ApiProxy>>,
-	extensions: extension_bridge::Bridge,
-	extension_close_pending: bool,
 	login: Option<platform::LoginView>,
 	captcha: captcha::Captcha,
 	connection: Option<connection::Connection>,
@@ -1960,15 +1818,6 @@ impl Desktop {
 		}
 		#[cfg(feature = "demo")]
 		if demo
-			&& let Some(tab) = std::env::args().find_map(|arg| {
-				arg.strip_prefix("--demo-theme-maker")
-					.map(|rest| rest.trim_start_matches('=').to_owned())
-			}) {
-			// `--demo-theme-maker` or `--demo-theme-maker=advanced`.
-			messaging.preview_theme_maker(&tab);
-		}
-		#[cfg(feature = "demo")]
-		if demo
 			&& std::env::args().any(|arg| arg == "--demo-threads")
 			&& let Some(selected) = state.selected
 		{
@@ -2302,10 +2151,6 @@ impl Desktop {
 			tray_window::State::default()
 		};
 		Ok(Self {
-			proxy_auth: proxy_auth::Authentication::default(),
-			api_proxy: tokio::sync::watch::channel(None).0,
-			extensions: extension_bridge::Bridge::default(),
-			extension_close_pending: false,
 			login: None,
 			captcha: captcha::Captcha::default(),
 			connection: None,
@@ -2412,7 +2257,7 @@ impl Desktop {
 			confirming_forget: sign_in_forget,
 			sign_in_copied: None,
 			credential_status: if demo {
-				"Fixture mode skips saved login; extensions use public GitHub downloads"
+				"Fixture mode skips saved login"
 			} else if loading_saved {
 				"Checking saved login…"
 			} else {
@@ -3095,15 +2940,6 @@ impl Desktop {
 		let mut own_activity = None;
 		self.messaging.game_activity_status = self.game_activity.status();
 		if let Some(connection) = &self.connection {
-			let custom_changed = self.extensions.take_rich_presence_change();
-			let custom = self.extensions.rich_presence();
-			connection.custom_rich_presence.send_if_modified(|current| {
-				if !custom_changed && current.as_ref() == custom {
-					return false;
-				}
-				*current = custom.cloned();
-				true
-			});
 			let registered = self.registered_games.games();
 			connection.registered_games.send_if_modified(|current| {
 				if current.as_slice() == registered {
@@ -5030,33 +4866,12 @@ impl Desktop {
 				)) {
 				self.notifications.dismiss();
 			}
-			let data_changes = extension_data_events::Changes::capture(&self.state, &event);
-			let extension_events = if self.extensions.has_message_events(&self.state) {
-				extension_events::capture(&self.state, &event.event)
-			} else {
-				Vec::new()
-			};
-			if event.generation == self.state.generation
-				&& (event.event.changes_access()
-					|| matches!(event.event, Event::Disconnected)
-					|| matches!(&event.event, Event::HistoryFailed { channel, request, failure: Failure::Forbidden }
-						if Some(*channel) == self.state.selected && *request == self.state.request && self.state.history_pending))
-			{
-				self.extensions.access_changed(&mut self.messaging);
-			}
 			log_session_event(&event.event);
 			self.state.apply(event);
 			if let Some(message) = takeover_notice {
 				self.messaging
 					.toasts
 					.push(ui::design::Level::Info, ui::i18n::translate(message));
-			}
-			self.extensions.data_changed(data_changes);
-			self.extensions.cancel_stale_message_events(&self.state);
-			for candidate in extension_events {
-				if let Some(event) = candidate.admit(&self.state) {
-					self.extensions.message_event(&self.state, event);
-				}
 			}
 			if user_action_was_pending
 				&& !self.state.user_action_pending()
@@ -5571,31 +5386,6 @@ impl eframe::App for Desktop {
 			self.captcha.close();
 			self.messaging.verification.active = false;
 		}
-		self.extensions.tick(
-			&mut self.state,
-			&mut self.messaging,
-			ctx,
-			&self.runtime,
-			&self.window,
-			self.fixture_only,
-		);
-		if self.extensions.api_proxy_ready() {
-			let route = self.proxy_auth.tick(
-				self.extensions.api_proxy(),
-				&mut self.messaging.extensions.proxy_auth,
-				&self.runtime,
-				ctx,
-				self.fixture_only,
-			);
-			self.api_proxy.send_if_modified(|current| {
-				if *current == route {
-					false
-				} else {
-					*current = route;
-					true
-				}
-			});
-		}
 		self.sync_customization(ctx);
 		#[cfg(feature = "demo")]
 		if self.demo_typing
@@ -5955,14 +5745,6 @@ impl eframe::App for Desktop {
 		};
 		self.messaging.downloads().active = self.downloads.is_active();
 		self.messaging.downloads().status = download_status;
-		if close_requested && self.extensions.cleanup_pending() {
-			self.extension_close_pending = true;
-			ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-		}
-		if self.extension_close_pending && !self.extensions.cleanup_pending() {
-			self.extension_close_pending = false;
-			ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-		}
 		if close_requested {
 			self.downloads.cancel();
 		}
@@ -6032,7 +5814,6 @@ impl eframe::App for Desktop {
 					.any(|p| p.delivery != Delivery::Confirmed)
 				|| self.messaging.has_edit()
 				|| self.messaging.has_server_settings_changes()
-				|| self.messaging.extensions.theme_editor_dirty()
 				|| self.state.server_settings.pending
 				|| self.state.server_admin.pending
 				|| self.uploads.has_unsent()
@@ -6141,7 +5922,6 @@ impl eframe::App for Desktop {
 				self.messaging.notification_sound_status = "Could not save device notification settings. Changes apply only until restart.";
 			}
 			let mut commands = self.messaging.show(ui, &mut self.state);
-			self.extensions.cancel_stale_message_events(&self.state);
 			self.choose_interaction_files(&ctx);
 			if let Some(command) = self.captcha.sync(
 				&mut self.state,
@@ -6731,14 +6511,8 @@ impl eframe::App for Desktop {
 			if let Some(note) = public_upload_note.as_deref() {
 				notes.push(note);
 			}
-			if self.messaging.extensions.theme_editor_dirty() {
-				notes.push("Unsaved theme changes will be discarded.");
-			}
 			if self.forgetting {
 				notes.push("Wait for saved-login removal to finish.");
-			}
-			if self.extensions.cleanup_pending() {
-				notes.push("Removing extension data before closing.");
 			}
 			if self.cache_clears.pending() {
 				notes.push(
@@ -6797,7 +6571,6 @@ impl eframe::App for Desktop {
 					self.updater.cancel_restart();
 					self.confirming_close = false;
 					self.tray_window.cancel_quit();
-					self.extension_close_pending = false;
 					self.confirming_logout = false;
 					self.end_intent = SessionEnd::Logout;
 					self.download_close_pending = false;

@@ -165,13 +165,6 @@ impl eframe::App for Preview {
 				}
 			}
 		}
-		for request in std::mem::take(&mut self.messaging.extensions.requests) {
-			if let ui::ExtensionRequest::PreviewTheme { theme, image } = request {
-				ui::design::set_extension_theme(theme.as_deref());
-				ui::design::set_background_image(&ctx, image);
-				ui::design::apply(&ctx);
-			}
-		}
 		if self.interactive {
 			return;
 		}
@@ -329,34 +322,6 @@ fn prime_activities(state: &mut client_core::State, proxy_artwork: bool) {
 	});
 }
 
-fn prime_extension_chat(state: &mut client_core::State) {
-	let channel = state.selected.expect("selected fixture channel");
-	let messages = [
-		"Welcome to our little corner of the internet.",
-		"A place for good conversations and late-night ideas.",
-		"**Game night** starts at 8. Everyone is welcome!",
-		"I'll bring the playlist. Any requests?",
-		"Something with a little more synth, please.",
-		"Hey everyone, ready for game night?",
-	]
-	.into_iter()
-	.enumerate()
-	.map(|(index, content)| {
-		let mut message = test_support::message(600 + index as u64, channel);
-		message.content = content.into();
-		message.attachments.clear();
-		message.embeds.clear();
-		message.reactions = Some(vec![]);
-		message
-	})
-	.collect();
-	state.timeline.clear();
-	state
-		.timeline
-		.seed_cache(messages)
-		.expect("valid synthetic conversation");
-}
-
 /// Shared before/after fixture; all channel metadata and server artwork are synthetic.
 fn prime_channel_links(state: &mut client_core::State) {
 	let channel = state.selected.expect("synthetic channel-link conversation");
@@ -499,193 +464,6 @@ fn prime_channel_link_replies(state: &mut client_core::State) {
 }
 
 // Fixture packages are checked-in inputs; execution never calls desktop adapters.
-fn extension_fixture(
-	id: &str,
-) -> Result<
-	(
-		extensions::Package,
-		extensions::Invocation,
-		Option<extensions::Output>,
-	),
-	Box<dyn std::error::Error>,
-> {
-	let external = std::env::var_os("DTEWCORD_PREVIEW_PACKAGE")
-		.map(std::fs::read)
-		.transpose()?;
-	let bytes: &[u8] = match id {
-		"custom-rpc" | "api-proxy" => external
-			.as_deref()
-			.ok_or("Set DTEWCORD_PREVIEW_PACKAGE to the external plugin package")?,
-		"serein-ocean" => {
-			include_bytes!("../../../extensions/themes/ocean.dtewcord-extension")
-		}
-		"message-delete-protector" => include_bytes!(
-			"../../../extensions/plugins/packages/message-delete-protector.dtewcord-extension"
-		),
-		"serein-midnight" => {
-			include_bytes!("../../../extensions/themes/midnight.dtewcord-extension")
-		}
-		"serein-rose" => {
-			include_bytes!("../../../extensions/themes/rose.dtewcord-extension")
-		}
-		"serein-forest" => {
-			include_bytes!("../../../extensions/themes/forest.dtewcord-extension")
-		}
-		"serein-latte" => {
-			include_bytes!("../../../extensions/themes/latte.dtewcord-extension")
-		}
-		"golden-theme" => {
-			include_bytes!("../../../extensions/themes/golden.dtewcord-extension")
-		}
-		"black-theme" => {
-			include_bytes!("../../../extensions/themes/katana.dtewcord-extension")
-		}
-		"obsidian-theme" => {
-			include_bytes!("../../../extensions/themes/obsidian.dtewcord-extension")
-		}
-		"teal-theme" => {
-			include_bytes!("../../../extensions/themes/teal.dtewcord-extension")
-		}
-		_ => return Err("Unknown fixture extension".into()),
-	};
-	let package = extensions::parse_package(bytes)?;
-	let invocation = extensions::Invocation {
-		action: if id == "custom-rpc" {
-			"preview"
-		} else if id == "api-proxy" {
-			"open"
-		} else {
-			"activate"
-		}
-		.into(),
-		values: if id == "custom-rpc" {
-			[
-				("application-id", "123456789"),
-				("name", "Stargazing"),
-				("details", "Exploring the night sky"),
-				("state", "In the observatory"),
-				("button1-label", "Visit the observatory"),
-				("button1-url", "https://example.com/observatory"),
-				("party-current", "2"),
-				("party-max", "4"),
-			]
-			.into_iter()
-			.map(|(k, v)| (k.into(), v.into()))
-			.collect()
-		} else {
-			Default::default()
-		},
-		..Default::default()
-	};
-	let output = if package.theme.is_none() {
-		Some(extensions::invoke(&package, &invocation)?)
-	} else {
-		None
-	};
-	Ok((package, invocation, output))
-}
-
-fn seed_catalog(extensions: &mut ui::ExtensionUi, themes: bool) {
-	if themes {
-		let packages: [(&[u8], &str); 6] = [
-			(
-				include_bytes!("../../../extensions/themes/ocean.dtewcord-extension"),
-				"",
-			),
-			(
-				include_bytes!("../../../extensions/themes/obsidian.dtewcord-extension"),
-				"Obsidian violet surfaces and lavender accents.",
-			),
-			(
-				include_bytes!("../../../extensions/themes/forest.dtewcord-extension"),
-				"Calm forest greens and fresh leafy accents.",
-			),
-			(
-				include_bytes!("../../../extensions/themes/latte.dtewcord-extension"),
-				"Warm coffee tones and a creamy caramel accent.",
-			),
-			(
-				include_bytes!("../../../extensions/themes/rose.dtewcord-extension"),
-				"Soft rose accents.",
-			),
-			(
-				include_bytes!("../../../extensions/themes/midnight.dtewcord-extension"),
-				"Deep, quiet surfaces.",
-			),
-		];
-		let mut entries: Vec<_> = packages
-			.into_iter()
-			.enumerate()
-			.map(|(index, (bytes, description))| {
-				let package = extensions::parse_package(bytes).expect("valid synthetic theme");
-				ui::ExtensionEntry {
-					cover_image: None,
-					local_theme: index == 0,
-					manifest: package.manifest,
-					theme_preview: package.theme,
-					description: description.into(),
-					preview: None,
-					reviewed: true,
-					sha256: "a".repeat(64),
-					download_bytes: bytes.len() as u64,
-					enabled: index < 2,
-					cleanup_pending: false,
-					update_available: false,
-					update_manifest: None,
-				}
-			})
-			.collect();
-		entries[0].manifest.name = "My ocean".into();
-		entries[0].manifest.author = "You".into();
-		let image =
-			image::load_from_memory(include_bytes!("../../../extensions/previews/ocean.png"))
-				.expect("valid synthetic cover")
-				.to_rgba8();
-		entries[0].cover_image = Some(Arc::new(egui::ColorImage::from_rgba_unmultiplied(
-			[image.width() as usize, image.height() as usize],
-			image.as_raw(),
-		)));
-		extensions.active_theme = Some(entries[0].manifest.id.clone());
-		extensions.set_entries(entries);
-		return;
-	}
-	let catalog = extensions::parse_catalog(include_bytes!("../../../extensions/catalog.json"))
-		.expect("valid fixture catalog");
-	extensions.set_entries(
-		catalog
-			.entries
-			.into_iter()
-			.map(|entry| ui::ExtensionEntry {
-				cover_image: None,
-				local_theme: false,
-				manifest: entry.manifest,
-				description: entry.description,
-				preview: entry.preview,
-				theme_preview: None,
-				reviewed: true,
-				sha256: entry.sha256,
-				download_bytes: entry.download_bytes,
-				enabled: false,
-				cleanup_pending: false,
-				update_available: false,
-				update_manifest: None,
-			})
-			.collect(),
-	);
-	let previews = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../extensions/previews");
-	{
-		let (id, filename) = ("serein-ocean", "ocean.png");
-		let image = image::open(previews.join(filename))
-			.expect("valid fixture preview")
-			.to_rgba8();
-		let size = [image.width() as usize, image.height() as usize];
-		extensions.preview_fixture_image(
-			id.into(),
-			egui::ColorImage::from_rgba_unmultiplied(size, image.as_raw()),
-		);
-	}
-}
-
 /// Synthetic settings for a fixture channel, including a forum's tags and post defaults.
 fn channel_settings(
 	state: &client_core::State,
@@ -716,7 +494,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let args: Vec<_> = std::env::args().skip(1).collect();
 	let value = |prefix: &str| args.iter().find_map(|arg| arg.strip_prefix(prefix));
 	if !args.iter().any(|arg| arg == "--demo") {
-		return Err("Usage: profile_preview --demo [--output=PATH.png | --smoke | --interactive] [--page=stickers|slash-commands|slash-command-search|slash-command-options|profile|markdown|embeds|channel-links|channel-link-replies|profile-card|collectibles|member-tags|dm-tags|account|appearance|storage|updates|general|chat|language|notifications|keybinds|extensions|server|server-engagement|server-safety|server-emoji|server-stickers|server-members|server-roles|server-invites|server-integrations|server-audit-log] [--command=help|weather] [--themes] [--extension=ID] [--thumbnail] [--proxy-artwork] [--width=1120] [--height=760] [--scroll=PIXELS] [--toolbar-hover=normal|shift] [--close-settings] [--keybinds-custom] [--light] [--toasts] [--compact] [--transparency=0..100]".into());
+		return Err("Usage: profile_preview --demo [--output=PATH.png | --smoke | --interactive] [--page=stickers|slash-commands|slash-command-search|slash-command-options|profile|markdown|embeds|channel-links|channel-link-replies|profile-card|collectibles|member-tags|dm-tags|account|appearance|storage|updates|general|chat|language|notifications|keybinds|server|server-engagement|server-safety|server-emoji|server-stickers|server-members|server-roles|server-invites|server-integrations|server-audit-log] [--command=help|weather] [--thumbnail] [--proxy-artwork] [--width=1120] [--height=760] [--scroll=PIXELS] [--toolbar-hover=normal|shift] [--close-settings] [--keybinds-custom] [--light] [--toasts] [--compact] [--transparency=0..100]".into());
 	}
 	let smoke = args.iter().any(|arg| arg == "--smoke");
 	let interactive = args.iter().any(|arg| arg == "--interactive");
@@ -752,7 +530,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			| "chat" | "language"
 			| "notifications"
 			| "keybinds"
-			| "extensions"
 			| "server"
 			| "server-engagement"
 			| "server-stickers"
@@ -768,7 +545,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			| "forum-settings"
 			| "friends"
 	) {
-		return Err("Page must be profile, markdown, embeds, channel-links, channel-link-replies, profile-card, collectibles, member-tags, dm-tags, account, appearance, storage, general, chat, language, notifications, keybinds, extensions, slash-commands, slash-command-search, slash-command-options, server, server-engagement, server-safety, server-emoji, server-stickers, server-members, server-roles, server-invites, server-integrations or server-audit-log".into());
+		return Err("Page must be profile, markdown, embeds, channel-links, channel-link-replies, profile-card, collectibles, member-tags, dm-tags, account, appearance, storage, general, chat, language, notifications, keybinds, slash-commands, slash-command-search, slash-command-options, server, server-engagement, server-safety, server-emoji, server-stickers, server-members, server-roles, server-invites, server-integrations or server-audit-log".into());
 	}
 	let slash_command = value("--command=").unwrap_or("help").to_owned();
 	if !matches!(slash_command.as_str(), "help" | "weather") {
@@ -815,10 +592,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let proxy_artwork = args.iter().any(|arg| arg == "--proxy-artwork");
 	let activities = proxy_artwork || args.iter().any(|arg| arg == "--activities");
 	let friends_tab = value("--tab=").unwrap_or("online").to_owned();
-	let theme_editor = value("--theme-editor=").map(str::to_owned);
-	let theme_preview = args.iter().any(|arg| arg == "--theme-preview");
 	let thumbnail = args.iter().any(|arg| arg == "--thumbnail");
-	let extension = value("--extension=").map(str::to_owned);
 	let name_style = value("--name-style=").and_then(|id| id.parse::<u32>().ok());
 	let name_font = value("--name-font=").and_then(|id| id.parse::<u32>().ok());
 	// `--name-style=` and `--name-font=` give the previewed user a synthetic Nitro name style;
@@ -836,7 +610,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let member_presence = value("--presence=").unwrap_or("online").to_owned();
 	let card_status = value("--status=").map(str::to_owned);
 	let private_profile = args.iter().any(|arg| arg == "--private");
-	let fixture = extension.as_deref().map(extension_fixture).transpose()?;
 	let saved = Arc::new(AtomicBool::new(false));
 	let completed = saved.clone();
 	eframe::run_native(
@@ -1211,48 +984,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					state.clear_profile();
 				}
 				messaging.preview_profile(user);
-			} else if let Some((package, invocation, result)) = fixture {
-				prime_extension_chat(&mut state);
-				if let Some(theme) = package.theme.as_ref() {
-					ui::design::set_extension_theme(Some(theme));
-					ui::design::apply(&cc.egui_ctx);
-				}
-				if let Some(output) = result {
-					if matches!(package.manifest.id.as_str(), "custom-rpc" | "api-proxy") {
-						messaging.extensions.set_entries(vec![ui::ExtensionEntry {
-							description: package.manifest.name.clone(),
-							preview: None,
-							theme_preview: None,
-							cover_image: None,
-							local_theme: false,
-							manifest: package.manifest.clone(),
-							reviewed: true,
-							sha256: String::new(),
-							download_bytes: 0,
-							enabled: true,
-							cleanup_pending: false,
-							update_available: false,
-							update_manifest: None,
-						}]);
-						messaging.extensions.present_output(
-							package.manifest.id.clone(),
-							invocation,
-							ui::ExtensionContext::panel(&state),
-							output.clone(),
-							&state,
-						);
-					}
-					if output.preserve_deleted_messages {
-						let channel = state.selected.unwrap();
-						state.apply(client_core::Envelope {
-							generation: state.generation,
-							event: client_core::Event::Delete {
-								channel,
-								id: model::Id(601),
-							},
-						});
-					}
-				}
 			} else if page.starts_with("server") {
 				server_settings_demo::open(&mut state, &mut messaging);
 				if page == "server-engagement" {
@@ -1277,13 +1008,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					});
 				}
 			} else {
-				messaging.preview_settings(
-					if page == "extensions" && args.iter().any(|arg| arg == "--themes") {
-						"themes"
-					} else {
-						&page
-					},
-				);
+				messaging.preview_settings(&page);
 				if page == "keybinds" && args.iter().any(|arg| arg == "--keybinds-custom") {
 					// Synthetic rows for the extra-binding card; no saved preference is read.
 					messaging.keybinds.custom = vec![
@@ -1314,55 +1039,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					// The app applies saved preferences at startup; this fixture skips them.
 					messaging.preload_on_hover =
 						local_store::AppPreferences::default().preload_on_hover;
-				}
-				if page == "extensions" {
-					seed_catalog(
-						&mut messaging.extensions,
-						args.iter().any(|arg| arg == "--themes"),
-					);
-					messaging
-						.extensions
-						.preview_themes(args.iter().any(|arg| arg == "--themes"));
-					if theme_preview {
-						prime_extension_chat(&mut state);
-						let package = extensions::parse_package(include_bytes!(
-							"../../../extensions/themes/katana.dtewcord-extension"
-						))?;
-						messaging.extensions.receive_theme_edit(
-							Box::new(package),
-							None,
-							None,
-							false,
-							true,
-						);
-					}
-					if let Some(tab) = &theme_editor {
-						let mut package = extensions::parse_package(include_bytes!(
-							"../../../extensions/themes/ocean.dtewcord-extension"
-						))
-						.expect("valid theme fixture");
-						package.manifest.name = "My ocean".into();
-						package.manifest.author = "You".into();
-						messaging.extensions.receive_theme_edit(
-							Box::new(package),
-							None,
-							None,
-							true,
-							false,
-						);
-						let bytes = include_bytes!("../../../extensions/previews/ocean.png");
-						let pixels = image::load_from_memory(bytes)
-							.expect("valid fixture image")
-							.to_rgba8();
-						messaging.extensions.receive_theme_image(
-							bytes.to_vec(),
-							Arc::new(egui::ColorImage::from_rgba_unmultiplied(
-								[pixels.width() as usize, pixels.height() as usize],
-								pixels.as_raw(),
-							)),
-						);
-						messaging.extensions.preview_theme_editor_tab(tab);
-					}
 				}
 			}
 			// `--toasts`: a full stack of notices, short to wrapping, over the shown page.

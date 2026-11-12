@@ -329,7 +329,7 @@ fn result_jump_and_numeric_pager_keep_scope_and_allow_explicit_retry() {
 	let mut state = state();
 	let mut view = MessagingUi::default();
 	view.search
-		.open_extension(Id(10), false, Some("needle".into()));
+		.open_with_query(Id(10), false, Some("needle".into()));
 	state.request_search("needle".into(), None).unwrap();
 	page(&mut state, 75);
 	let request = state.search.as_ref().unwrap().request;
@@ -503,22 +503,16 @@ fn pane_frame(
 }
 
 /// Checks that right-clicking a result opens its menu, that each copy entry copies the
-/// result's text, ID or link, and that a plugin message action is requested for that message.
+/// result's text, ID or link.
 #[test]
-fn result_context_menu_copies_and_offers_plugin_message_actions() {
+fn result_context_menu_copies_message_text_id_and_link() {
 	let ctx = egui::Context::default();
 	let mut state = state();
 	let mut view = MessagingUi::default();
 	view.search
-		.open_extension(Id(10), false, Some("needle".into()));
+		.open_with_query(Id(10), false, Some("needle".into()));
 	state.request_search("needle".into(), None).unwrap();
 	page(&mut state, 1);
-	let plugin = crate::extensions_ui::MenuAction {
-		plugin: "synthetic.words".into(),
-		action: "count".into(),
-		label: "Synthetic · Count words".into(),
-	};
-	view.search.extension_actions = std::sync::Arc::new(vec![plugin.clone()]);
 	let mut labels = Vec::new();
 	for _ in 0..3 {
 		labels = pane_frame(&ctx, &mut view, &mut state, vec![]).0;
@@ -578,82 +572,19 @@ fn result_context_menu_copies_and_offers_plugin_message_actions() {
 		);
 		assert_eq!(copied, vec![expected], "{key}");
 	}
-	assert!(view.search.extension_request.is_none());
-	let labels = open(&mut view, &mut state);
-	let submenu = entry(&labels, "timeline-message-actions-extensions");
-	let mut events = vec![egui::Event::PointerMoved(submenu)];
-	events.extend(press(egui::PointerButton::Primary, submenu));
-	let mut labels = pane_frame(&ctx, &mut view, &mut state, events).0;
-	for _ in 0..3 {
-		if labels.iter().any(|(text, _)| *text == plugin.label) {
-			break;
-		}
-		labels = pane_frame(&ctx, &mut view, &mut state, vec![]).0;
-	}
-	let item = labels
-		.iter()
-		.find(|(text, _)| *text == plugin.label)
-		.expect("plugin action listed")
-		.1
-		.center();
-	pane_frame(
-		&ctx,
-		&mut view,
-		&mut state,
-		press(egui::PointerButton::Primary, item),
-	);
-	let (action, text, target) = view
-		.search
-		.extension_request
-		.clone()
-		.expect("plugin action requested");
-	// A full client frame hands the request to the plugin host with the message's IDs.
-	frame(&ctx, &mut view, &mut state, vec![], false, false);
-	assert!(view.search.extension_request.is_none());
-	let [crate::extensions_ui::ExtensionRequest::Invoke { id, invocation, .. }] =
-		view.extensions.requests.as_slice()
-	else {
-		panic!("one plugin invocation queued")
-	};
-	assert_eq!(id, "synthetic.words");
-	assert_eq!(invocation.action, "count");
-	assert_eq!(
-		invocation.selected_message.as_deref(),
-		Some("Synthetic result to revisit")
-	);
-	let reference = invocation.selected_message_ref.as_deref().unwrap();
-	assert_eq!(
-		(reference.channel_id.as_str(), reference.message_id.as_str()),
-		("10", "90")
-	);
-	assert_eq!(reference.guild_id, None);
-	assert_eq!(
-		(action.plugin, action.action),
-		(plugin.plugin.clone(), plugin.action.clone())
-	);
-	assert_eq!(text, "Synthetic result to revisit");
-	assert_eq!(
-		(target.channel, target.message, target.author),
-		(Id(10), Id(90), test_support::message(90, Id(10)).author.id)
-	);
 }
 
 /// Checks that a primary click on a result never opens its menu, and that a result shown only
-/// as the preview-limit notice offers its link and ID but no text copy or plugin actions.
+/// as the preview-limit notice offers its link and ID but no text copy.
 #[test]
 fn result_menu_withholds_text_actions_for_the_preview_notice() {
 	let ctx = egui::Context::default();
 	let mut state = state();
 	let mut view = MessagingUi::default();
 	view.search
-		.open_extension(Id(10), false, Some("needle".into()));
+		.open_with_query(Id(10), false, Some("needle".into()));
 	state.request_search("needle".into(), None).unwrap();
 	page_with(&mut state, 1, model::PREVIEW_LIMIT_NOTICE);
-	view.search.extension_actions = std::sync::Arc::new(vec![crate::extensions_ui::MenuAction {
-		plugin: "synthetic.words".into(),
-		action: "count".into(),
-		label: "Synthetic · Count words".into(),
-	}]);
 	let mut labels = Vec::new();
 	for _ in 0..3 {
 		labels = pane_frame(&ctx, &mut view, &mut state, vec![]).0;
@@ -703,10 +634,6 @@ fn result_menu_withholds_text_actions_for_the_preview_notice() {
 		!has(&labels, "message-menu-copy"),
 		"the notice is not copied as the message"
 	);
-	assert!(
-		!has(&labels, "timeline-message-actions-extensions"),
-		"plugins never receive the notice as message text"
-	);
 }
 
 /// Checks that a text selection dragged in a result counts as that result's selection, which
@@ -719,7 +646,7 @@ fn a_selection_belongs_to_the_result_it_was_made_in() {
 	let mut state = state();
 	let mut view = MessagingUi::default();
 	view.search
-		.open_extension(Id(10), false, Some("needle".into()));
+		.open_with_query(Id(10), false, Some("needle".into()));
 	state.request_search("needle".into(), None).unwrap();
 	page(&mut state, 1);
 	let mut labels = Vec::new();

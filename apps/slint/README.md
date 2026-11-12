@@ -26,7 +26,7 @@ Set `DTEWCORD_THEME=light` to start in the light theme. The button next to the a
 - Sending, with pending, failed and unknown-outcome states, plus typing indicators from other people.
 - Loading older history when you scroll to the top, and a reconnecting banner when the Gateway drops.
 
-The egui app remains the complete client: voice and video, forums, threads, reactions, attachments, profiles, settings, extensions and so on aren't ported yet.
+The egui app remains the complete client: voice and video, forums, threads, reactions, attachments, profiles, settings and so on aren't ported yet.
 
 ## Layout
 

@@ -1532,31 +1532,6 @@ mod tests {
 				.iter()
 				.any(|user| user.id == target)
 		);
-		let mut view = crate::MessagingUi::default();
-		let mut commands = vec![];
-		view.apply_extension_app_action(
-			&mut state,
-			extensions::AppAction::RequestProfile {
-				user_id: target.to_string(),
-				guild_id: None,
-			},
-			&mut commands,
-		)
-		.unwrap();
-		assert!(!commands.is_empty());
-		commands.clear();
-		view.apply_extension_account_action(
-			&mut state,
-			extensions::AppAction::SetUserBlocked {
-				user_id: target.to_string(),
-				blocked: true,
-			},
-			&mut commands,
-		)
-		.unwrap();
-		assert!(
-			matches!(&commands[..], [client_core::Command::UserAction { action: client_core::user_actions::Action::Block { user, blocked: true }, .. }] if *user == target)
-		);
 	}
 
 	#[test]
