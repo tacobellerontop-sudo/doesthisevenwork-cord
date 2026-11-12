@@ -273,7 +273,7 @@ impl Decoder {
 				.SetCurrentMediaType(VIDEO, None, &video)
 				.map_err(|_| UNSUPPORTED)?;
 			if rotation != 0 {
-				// Apply track rotation once in rgba_frame, without the GPU processor also
+				// Apply track rotation once in the renderer, without the GPU processor also
 				// correcting it. If its control is unavailable, use the software reader.
 				let extended = reader
 					.cast::<IMFSourceReaderEx>()
@@ -518,17 +518,18 @@ impl Decoder {
 				return Err(INVALID);
 			}
 			if index == self.video_index {
-				// The RGB32 reader already converted colour and applied rotation.
-				let rgba = self.video_frame(&sample)?;
+				// The reader converted colour (on the GPU under DXVA); the renderer applies
+				// the track rotation while it uploads, so only rows are copied here.
+				let bgra = self.video_frame(&sample)?;
 				return Ok(Some(Sample::Video {
 					pts,
 					picture: Picture {
-						width: self.info.width,
-						height: self.info.height,
-						layout: Layout::Rgba,
+						width: self.width,
+						height: self.height,
+						layout: Layout::Bgra,
 						color: Color::WEBRTC,
-						rotation: 0,
-						data: rgba,
+						rotation: self.rotation as u16,
+						data: bgra,
 					},
 				}));
 			}
@@ -567,12 +568,11 @@ impl Decoder {
 
 	fn video_frame(&self, sample: &IMFSample) -> Result<Vec<u8>, &'static str> {
 		let convert = |bytes: &[u8], stride| {
-			rgba_frame(
+			bgra_frame(
 				bytes,
 				self.width,
 				self.height,
 				stride,
-				self.rotation,
 				self.buffer_height,
 				self.crop,
 			)
@@ -691,12 +691,14 @@ fn output_aperture(
 	}
 }
 
-fn rgba_frame(
+/// Pack the visible rows of an RGB32 (BGRX) surface, top-down. Each row is one memcpy:
+/// channel order and track rotation are left to the GPU converter, so no per-pixel work
+/// runs on the CPU.
+fn bgra_frame(
 	bytes: &[u8],
 	width: u32,
 	height: u32,
 	stride: i32,
-	rotation: u32,
 	buffer_height: u32,
 	crop: (u32, u32),
 ) -> Result<Vec<u8>, &'static str> {
@@ -705,36 +707,19 @@ fn rgba_frame(
 		return Err(INVALID);
 	}
 	let (w, h) = (width as usize, height as usize);
-	let out_width = if rotation == 90 || rotation == 270 {
-		h
-	} else {
-		w
-	};
-	let mut rgba = vec![0; w * h * 4];
+	let row_bytes = w * 4;
+	let left = crop.0 as usize * 4;
+	let mut bgra = Vec::with_capacity(row_bytes * h);
 	for y in 0..h {
 		let row = if stride < 0 {
 			buffer_height as usize - 1 - y - crop.1 as usize
 		} else {
 			y + crop.1 as usize
 		};
-		for x in 0..w {
-			let (dx, dy) = match rotation {
-				90 => (h - 1 - y, x),
-				180 => (w - 1 - x, h - 1 - y),
-				270 => (y, w - 1 - x),
-				_ => (x, y),
-			};
-			let source = row * pitch + (x + crop.0 as usize) * 4;
-			let target = (dy * out_width + dx) * 4;
-			rgba[target..target + 4].copy_from_slice(&[
-				bytes[source + 2],
-				bytes[source + 1],
-				bytes[source],
-				255,
-			]);
-		}
+		let start = row * pitch + left;
+		bgra.extend_from_slice(&bytes[start..start + row_bytes]);
 	}
-	Ok(rgba)
+	Ok(bgra)
 }
 
 fn sample_bytes(sample: &IMFSample, max: usize) -> Result<Vec<u8>, &'static str> {
@@ -999,10 +984,14 @@ mod tests {
 		let Some(Sample::Video { picture, .. }) = decoder.read_video().unwrap() else {
 			panic!("Missing portrait frame");
 		};
+		// Frames stay in coded orientation; the renderer turns them on upload.
+		assert_eq!(picture.layout, Layout::Bgra);
+		assert!(matches!(picture.rotation, 90 | 270));
 		assert_eq!(
-			(picture.width, picture.height, picture.data.len()),
-			(180, 320, 180 * 320 * 4)
+			(picture.display_size(), picture.data.len()),
+			((180, 320), 180 * 320 * 4)
 		);
+		assert_eq!(picture.to_rgba().map(|(w, h, _)| (w, h)), Some((180, 320)));
 
 		{
 			let stream: IStream = ReadStream {
@@ -1033,15 +1022,22 @@ mod tests {
 				);
 			}
 			let input = [1, 2, 3, 0, 4, 5, 6, 0];
+			// Bottom-up surfaces come out top-down; channel order is untouched.
 			assert_eq!(
-				rgba_frame(&input, 1, 2, -4, 0, 2, (0, 0)).unwrap(),
-				[6, 5, 4, 255, 3, 2, 1, 255]
+				bgra_frame(&input, 1, 2, -4, 2, (0, 0)).unwrap(),
+				[4, 5, 6, 0, 1, 2, 3, 0]
 			);
 			assert_eq!(
-				rgba_frame(&input, 1, 2, 4, 90, 2, (0, 0)).unwrap(),
-				[6, 5, 4, 255, 3, 2, 1, 255]
+				bgra_frame(&input, 1, 2, 4, 2, (0, 0)).unwrap(),
+				[1, 2, 3, 0, 4, 5, 6, 0]
 			);
-			assert!(rgba_frame(&input[..4], 1, 2, 4, 0, 2, (0, 0)).is_err());
+			// A cropped aperture copies only its columns and rows.
+			let padded = [9, 9, 9, 9, 1, 2, 3, 0, 9, 9, 9, 9, 4, 5, 6, 0];
+			assert_eq!(
+				bgra_frame(&padded, 1, 1, 8, 2, (1, 1)).unwrap(),
+				[4, 5, 6, 0]
+			);
+			assert!(bgra_frame(&input[..4], 1, 2, 4, 2, (0, 0)).is_err());
 		}
 	}
 }

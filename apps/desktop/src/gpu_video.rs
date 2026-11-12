@@ -1,7 +1,8 @@
-//! GPU colour conversion for decoded video. Decoders hand over their native NV12/I420 planes;
-//! one small render pass converts them (and applies track rotation) into an RGBA texture
-//! that egui draws like any other image. Uploads move 1.5 bytes per pixel instead of 4 and
-//! no per-pixel colour work runs on the CPU. Without a wgpu renderer (tests), the CPU
+//! GPU colour conversion for decoded video. Decoders hand over their native NV12/I420 planes
+//! (or packed BGRA from the Windows video processor); one small render pass converts them
+//! and applies track rotation into an RGBA texture that egui draws like any other image.
+//! YUV uploads move 1.5 bytes per pixel instead of 4, and no per-pixel colour, channel-order
+//! or rotation work runs on the CPU. Without a wgpu renderer (tests), the CPU
 //! fallback in [`platform::video::Picture::to_rgba`] feeds an ordinary egui texture.
 use eframe::{egui, egui_wgpu, wgpu};
 use platform::video::{Layout, Picture};
@@ -86,6 +87,12 @@ fn fs_i420(in: Varyings) -> @location(0) vec4<f32> {
 	let cr = textureSampleLevel(chroma_b, planes, in.uv, 0.0).r;
 	return to_rgb(vec3<f32>(y, cb, cr));
 }
+
+// Packed RGBA/BGRA: the texture format already orders the channels, so only rotation applies.
+@fragment
+fn fs_packed(in: Varyings) -> @location(0) vec4<f32> {
+	return vec4<f32>(textureSampleLevel(luma, planes, in.uv, 0.0).rgb, 1.0);
+}
 ";
 
 /// Shared pipelines plus the renderer handles every [`VideoTexture`] uploads through.
@@ -96,6 +103,7 @@ pub struct Converter {
 	layout: wgpu::BindGroupLayout,
 	nv12: wgpu::RenderPipeline,
 	i420: wgpu::RenderPipeline,
+	packed: wgpu::RenderPipeline,
 	sampler: wgpu::Sampler,
 	/// Dropped textures awaiting [`collect`]; at most one frame's worth.
 	retired: egui::mutex::Mutex<Vec<egui::TextureId>>,
@@ -186,6 +194,7 @@ impl Converter {
 			renderer: state.renderer.clone(),
 			nv12: pipeline("fs_nv12"),
 			i420: pipeline("fs_i420"),
+			packed: pipeline("fs_packed"),
 			layout,
 			sampler,
 			retired: Default::default(),
@@ -355,12 +364,9 @@ impl VideoTexture {
 		let Some(gpu) = &mut self.gpu else {
 			return;
 		};
-		if picture.layout == Layout::Rgba {
-			if picture.rotation == 0 {
-				converter.write(&gpu.output, picture.data, picture.width * 4);
-			} else if let Some((width, _, rgba)) = picture.to_rgba() {
-				converter.write(&gpu.output, &rgba, width * 4);
-			}
+		if picture.layout == Layout::Rgba && picture.rotation == 0 {
+			// Already display-ready: copy straight into the output texture.
+			converter.write(&gpu.output, picture.data, picture.width * 4);
 			return;
 		}
 		let size = (picture.width, picture.height);
@@ -373,11 +379,16 @@ impl VideoTexture {
 		}
 		let planes = gpu.planes.as_ref().expect("planes allocated");
 		let (chroma_width, chroma_height) = picture.chroma_size();
-		let (luma, chroma) = picture.data.split_at((size.0 * size.1) as usize);
-		converter.write(&planes.luma, luma, size.0);
 		match picture.layout {
-			Layout::Nv12 => converter.write(&planes.chroma[0], chroma, chroma_width * 2),
-			_ => {
+			Layout::Rgba | Layout::Bgra => converter.write(&planes.luma, picture.data, size.0 * 4),
+			Layout::Nv12 => {
+				let (luma, chroma) = picture.data.split_at((size.0 * size.1) as usize);
+				converter.write(&planes.luma, luma, size.0);
+				converter.write(&planes.chroma[0], chroma, chroma_width * 2);
+			}
+			Layout::I420 => {
+				let (luma, chroma) = picture.data.split_at((size.0 * size.1) as usize);
+				converter.write(&planes.luma, luma, size.0);
 				let (cb, cr) = chroma.split_at((chroma_width * chroma_height) as usize);
 				converter.write(&planes.chroma[0], cb, chroma_width);
 				converter.write(&planes.chroma[1], cr, chroma_width);
@@ -419,7 +430,8 @@ impl VideoTexture {
 			});
 			pass.set_pipeline(match picture.layout {
 				Layout::Nv12 => &converter.nv12,
-				_ => &converter.i420,
+				Layout::I420 => &converter.i420,
+				Layout::Rgba | Layout::Bgra => &converter.packed,
 			});
 			pass.set_bind_group(0, &planes.bind_group, &[]);
 			pass.draw(0..3, 0..1);
@@ -430,8 +442,15 @@ impl VideoTexture {
 
 fn planes(converter: &Converter, layout: Layout, size: (u32, u32)) -> Planes {
 	let chroma_size = (size.0.div_ceil(2), size.1.div_ceil(2));
-	let luma = converter.texture("video-luma", size, wgpu::TextureFormat::R8Unorm, false);
+	let luma_format = match layout {
+		Layout::Rgba => wgpu::TextureFormat::Rgba8Unorm,
+		Layout::Bgra => wgpu::TextureFormat::Bgra8Unorm,
+		Layout::Nv12 | Layout::I420 => wgpu::TextureFormat::R8Unorm,
+	};
+	let luma = converter.texture("video-luma", size, luma_format, false);
 	let chroma = match layout {
+		// Packed pictures have one plane; the unused chroma slots alias it.
+		Layout::Rgba | Layout::Bgra => [luma.clone(), luma.clone()],
 		Layout::Nv12 => {
 			let pairs = converter.texture(
 				"video-chroma",
