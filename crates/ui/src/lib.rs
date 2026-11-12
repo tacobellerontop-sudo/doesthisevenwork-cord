@@ -1802,11 +1802,15 @@ impl MessagingUi {
 							inner.spacing_mut().item_spacing.x = 12.0;
 							let animate_avatar = pointer_over;
 							inner.push_id(member.user.id.0, |ui| {
-								let avatar = self
-									.avatars
-									.with_avatar_animation(animate_avatar, |avatars| {
-										avatars.show(ui, &member.user, 32.0, state.demo)
-									});
+								// Offline people read as greyscale until the row is pointed at.
+								let avatar = self.avatars.with_greyscale(
+									!online && !pointer_over,
+									|avatars| {
+										avatars.with_avatar_animation(animate_avatar, |avatars| {
+											avatars.show(ui, &member.user, 32.0, state.demo)
+										})
+									},
+								);
 								user_menu::show(
 									&avatar,
 									state,
@@ -1840,7 +1844,11 @@ impl MessagingUi {
 										})
 									})
 									.flatten();
-								let text_color = if online { colors.text } else { colors.muted };
+								let text_color = if online {
+									colors.text
+								} else {
+									design::offline_name(&colors)
+								};
 								let mut show_name = |ui: &mut egui::Ui| {
 									ui.allocate_ui_with_layout(
 										egui::vec2(ui.available_width(), 18.0),
@@ -4585,6 +4593,8 @@ impl MessagingUi {
 			state.selected,
 		);
 		self.avatars.cosmetics = self.cosmetics;
+		let own_status = self.shown_presence_status();
+		state.set_local_own_presence(own_status, &self.own_presence.custom_status);
 		name_styles::set_enabled(self.cosmetics.name_styles);
 		role_names::set_gradients(!self.cosmetics.solid_names);
 		let cosmetics_refresh = state.set_profile_cosmetics(self.cosmetics);

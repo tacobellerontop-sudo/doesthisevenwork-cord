@@ -3796,14 +3796,11 @@ impl MessagingUi {
 		let conversation = state.channel(channel).cloned();
 		egui::Panel::top("dm-existing-call")
 			.show_separator_line(false)
-			.frame(
-				egui::Frame::new()
-					.fill(STAGE_FILL)
-					.inner_margin(egui::Margin::symmetric(16, 16)),
-			)
+			.frame(egui::Frame::new().inner_margin(egui::Margin::symmetric(16, 16)))
 			.show(ui, |ui| {
-				// The stage stays black in every theme, like the joined call above it.
-				ui.visuals_mut().dark_mode = true;
+				// No black box: the conversation shows through a faint frosted haze that
+				// softens into the messages below, so the stage follows the theme.
+				frosted_haze(ui, ui.max_rect().expand(16.0), colors.text);
 				ui.vertical_centered(|ui| {
 					ui.spacing_mut().item_spacing = egui::vec2(TILE_GAP, 8.0);
 					let width = ui.available_width();
@@ -3844,7 +3841,7 @@ impl MessagingUi {
 								};
 								ui.add(
 									egui::Label::new(
-										RichText::new(name).size(13.0).color(STAGE_TEXT),
+										RichText::new(name).size(13.0).color(colors.text),
 									)
 									.truncate(),
 								);
@@ -3857,14 +3854,17 @@ impl MessagingUi {
 									egui::Vec2::splat(AVATAR),
 									egui::Sense::hover(),
 								);
-								ui.painter()
-									.circle_filled(rect.center(), AVATAR * 0.5, TILE_FILL);
+								ui.painter().circle_filled(
+									rect.center(),
+									AVATAR * 0.5,
+									colors.raised,
+								);
 								ui.painter().text(
 									rect.center(),
 									egui::Align2::CENTER_CENTER,
 									&label,
 									egui::FontId::proportional(18.0),
-									STAGE_TEXT,
+									colors.text,
 								);
 								let names = people[shown..]
 									.iter()
@@ -3879,7 +3879,7 @@ impl MessagingUi {
 						ui.label(
 							RichText::new(crate::i18n::translate(status))
 								.size(13.0)
-								.color(STAGE_MUTED),
+								.color(colors.muted),
 						);
 					}
 					ui.add_space(4.0);
@@ -4253,6 +4253,36 @@ fn card_action(
 	response
 		.widget_info(|| egui::WidgetInfo::selected(egui::Role::Button, enabled, active, &label));
 	response.on_hover_text(hint)
+}
+
+/// A see-through stage background: a light veil of `tint` that is strongest at the top and
+/// feathers out over the bottom edge, so the stage blurs into what is under it instead of
+/// boxing it in. egui has no backdrop filter, so the softness comes from the feathering.
+fn frosted_haze(ui: &egui::Ui, rect: egui::Rect, tint: egui::Color32) {
+	if !rect.is_positive() {
+		return;
+	}
+	let at = |alpha: f32| tint.gamma_multiply(alpha);
+	let feather = (rect.height() * 0.35).min(48.0);
+	let body =
+		egui::Rect::from_min_max(rect.min, egui::pos2(rect.right(), rect.bottom() - feather));
+	let mut mesh = egui::Mesh::default();
+	// Three bands: a faint veil, then a fade to nothing.
+	let stops = [
+		(rect.top(), at(0.045)),
+		(body.bottom(), at(0.03)),
+		(rect.bottom(), egui::Color32::TRANSPARENT),
+	];
+	for (y, color) in stops {
+		mesh.colored_vertex(egui::pos2(rect.left(), y), color);
+		mesh.colored_vertex(egui::pos2(rect.right(), y), color);
+	}
+	for band in 0..2u32 {
+		let i = band * 2;
+		mesh.add_triangle(i, i + 1, i + 2);
+		mesh.add_triangle(i + 1, i + 3, i + 2);
+	}
+	ui.painter().add(mesh);
 }
 
 /// Discord's call stage is black in every appearance; pills and tiles sit on it in fixed greys.

@@ -156,6 +156,38 @@ impl State {
 			.flatten()
 	}
 
+	/// Our own status as Discord shows it to others: the chosen status (Invisible reads as
+	/// offline) and custom status, while signed in and connected (or in the demo).
+	pub fn local_own_presence(&self) -> Option<(&'static str, Option<&str>)> {
+		let (status, custom) = self.local_own_presence.as_ref().filter(|_| {
+			self.user.is_some()
+				&& (self.demo
+					|| (self.gateway_connected
+						&& self.auth == crate::auth::AuthState::Authenticated))
+		})?;
+		let status = match status {
+			model::PresenceStatus::Invisible => "offline",
+			other => other.wire(),
+		};
+		Some((
+			status,
+			Some(custom.as_str()).filter(|text| !text.is_empty()),
+		))
+	}
+
+	/// Records our own chosen status for local presentation; true when it changed.
+	pub fn set_local_own_presence(&mut self, status: model::PresenceStatus, custom: &str) -> bool {
+		if self
+			.local_own_presence
+			.as_ref()
+			.is_some_and(|(old, text)| *old == status && text == custom)
+		{
+			return false;
+		}
+		self.local_own_presence = Some((status, custom.to_owned()));
+		true
+	}
+
 	/// Updates only local presentation, never the remote presence caches or timeline revision.
 	pub fn set_local_game_activity(&mut self, activity: Option<RichActivity>) -> bool {
 		if activity.as_ref().is_some_and(|activity| {
@@ -621,6 +653,20 @@ mod tests {
 
 	fn row(state: &State) -> &Member {
 		person(&state.members.as_ref().unwrap().slots[0])
+	}
+
+	#[test]
+	fn own_presence_shows_while_connected_and_invisible_reads_offline() {
+		let mut state = state();
+		assert!(state.set_local_own_presence(model::PresenceStatus::DoNotDisturb, "Busy"));
+		assert!(!state.set_local_own_presence(model::PresenceStatus::DoNotDisturb, "Busy"));
+		state.auth = AuthState::Authenticated;
+		state.gateway_connected = true;
+		assert_eq!(state.local_own_presence(), Some(("dnd", Some("Busy"))));
+		assert!(state.set_local_own_presence(model::PresenceStatus::Invisible, ""));
+		assert_eq!(state.local_own_presence(), Some(("offline", None)));
+		state.gateway_connected = false;
+		assert_eq!(state.local_own_presence(), None);
 	}
 
 	#[test]
