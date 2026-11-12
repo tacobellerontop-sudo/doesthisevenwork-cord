@@ -20,7 +20,10 @@ pub(super) struct Settings {
 enum Page {
 	Account,
 	Profile,
+	/// Startup, window and tray behaviour.
 	General,
+	/// GPU adapter, graphics API and frame pacing.
+	Graphics,
 	#[default]
 	Appearance,
 	Chat,
@@ -37,30 +40,32 @@ enum Page {
 }
 impl Page {
 	/// Every page in sidebar order; the narrow-window page picker lists them the same way.
-	const ALL: [Self; 13] = [
+	const ALL: [Self; 14] = [
 		Self::Account,
 		Self::Profile,
 		Self::MessagingPermissions,
-		Self::Storage,
+		Self::Activity,
 		Self::Appearance,
 		Self::Chat,
 		Self::Notifications,
 		Self::Voice,
 		Self::Keybinds,
-		Self::Activity,
 		Self::LanguageTime,
 		Self::General,
+		Self::Graphics,
+		Self::Storage,
 		Self::Updates,
 	];
-	/// Sidebar sections: account-level choices first, then how this app looks and behaves.
-	const SECTIONS: [(&'static str, &'static [Self]); 2] = [
+	/// Sidebar sections: what Discord stores for your account, then how the app looks and
+	/// behaves, then what only concerns this computer (startup, GPU, disk, updates).
+	const SECTIONS: [(&'static str, &'static [Self]); 3] = [
 		(
 			"section-user",
 			&[
 				Self::Account,
 				Self::Profile,
 				Self::MessagingPermissions,
-				Self::Storage,
+				Self::Activity,
 			],
 		),
 		(
@@ -71,11 +76,12 @@ impl Page {
 				Self::Notifications,
 				Self::Voice,
 				Self::Keybinds,
-				Self::Activity,
 				Self::LanguageTime,
-				Self::General,
-				Self::Updates,
 			],
+		),
+		(
+			"section-system",
+			&[Self::General, Self::Graphics, Self::Storage, Self::Updates],
 		),
 	];
 	fn label_key(self) -> &'static str {
@@ -83,6 +89,7 @@ impl Page {
 			Self::Account => "page-account",
 			Self::Profile => "page-profile",
 			Self::General => "page-general",
+			Self::Graphics => "page-graphics",
 			Self::LanguageTime => "page-language-time",
 			Self::Appearance => "page-appearance",
 			Self::Chat => "page-chat",
@@ -103,6 +110,7 @@ impl Page {
 			Self::Account => "description-account",
 			Self::Profile => "description-profile",
 			Self::General => "description-general",
+			Self::Graphics => "description-graphics",
 			Self::LanguageTime => "description-language-time",
 			Self::Appearance => "description-appearance",
 			Self::Chat => "description-chat",
@@ -123,7 +131,10 @@ impl Page {
 			Self::Account => "my account profile logout",
 			Self::Profile => "profile edit display name about me bio pronouns color colour",
 			Self::General => {
-				"general windows macos linux login menu bar startup autostart automatically open minimized minimize close tray background title bar caption window buttons decorations borderless tiling graphics gpu adapter render discrete integrated hardware acceleration performance battery vrr variable refresh rate steady refresh rate g-sync gsync freesync adaptive sync flicker flickering steady frame rate fps vsync"
+				"general windows login startup autostart automatically open minimized minimize close tray background title bar caption window buttons decorations borderless tiling setup wizard run again"
+			}
+			Self::Graphics => {
+				"graphics gpu adapter render renderer directx dx12 vulkan opengl api discrete integrated hardware acceleration performance battery vrr variable refresh rate steady refresh rate g-sync gsync freesync adaptive sync flicker flickering steady frame rate fps vsync"
 			}
 			Self::Appearance => {
 				"appearance customization font typography import ttf otf primary accent hex window effects transparency blur gradient names cosmetics decorations theme dark light system mode zoom scale layout sidebar width people members member list reset colour color preset"
@@ -377,6 +388,7 @@ impl MessagingUi {
 								}
 								match self.settings.page {
 									Page::General => self.general_settings(ui, state.demo),
+									Page::Graphics => self.graphics_settings(ui),
 									Page::LanguageTime => self.language_time_settings(ui),
 									Page::Account => self.account_page(ui, state),
 									Page::Profile => self.settings.editor.show(
@@ -444,7 +456,7 @@ impl MessagingUi {
 				self.settings_search(ui);
 				ui.add_space(12.0);
 				let query = self.settings.query.to_lowercase();
-				for (heading, pages) in Page::SECTIONS {
+				for (index, (heading, pages)) in Page::SECTIONS.into_iter().enumerate() {
 					let visible: Vec<Page> = pages
 						.iter()
 						.copied()
@@ -453,13 +465,17 @@ impl MessagingUi {
 					if visible.is_empty() {
 						continue;
 					}
-					ui.add_space(6.0);
-					ui.add(egui::Label::new(design::eyebrow(
-						ui,
-						language.text(heading),
-						colors.muted,
-					)));
-					ui.add_space(2.0);
+					ui.add_space(if index == 0 { 4.0 } else { 12.0 });
+					ui.horizontal(|ui| {
+						// Line the heading up with the page names under it.
+						ui.add_space(12.0);
+						ui.add(egui::Label::new(design::eyebrow(
+							ui,
+							language.text(heading),
+							colors.muted,
+						)));
+					});
+					ui.add_space(4.0);
 					for page in visible {
 						if nav_item(ui, &page.label(language), self.settings.page == page).clicked()
 						{
@@ -816,8 +832,27 @@ impl MessagingUi {
 		design::group(ui, &title, |ui| self.startup_switches(ui));
 		let title = language.text("general-window");
 		design::group(ui, &title, |ui| self.window_switches(ui));
-		let title = language.text("general-graphics");
-		design::group(ui, &title, |ui| {
+		design::card(ui, |ui| {
+			design::row(
+				ui,
+				"setup-run-again",
+				Some("setup-run-again-description"),
+				|ui| {
+					if design::button(ui, "setup-run-again-action", design::ButtonKind::Outline)
+						.clicked()
+					{
+						self.preview_setup(0);
+						self.settings.open = false;
+					}
+				},
+			);
+		});
+	}
+
+	fn graphics_settings(&mut self, ui: &mut egui::Ui) {
+		let language = self.language;
+		// The page title already says Graphics, so the rows sit in a plain card.
+		design::card(ui, |ui| {
 			let restart = language.text("general-gpu-restart");
 			let detail = if self.gpu_adapter.is_empty() {
 				restart
@@ -881,21 +916,6 @@ impl MessagingUi {
 				&label,
 				Some(&description),
 				&mut self.steady_refresh_rate,
-			);
-		});
-		design::card(ui, |ui| {
-			design::row(
-				ui,
-				"setup-run-again",
-				Some("setup-run-again-description"),
-				|ui| {
-					if design::button(ui, "setup-run-again-action", design::ButtonKind::Outline)
-						.clicked()
-					{
-						self.preview_setup(0);
-						self.settings.open = false;
-					}
-				},
 			);
 		});
 	}
