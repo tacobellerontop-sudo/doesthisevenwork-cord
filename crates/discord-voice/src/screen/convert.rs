@@ -28,12 +28,14 @@ struct Axis {
 	taps: Vec<Tap>,
 	start: usize,
 	end: usize,
+	/// Every tap lands exactly on consecutive source pixels (no scaling on this axis).
+	identity: bool,
 }
 
 impl Axis {
 	fn new(source: usize, scaled: usize, destination: usize, step: usize) -> Self {
 		let start = (destination - scaled) / 2;
-		let taps = (0..scaled)
+		let taps: Vec<Tap> = (0..scaled)
 			.map(|index| {
 				let position = ((index as f64 + 0.5) * source as f64 / scaled as f64 - 0.5)
 					.clamp(0.0, (source - 1) as f64);
@@ -45,10 +47,16 @@ impl Axis {
 				}
 			})
 			.collect();
+		let identity = scaled == source
+			&& taps
+				.iter()
+				.enumerate()
+				.all(|(index, tap)| tap.weight == 0 && tap.near == index * step);
 		Self {
 			taps,
 			start,
 			end: start + scaled,
+			identity,
 		}
 	}
 
@@ -57,6 +65,17 @@ impl Axis {
 			.contains(&index)
 			.then(|| self.taps[index - self.start])
 	}
+}
+
+/// The letterboxed picture size of `source` fitted into `target`, shared with the GPU path
+/// so both place the picture identically.
+pub(crate) fn fitted(source: (u32, u32), target: (u32, u32)) -> (u32, u32) {
+	let (source_width, source_height) = (f64::from(source.0), f64::from(source.1));
+	let scale = (f64::from(target.0) / source_width).min(f64::from(target.1) / source_height);
+	(
+		((source_width * scale).round() as u32).clamp(1, target.0),
+		((source_height * scale).round() as u32).clamp(1, target.1),
+	)
 }
 
 /// Fit `frame` into `width`x`height` 4:2:0 `output` (exactly `width * height * 3 / 2` bytes).
@@ -68,6 +87,9 @@ pub(crate) fn bgra_to_yuv420(
 	output: &mut [u8],
 ) -> Result<(), &'static str> {
 	validate_frame(frame)?;
+	if frame.format == super::FrameFormat::Nv12 {
+		return copy_nv12(frame, width, height, chroma, output);
+	}
 	if width == 0
 		|| height == 0
 		|| !width.is_multiple_of(2)
@@ -77,9 +99,9 @@ pub(crate) fn bgra_to_yuv420(
 		return Err("Invalid screen encoder picture size");
 	}
 	let (source_width, source_height) = (frame.width as usize, frame.height as usize);
-	let scale = (width as f64 / source_width as f64).min(height as f64 / source_height as f64);
-	let scaled_width = ((source_width as f64 * scale).round() as usize).clamp(1, width);
-	let scaled_height = ((source_height as f64 * scale).round() as usize).clamp(1, height);
+	let (scaled_width, scaled_height) =
+		fitted((frame.width, frame.height), (width as u32, height as u32));
+	let (scaled_width, scaled_height) = (scaled_width as usize, scaled_height as usize);
 	let columns = Axis::new(source_width, scaled_width, width, 4);
 	let rows = Axis::new(source_height, scaled_height, height, frame.stride);
 
@@ -133,6 +155,34 @@ pub(crate) fn bgra_to_yuv420(
 			first += count;
 		}
 	});
+	Ok(())
+}
+
+/// The GPU already scaled and converted this frame: copy it, splitting chroma for I420.
+fn copy_nv12(
+	frame: &RawFrame,
+	width: usize,
+	height: usize,
+	chroma: Chroma,
+	output: &mut [u8],
+) -> Result<(), &'static str> {
+	if (frame.width as usize, frame.height as usize) != (width, height)
+		|| output.len() != frame.data.len()
+	{
+		return Err("Invalid screen encoder picture size");
+	}
+	match chroma {
+		Chroma::Interleaved => output.copy_from_slice(&frame.data),
+		Chroma::Planar => {
+			let (luma, pairs) = frame.data.split_at(width * height);
+			let (out_luma, out_chroma) = output.split_at_mut(width * height);
+			out_luma.copy_from_slice(luma);
+			let (u, v) = out_chroma.split_at_mut(pairs.len() / 2);
+			for ((pair, u), v) in pairs.as_chunks::<2>().0.iter().zip(u).zip(v) {
+				(*u, *v) = (pair[0], pair[1]);
+			}
+		}
+	}
 	Ok(())
 }
 
@@ -190,34 +240,51 @@ impl Band<'_> {
 		}
 	}
 
-	/// One destination row as RGB, black outside the letterboxed picture.
+	/// One destination row as RGB, black outside the letterboxed picture. Straight-line
+	/// loops per case (unscaled, horizontal-only, bilinear) keep the per-pixel work free of
+	/// branches and closures; the arithmetic is the same as a general bilinear tap.
 	fn sample(&self, row: usize, out: &mut [[u32; 3]]) {
 		let Some(y) = self.rows.tap(row) else {
 			out.fill([0; 3]);
 			return;
 		};
+		let columns = self.columns;
+		out[..columns.start].fill([0; 3]);
+		out[columns.end..].fill([0; 3]);
+		let out = &mut out[columns.start..columns.end];
 		let (near, far) = (&self.source[y.near..], &self.source[y.far..]);
-		for (column, rgb) in out.iter_mut().enumerate() {
-			let Some(x) = self.columns.tap(column) else {
-				*rgb = [0; 3];
-				continue;
-			};
-			for (channel, value) in rgb.iter_mut().enumerate() {
-				// BGRA: red is byte 2, green 1, blue 0.
-				let byte = 2 - channel;
-				let lerp = |line: &[u8]| {
-					let a = u32::from(line[x.near + byte]);
-					if x.weight == 0 {
-						return a << 8;
-					}
-					a * (256 - x.weight) + u32::from(line[x.far + byte]) * x.weight
-				};
-				let upper = lerp(near);
-				*value = if y.weight == 0 {
-					(upper + 128) >> 8
-				} else {
-					(upper * (256 - y.weight) + lerp(far) * y.weight + 32_768) >> 16
-				};
+		// BGRA: red is byte 2, green 1, blue 0.
+		let pixel = |line: &[u8], at: usize| -> [u32; 3] {
+			let p = &line[at..at + 4];
+			[u32::from(p[2]), u32::from(p[1]), u32::from(p[0])]
+		};
+		// Horizontal blend scaled by 256, exactly as the general tap computes it.
+		let across = |line: &[u8], x: &Tap| -> [u32; 3] {
+			let a = pixel(line, x.near);
+			if x.weight == 0 {
+				return a.map(|value| value << 8);
+			}
+			let b = pixel(line, x.far);
+			[0, 1, 2].map(|c| a[c] * (256 - x.weight) + b[c] * x.weight)
+		};
+		if columns.identity && y.weight == 0 {
+			let line = &near[..out.len() * 4];
+			for (rgb, source) in out.iter_mut().zip(line.as_chunks::<4>().0) {
+				*rgb = [
+					u32::from(source[2]),
+					u32::from(source[1]),
+					u32::from(source[0]),
+				];
+			}
+		} else if y.weight == 0 {
+			for (rgb, x) in out.iter_mut().zip(&columns.taps) {
+				*rgb = across(near, x).map(|upper| (upper + 128) >> 8);
+			}
+		} else {
+			let (down, up) = (y.weight, 256 - y.weight);
+			for (rgb, x) in out.iter_mut().zip(&columns.taps) {
+				let (upper, lower) = (across(near, x), across(far, x));
+				*rgb = [0, 1, 2].map(|c| (upper[c] * up + lower[c] * down + 32_768) >> 16);
 			}
 		}
 	}
@@ -249,6 +316,7 @@ mod tests {
 			width,
 			height,
 			stride,
+			format: crate::screen::FrameFormat::Bgra,
 			data,
 		}
 	}
@@ -308,5 +376,26 @@ mod tests {
 			.run();
 			assert!(banded == single);
 		}
+	}
+
+	#[test]
+	fn gpu_nv12_frames_are_copied_or_split_without_reconversion() {
+		let frame = RawFrame {
+			width: 2,
+			height: 2,
+			stride: 2,
+			format: crate::screen::FrameFormat::Nv12,
+			data: vec![16, 17, 18, 19, 90, 240],
+		};
+		let mut out = vec![0; 6];
+		bgra_to_yuv420(&frame, 2, 2, Chroma::Interleaved, &mut out).unwrap();
+		assert_eq!(out, frame.data);
+		bgra_to_yuv420(&frame, 2, 2, Chroma::Planar, &mut out).unwrap();
+		assert_eq!(out, [16, 17, 18, 19, 90, 240]);
+		// The GPU already scaled to the stream size; any other size is refused, not rescaled.
+		let mut larger = vec![0; 4 * 4 * 3 / 2];
+		assert!(bgra_to_yuv420(&frame, 4, 4, Chroma::Planar, &mut larger).is_err());
+		assert_eq!(fitted((2560, 1440), (1920, 1080)), (1920, 1080));
+		assert_eq!(fitted((1000, 1000), (1920, 1080)), (1080, 1080));
 	}
 }
