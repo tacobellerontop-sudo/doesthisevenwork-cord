@@ -1,0 +1,50 @@
+{
+  "format": 1,
+  "name": "Forest",
+  "author": "Serein contributors",
+  "base": "standard",
+  "dark": {
+    "colors": {
+      "accent": "#9bd6ab",
+      "accent_text": "#132e1d",
+      "base": "#131d18",
+      "border": "#52715b",
+      "chat": "#22342a",
+      "danger": "#ff9797",
+      "hover": "#38523f",
+      "link": "#b2e9bf",
+      "mention_bg": "#355b40",
+      "mention_text": "#d8f6df",
+      "muted": "#a4c1ac",
+      "positive": "#80d2a0",
+      "raised": "#2d4335",
+      "selected": "#46644e",
+      "sidebar": "#192820",
+      "text": "#d0e4d5",
+      "text_strong": "#ecf7ef",
+      "warning": "#f0c674"
+    }
+  },
+  "light": {
+    "colors": {
+      "accent": "#2e7147",
+      "accent_text": "#ffffff",
+      "base": "#ddeadf",
+      "border": "#afc6af",
+      "chat": "#f5faf3",
+      "danger": "#b83039",
+      "hover": "#dcebdb",
+      "link": "#286b40",
+      "mention_bg": "#d2ebd5",
+      "mention_text": "#28593a",
+      "muted": "#607866",
+      "positive": "#237c48",
+      "raised": "#ffffff",
+      "selected": "#cce0cb",
+      "sidebar": "#e8f1e8",
+      "text": "#395440",
+      "text_strong": "#233d2c",
+      "warning": "#966500"
+    }
+  }
+}

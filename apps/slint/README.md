@@ -15,7 +15,7 @@ cargo run -p dtewcord-slint --features demo -- --demo
 cargo run -p dtewcord-slint
 ```
 
-Colours come from the shared `theme` crate, so this client and the desktop app use the same themes. `DTEWCORD_THEME` picks one at startup: `light` or `dark`, a built-in theme such as `slate` or `nightfall`, or the path of a custom theme `.json` file. The button next to the account name switches between dark and light.
+Colours come from the shared `theme` crate, so this client and the desktop app use the same themes. `DTEWCORD_THEME` picks one at startup: `light` or `dark`, a built-in theme such as `slate` or `nightfall`, a ready-made theme such as `latte` or `obsidian`, or the path of a custom theme `.json` file. The button next to the account name switches between dark and light.
 
 ## What milestone 1 covers
 

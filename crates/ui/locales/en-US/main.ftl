@@ -4841,6 +4841,8 @@ themes-open-folder = Open themes folder
 themes-imported = Added “{ $name }”.
 themes-import-failed = Couldn’t import that file: { $error }
 themes-exported = Theme exported.
+themes-copy-name = { $name } copy
+themes-by-author = { $name } by { $author }
 themes-export-failed = Couldn’t export the theme: { $error }
 themes-skipped-files = Some files in the themes folder couldn’t be read:
     { $files }

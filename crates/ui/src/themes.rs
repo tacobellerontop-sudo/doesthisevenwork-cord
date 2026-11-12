@@ -48,13 +48,19 @@ impl Themes {
 		&self.entries
 	}
 
+	/// A ready-made theme (`theme:<name>`) or a library theme by its id.
 	fn entry(&self, id: &str) -> Option<&theme::Entry> {
+		if id.starts_with(theme::BUNDLED_PREFIX) {
+			return theme::bundled().iter().find(|entry| entry.id == id);
+		}
 		self.entries.iter().find(|entry| entry.id == id)
 	}
 
-	/// The key the host saves: a built-in key, or `custom:<id>`. `None` is the default theme.
+	/// The key the host saves: a built-in key, a ready-made theme's `theme:<name>`, or
+	/// `custom:<id>`. `None` is the default theme.
 	pub fn selection_key(&self) -> Option<String> {
 		match &self.active {
+			Some(id) if id.starts_with(theme::BUNDLED_PREFIX) => Some(id.clone()),
 			Some(id) => Some(theme::selection_key(id)),
 			None => {
 				let variant = design::variant();
@@ -65,9 +71,14 @@ impl Themes {
 
 	/// Show the saved selection. Unknown keys and missing files fall back to the default theme.
 	pub fn restore(&mut self, ctx: &egui::Context, key: Option<&str>) {
-		if let Some(id) = key.and_then(theme::selection_id)
-			&& let Some(entry) = self.entry(id).cloned()
-		{
+		let id = key.and_then(|key| {
+			if key.starts_with(theme::BUNDLED_PREFIX) {
+				Some(key)
+			} else {
+				theme::selection_id(key)
+			}
+		});
+		if let Some(entry) = id.and_then(|id| self.entry(id)).cloned() {
 			self.show_custom(Some(&entry));
 		} else {
 			self.show_custom(None);
@@ -128,10 +139,16 @@ impl Themes {
 
 	/// The host's answer to [`FileRequest::Export`].
 	pub fn export_file(&mut self, id: &str, file: &Path) {
-		let Some(library) = &self.library else {
+		let result = if let Some(entry) =
+			theme::find_bundled(id).filter(|_| id.starts_with(theme::BUNDLED_PREFIX))
+		{
+			std::fs::write(file, entry.theme.to_json()).map_err(theme::LibraryError::Io)
+		} else if let Some(library) = &self.library {
+			library.export(id, file)
+		} else {
 			return;
 		};
-		self.notice = Some(match library.export(id, file) {
+		self.notice = Some(match result {
 			Ok(()) => (design::Level::Success, translate("themes-exported")),
 			Err(error) => (
 				design::Level::Error,
@@ -163,11 +180,18 @@ impl Themes {
 						chosen_builtin = Some(variant);
 					}
 				}
-				for entry in &self.entries {
+				for entry in theme::bundled().iter().chain(&self.entries) {
 					let selected = self.active.as_deref() == Some(entry.id.as_str());
 					let swatch = design::custom_preview_colors(dark, &entry.theme);
+					let hover = match &entry.theme.author {
+						Some(author) => crate::i18n::translate_args(
+							"themes-by-author",
+							&[("name", &entry.theme.name), ("author", author)],
+						),
+						None => entry.theme.name.clone(),
+					};
 					if crate::settings::preset_swatch(ui, &entry.theme.name, &swatch, selected)
-						.on_hover_text(&entry.theme.name)
+						.on_hover_text(hover)
 						.clicked() && !selected
 					{
 						chosen_custom = Some(entry.id.clone());
@@ -241,8 +265,23 @@ impl Themes {
 	}
 
 	/// Start editing `id`, or a new theme based on what is showing now.
-	fn open_editor(&mut self, ctx: &egui::Context, id: Option<String>) {
+	fn open_editor(&mut self, ctx: &egui::Context, mut id: Option<String>) {
 		let dark = ctx.theme() == egui::Theme::Dark;
+		// Ready-made themes can't change; editing one starts a copy in the library.
+		if let Some(entry) = id
+			.as_deref()
+			.filter(|id| id.starts_with(theme::BUNDLED_PREFIX))
+			.and_then(|id| self.entry(id))
+		{
+			let mut draft = entry.theme.clone();
+			draft.name = crate::i18n::translate_args("themes-copy-name", &[("name", &draft.name)])
+				// Fluent wraps arguments in Unicode isolation marks; a saved name shouldn't keep them.
+				.replace(['\u{2068}', '\u{2069}'], "");
+			draft.author = None;
+			id = None;
+			self.open_editor_with(ctx, id, draft, dark);
+			return;
+		}
 		let draft = match id.as_deref().and_then(|id| self.entry(id)) {
 			Some(entry) => entry.theme.clone(),
 			None => {
@@ -251,9 +290,20 @@ impl Themes {
 					None => CustomTheme::new(String::new(), design::variant()),
 				};
 				draft.name = translate("themes-editor-default-name");
+				draft.author = None;
 				draft
 			}
 		};
+		self.open_editor_with(ctx, id, draft, dark);
+	}
+
+	fn open_editor_with(
+		&mut self,
+		ctx: &egui::Context,
+		id: Option<String>,
+		draft: CustomTheme,
+		dark: bool,
+	) {
 		self.notice = None;
 		self.editor = Some(Editor {
 			id,
@@ -645,6 +695,35 @@ mod tests {
 	use super::*;
 
 	#[test]
+	fn ready_made_themes_are_listed_selected_and_saved() {
+		let ctx = egui::Context::default();
+		let mut themes = Themes::default();
+		themes.restore(&ctx, Some("theme:latte"));
+		assert!(design::custom_theme_active());
+		assert_eq!(themes.selection_key().as_deref(), Some("theme:latte"));
+		// A missing ready-made theme falls back to the default theme.
+		themes.restore(&ctx, Some("theme:gone"));
+		assert!(!design::custom_theme_active());
+		assert_eq!(themes.selection_key(), None);
+		themes.select_custom(&ctx, "theme:obsidian");
+		assert!(themes.selection_changed);
+		assert_eq!(themes.selection_key().as_deref(), Some("theme:obsidian"));
+		// Editing a ready-made theme starts an unsaved copy instead.
+		themes.open_editor(&ctx, Some("theme:obsidian".into()));
+		let editor = themes.editor.as_ref().unwrap();
+		assert_eq!(editor.id, None);
+		// Fluent wraps arguments in Unicode isolation marks.
+		assert_eq!(
+			editor.draft.name.replace(['\u{2068}', '\u{2069}'], ""),
+			"Obsidian copy"
+		);
+		themes.close_editor(&ctx);
+		assert_eq!(themes.selection_key().as_deref(), Some("theme:obsidian"));
+		design::set_custom_theme(None);
+		design::set_variant(Builtin::Standard);
+	}
+
+	#[test]
 	fn every_token_is_in_one_editor_group() {
 		let mut seen: Vec<Token> = GROUPS
 			.iter()
@@ -704,13 +783,22 @@ mod tests {
 			);
 		}
 		for key in [
+			"themes-copy-name",
+			"themes-by-author",
 			"themes-imported",
 			"themes-import-failed",
 			"themes-export-failed",
 			"themes-skipped-files",
 		] {
-			let text =
-				crate::i18n::translate_args(key, &[("name", "x"), ("error", "x"), ("files", "x")]);
+			let text = crate::i18n::translate_args(
+				key,
+				&[
+					("name", "x"),
+					("error", "x"),
+					("files", "x"),
+					("author", "x"),
+				],
+			);
 			assert!(!text.starts_with("Unknown localization key"), "{key}");
 		}
 	}

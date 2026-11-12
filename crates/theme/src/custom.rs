@@ -28,6 +28,9 @@ pub const MAX_FILE_BYTES: u64 = 64 * 1024;
 pub struct CustomTheme {
 	pub format: u32,
 	pub name: String,
+	/// Who made the theme, shown next to its name.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub author: Option<String>,
 	/// Key of the built-in theme that supplies every colour not listed here.
 	#[serde(default = "default_base")]
 	pub base: String,
@@ -96,6 +99,7 @@ impl CustomTheme {
 		Self {
 			format: FORMAT,
 			name: name.into(),
+			author: None,
 			base: base.key().to_owned(),
 			dark: Overrides::default(),
 			light: Overrides::default(),
