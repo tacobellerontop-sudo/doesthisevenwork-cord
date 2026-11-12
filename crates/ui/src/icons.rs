@@ -481,7 +481,7 @@ pub fn channel(kind: u8) -> Icon {
 
 /// Glyph size for one square standard button. The validated theme scale never changes its hitbox.
 pub(crate) fn button_glyph_size(size: f32) -> f32 {
-	(size * 0.70 * design::icon_scale()).min(size)
+	size * 0.70
 }
 
 /// Square icon button that highlights on hover and exposes `label` to accessibility.

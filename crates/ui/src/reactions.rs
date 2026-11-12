@@ -301,12 +301,11 @@ pub fn quick_button(ui: &mut egui::Ui, emoji: &str, reacted: bool) -> egui::Resp
 			},
 		);
 	}
-	let base = if response.hovered() && ui.is_enabled() {
+	let size = if response.hovered() && ui.is_enabled() {
 		24.0
 	} else {
 		22.0
 	};
-	let size = (base * crate::design::icon_scale()).min(26.0);
 	let target = egui::Rect::from_center_size(rect.center(), egui::Vec2::splat(size));
 	let tint = if ui.is_enabled() {
 		egui::Color32::WHITE
