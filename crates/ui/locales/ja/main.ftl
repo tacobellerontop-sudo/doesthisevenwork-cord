@@ -6,7 +6,6 @@ language-label = 表示言語
 language-description = セレインの言語を選択してください。 Discord のコンテンツは翻訳されません。
 section-user = ユーザー設定
 section-app = アプリの設定
-section-customization = カスタマイズ
 page-account = 私のアカウント
 page-profile = プロフィール
 page-general = 一般的な
@@ -19,8 +18,6 @@ page-voice = 音声とビデオ
 page-keybinds = キーバインド
 page-storage = データとプライバシー
 page-updates = アップデート
-page-extensions = 拡張機能
-page-themes = テーマ
 description-account = Discord アカウントはこのデバイスにサインインしています。
 description-profile = Discord 上で自分がどのように表示されるかを選択します。
 description-general = このデバイスの起動、ウィンドウ、グラフィックスの動作。
@@ -33,10 +30,6 @@ description-voice = マイク、スピーカー、カメラ、音声処理。
 description-keybinds = セレインのキーボード ショートカット。
 description-storage = DTEW Cord がこのデバイスに保存しているもの。
 description-updates = このデバイスで DTEW Cord を常に最新の状態に保ってください。
-description-extensions = コミュニティプラグインを管理します。
-description-themes = コミュニティのテーマを選択します。
-theme-maker = テーマメーカー
-theme-maker-description = それをあなたのものにしてください。会話の変更をプレビューします。
 search = 検索
 no-settings-found = 設定が見つかりません
 search-suggestion = テーマ、通知、音声、キャッシュを試してください。
@@ -894,131 +887,68 @@ emoji-picker-unicode-button-with-search-emoji = 絵文字を検索
 
 ## crates/ui/src/extensions_ui.rs
 # Context: card_body
-extensions-ui-card-body-active = アクティブ
 # Context: card_body
-extensions-ui-card-body-apply-this-installed-theme-to-the-app = このインストールされたテーマをアプリに適用します。
 # Context: card_body
-extensions-ui-card-body-by = による
 # Context: card_body
-extensions-ui-card-body-cleanup-pending = クリーンアップ保留中
 # Context: card_body
-extensions-ui-card-body-enabled = 有効
 # Context: card_body
-extensions-ui-card-body-finish-removing-this-extension-and-its-local-data = この拡張機能とそのローカル データの削除を完了します。
 # Context: card_body
-extensions-ui-card-body-open-tool = ツールを開く
 # Context: card_body
-extensions-ui-card-body-plugin = プラグイン
 # Context: card_body
-extensions-ui-card-body-remove = 取り除く
 # Context: card_body
-extensions-ui-card-body-remove-this-theme-and-delete-its-local-data = このテーマを削除し、そのローカル データを削除します。
 # Context: card_body
-extensions-ui-card-body-removes-this-extension-and-deletes-its-local-data = この拡張機能を削除し、そのローカル データを削除します。
 # Context: card_body
-extensions-ui-card-body-review-the-new-release-before-it-replaces-this-version = このバージョンを置き換える前に、新しいリリースを確認してください。
 # Context: card_body
-extensions-ui-card-body-update = アップデート
 # Context: composer_menu
-extensions-ui-composer-menu-tools = ツール
 # Context: consent_modal
-extensions-ui-consent-modal-allow-every-listed-permission-to-continue = リストされているすべての権限を続行できるようにします。
 # Context: consent_modal
-extensions-ui-consent-modal-allow-this-extension-to = この拡張機能に許可する
 # Context: consent_modal
-extensions-ui-consent-modal-by = による
 # Context: consent_modal
-extensions-ui-consent-modal-cancel = キャンセル
 # Context: consent_modal
-extensions-ui-consent-modal-disabling-removes-the-extension-and-its-local-data-re-enabling = 無効にすると、拡張機能とそのローカル データが削除されます。再度有効にすると、新たに開始されます。
 # Context: consent_modal
-extensions-ui-consent-modal-enable = 有効にする
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-extension = この拡張機能を有効にする
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-theme = このテーマを有効にする
 # Context: consent_modal
-extensions-ui-consent-modal-everything-it-may-touch-is-listed-below = 接触する可能性のあるものはすべて以下にリストされています。
 # Context: consent_modal
-extensions-ui-consent-modal-no-access-to-conversations-or-composer-text = 会話や作曲者のテキストにはアクセスできません。
 # Context: consent_modal
-extensions-ui-consent-modal-reviewed = レビュー済み
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed = 未レビュー
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed-package-its-source-has-not-been-reviewed-for-the = 未レビューのパッケージ — そのソースはカタログ用にレビューされていません。
 # Context: consent_modal
-extensions-ui-consent-modal-view-source = ソースを見る
 # Context: preview_image
-extensions-ui-preview-image-preview = プレビュー
 # Context: preview_image
-extensions-ui-preview-image-view-preview = プレビューを表示する
 # Context: preview_modal
-extensions-ui-preview-modal-close-preview = プレビューを閉じる
 # Context: preview_modal
-extensions-ui-preview-modal-creator-preview = クリエイタープレビュー
 # Context: preview_modal
-extensions-ui-preview-modal-example-deleted-message-appearance = 削除されたメッセージの外観の例
 # Context: preview_modal
 extensions-ui-preview-modal-selecting-artwork-sends-it-as-an-image-attachment = アートワークを選択すると、画像添付として送信されます。
-extensions-ui-preview-modal-unavailable-artwork-falls-back-to-images = 使用できない絵文字やスタンプは、代わりに画像として添付されます。
 # Context: settings
-extensions-ui-settings-no-extensions-yet = まだ拡張機能はありません
 # Context: settings
-extensions-ui-settings-no-matches = 一致しません
 # Context: settings
-extensions-ui-settings-no-themes-yet = まだテーマがありません
 # Context: settings
-extensions-ui-settings-refresh-the-catalog-or-import-a-creator-s-package-to = カタログを更新するか、作成者のパッケージをインポートして開始してください。
 # Context: settings
-extensions-ui-settings-try-a-different-name-or-creator = 別の名前または作成者を試してください。
 # Context: show_result
-extensions-ui-show-result-apply-to-draft = ドラフトに適用
 # Context: show_result
-extensions-ui-show-result-close = 閉じる
 # Context: show_result
-extensions-ui-show-result-dismiss = 閉じる
 # Context: show_result
-extensions-ui-show-result-extension-error = 拡張エラー
 # Context: show_result
-extensions-ui-show-result-proposed-app-action = 提案されたアプリのアクション
 # Context: show_result
-extensions-ui-show-result-proposed-composer-text = 提案された作曲家テキスト
 # Context: show_result
-extensions-ui-show-result-review-the-result-app-actions-and-draft-changes-need-your = 結果を確認します。アプリの操作と下書きの変更には承認が必要です。
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-theme-editor = テーマエディターに戻る
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-themes = テーマに戻る
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-changes-are-not-saved-yet = 変更はまだ保存されていません
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-customize = カスタマイズ
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-previewing-theme = テーマのプレビュー
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-theme-preview = テーマのプレビュー
 # Context: toolbar
-extensions-ui-toolbar-checking-for-packages-and-updates = パッケージとアップデートの確認
 # Context: toolbar
-extensions-ui-toolbar-clear-search = 検索をクリア
 # Context: toolbar
-extensions-ui-toolbar-dismiss = 閉じる
 # Context: toolbar
-extensions-ui-toolbar-import-theme = テーマをインポート…
 # Context: toolbar
-extensions-ui-toolbar-look-for-new-packages-and-updates-nothing-installs-on-its = 新しいパッケージやアップデートを探してください。単独でインストールされるものはありません。
 # Context: toolbar
-extensions-ui-toolbar-open-a-package-file-from-this-computer = このコンピュータからパッケージ ファイルを開きます。
 # Context: toolbar
-extensions-ui-toolbar-refresh-catalog = カタログを更新する
 # Context: toolbar
-extensions-ui-toolbar-search-extensions = 検索拡張機能
 # Context: toolbar
-extensions-ui-toolbar-search-themes = テーマを検索する
 # Context: toolbar
-extensions-ui-toolbar-working-on-your-last-action = 最後のアクションに取り組んでいます
-
 ## crates/ui/src/fonts.rs
 # Context: show
 fonts-show-import-font = フォントをインポート…
@@ -1615,11 +1545,9 @@ lib-ime-updates-text-wait-for-readable-current-message-history = 読み取り可
 # Context: mention_switch
 lib-mention-switch-ping-the-original-author = 原作者に問い合わせる
 # Context: title_bar
-lib-title-bar-offline-preview = オフラインプレビュー
 # Context: title_bar
 lib-title-bar-sign-in-again = 再度サインインしてください
 # Context: title_bar
-lib-title-bar-synthetic-data-no-network-or-local-storage = 合成データ · ネットワークまたはローカル ストレージなし
 
 ## apps/desktop/src/main.rs
 # Context: restoring
@@ -3632,191 +3560,101 @@ switcher-show-where-would-you-like-to-go = どこに行きたいですか？
 
 ## crates/ui/src/theme_editor.rs
 # Context: appearance_switch
-theme-editor-appearance-switch-colors-and-opacity-are-saved-separately-for-dark-and-light = 色と不透明度は、暗い外観と明るい外観に分けて保存されます。
 # Context: appearance_switch
 theme-editor-appearance-switch-dark = 暗い
 # Context: appearance_switch
-theme-editor-appearance-switch-editing = 編集
 # Context: appearance_switch
 theme-editor-appearance-switch-light = ライト
 # Context: color_input
-theme-editor-color-input-use-rrggbb-or-rrggbbaa = #RRGGBB または #RRGGBBAA を使用してください
 # Context: color_override
-theme-editor-color-override-reset = リセット
 # Context: color_override
-theme-editor-color-override-use-rrggbb-or-rrggbbaa = #RRGGBB または #RRGGBBAA を使用します。
 # Context: color_override
-theme-editor-color-override-use-the-default-color-for-this-appearance = この外観にはデフォルトの色を使用します
 # Context: cover_card
-theme-editor-cover-card-automatic-preview = 自動プレビュー
 # Context: cover_card
-theme-editor-cover-card-choose-cover = カバーを選択してください
 # Context: cover_card
-theme-editor-cover-card-custom-cover = カスタムカバー
 # Context: cover_card
-theme-editor-cover-card-png-or-jpeg-up-to-2-mib-this-image-does = PNG または JPEG、最大 2 MiB。この画像はチャットの背景を変更しません。
 # Context: cover_card
-theme-editor-cover-card-remove = 取り除く
 # Context: cover_card
-theme-editor-cover-card-replace-cover = カバーを交換する
 # Context: description
-theme-editor-description-direct-messages-and-channel-navigation = ダイレクトメッセージとチャンネルナビゲーション
 # Context: description
-theme-editor-description-the-area-around-the-message-box = メッセージボックスの周囲
 # Context: description
-theme-editor-description-the-conversation-timeline = 会話のタイムライン
 # Context: description
-theme-editor-description-the-left-server-rail = 左側のサーバーレール
 # Context: description
-theme-editor-description-the-member-and-search-pane-on-the-right = 右側のメンバーと検索ペイン
 # Context: description
-theme-editor-description-window-title-and-conversation-header = ウィンドウのタイトルと会話ヘッダー
 # Context: image_card
-theme-editor-image-card-background-image = 背景画像
 # Context: image_card
-theme-editor-image-card-choose-image = 画像を選択してください
 # Context: image_card
-theme-editor-image-card-no-image-selected = 画像が選択されていません
 # Context: image_card
-theme-editor-image-card-pixels = ピクセル
 # Context: image_card
-theme-editor-image-card-png-or-jpeg-up-to-2-mib = PNG または JPEG、最大 2 MiB
 # Context: image_card
-theme-editor-image-card-remove = 取り除く
 # Context: image_card
-theme-editor-image-card-replace-image = 画像を置き換える
 # Context: label
-theme-editor-label-member-list = メンバーリスト
 # Context: label
-theme-editor-label-message-input-area = メッセージ入力エリア
 # Context: label
-theme-editor-label-message-list = メッセージ一覧
 # Context: label
-theme-editor-label-people-channels = 人とチャンネル
 # Context: label
-theme-editor-label-server-list = サーバーリスト
 # Context: label
-theme-editor-label-top-bars = トップバー
 # Context: metric_label
-theme-editor-metric-label-reset = リセット
 # Context: metric_label
-theme-editor-metric-label-use-the-built-in-value = 組み込み値を使用する
 # Context: section_controls
-theme-editor-section-controls-0-shows-the-image-100-is-a-solid-section-color = 0% shows the image. 100% はソリッドセクションカラーです。
 # Context: section_controls
-theme-editor-section-controls-selected-section = 選択したセクション
 # Context: section_controls
-theme-editor-section-controls-surface-opacity = 表面の不透明度
-# Context: show
-theme-editor-show-additional-colors-app-controls-and-sharing-details = 追加の色、アプリのコントロール、詳細の共有。
-# Context: show
-theme-editor-show-advanced = 高度な
-# Context: show
-theme-editor-show-app-background = アプリの背景
 # Context: show
 # Context: show
-theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = アプリの表面の裏側で 2 つの色をブレンドします。
-# Context: show
-theme-editor-show-blur = ぼかし
-# Context: show
-theme-editor-show-card-cover = カードカバー
-# Context: show
-theme-editor-show-choose-an-image-to-adjust-the-top-bar-lists-and = 画像を選択して、トップバー、リスト、メッセージ領域を調整します。
-# Context: show
-theme-editor-show-choose-the-image-shown-on-your-theme-card-in-themes = [テーマ] でテーマ カードに表示される画像を選択します。
-# Context: show
-theme-editor-show-click-a-swatch-to-choose-a-color-or-enter-its = スウォッチをクリックして色を選択するか、その 16 進値を入力します。
-# Context: show
-theme-editor-show-conversation-colors = 会話の色
-# Context: show
-theme-editor-show-created-by = 作成者
-# Context: show
-theme-editor-show-creator-name-is-required = 作成者名は必須です。
-# Context: show
-theme-editor-show-export-theme = テーマのエクスポート
-# Context: show
-theme-editor-show-fill-area = 塗りつぶし領域
-# Context: show
-theme-editor-show-fit-entire-image = 画像全体をフィットさせる
-# Context: show
-theme-editor-show-how-your-theme-appears-in-the-gallery = テーマがギャラリーにどのように表示されるか。
-# Context: show
-theme-editor-show-image-opacity = 画像の不透明度
 # Context: show
 # Context: show
-theme-editor-show-license = ライセンス
 # Context: show
-theme-editor-show-license-and-version-are-required = ライセンスとバージョンが必要です。
 # Context: show
-theme-editor-show-more-colors = より多くの色
 # Context: show
-theme-editor-show-only-share-images-you-own-or-have-permission-to-use = 自分が所有する画像、または使用許可を得ている画像のみを共有してください。必要な帰属を保持してください。
 # Context: show
-theme-editor-show-override-the-default-appearance-setting-for-this-theme = このテーマのデフォルトの外観設定をオーバーライドします。
 # Context: show
-theme-editor-show-requires-transparency-blur-in-appearance-then-an-app-restart = 外観で透明性とぼかしを設定してからアプリを再起動する必要があります。
 # Context: show
-theme-editor-show-section-opacity = セクションの不透明度
 # Context: show
-theme-editor-show-select-an-area-then-choose-how-much-of-the-image = 領域を選択し、画像がどの程度透けて見えるかを選択します。
 # Context: show
-theme-editor-show-sharing-export = 共有とエクスポート
 # Context: show
-theme-editor-show-source-url = ソースURL
 # Context: show
-theme-editor-show-text-spacing-corners = テキスト、間隔、コーナー
 # Context: show
-theme-editor-show-the-license-and-version-are-required-a-source-url-is = ライセンスとバージョンが必要です。ローカル テーマの場合、ソース URL はオプションです。
 # Context: show
-theme-editor-show-theme-details = テーマの詳細
 # Context: show
-theme-editor-show-theme-name = テーマ名
 # Context: show
-theme-editor-show-theme-name-is-required = テーマ名は必須です。
 # Context: show
-theme-editor-show-these-settings-apply-to-dark-and-light-appearances = これらの設定は、暗い外観と明るい外観に適用されます。
 # Context: show
-theme-editor-show-this-older-theme-uses-its-original-image-placement = この古いテーマでは、元の画像配置が使用されています。
 # Context: show
-theme-editor-show-transparency = 透明性
 # Context: show
-theme-editor-show-transparency-blur = 透明度とぼかし
 # Context: show
-theme-editor-show-use-a-gradient = グラデーションを使用する
 # Context: show
-theme-editor-show-use-a-valid-https-source-url-or-leave-this-blank = 有効な HTTPS ソース URL を使用するか、これを空白のままにします。
 # Context: show
-theme-editor-show-use-image-across-the-app = アプリ全体で画像を使用する
 # Context: show
-theme-editor-show-use-one-image-behind-your-conversations-and-sidebars = 会話やサイドバーの背後に 1 つの画像を使用します。
 # Context: show
-theme-editor-show-use-rrggbb-or-rrggbbaa = #RRGGBB または #RRGGBBAA を使用します。
 # Context: show
-theme-editor-show-version = バージョン
 # Context: show
-theme-editor-show-window-effects = ウィンドウ効果
 # Context: show
-theme-editor-show-window-gradient = ウィンドウのグラデーション
 # Context: show
-theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = 外観の基本色がこのアクセントより優先されます。
 # Context: show
-theme-editor-show-the-system-applies-its-standard-blur-strength = システム標準の強さでぼかしを適用します。
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
 # Context: key
-theme-editor-tab-advanced = 高度な
 # Context: key
-theme-editor-tab-background = 背景
 # Context: key
-theme-editor-tab-basics = 基本
 # Context: key
-theme-editor-tab-colors = 色
 # Context: toolbar
-theme-editor-toolbar-back = 戻る
 # Context: toolbar
-theme-editor-toolbar-preview-in-app = アプリでプレビュー
 # Context: toolbar
-theme-editor-toolbar-save-and-apply = 保存して適用する
 # Context: toolbar
-theme-editor-toolbar-unsaved-changes = 未保存の変更
 # Context: toolbar
 theme-editor-toolbar-working = 働く…
 
@@ -3856,11 +3694,8 @@ timeline-message-actions-delete-message = メッセージを削除…
 # Context: message_actions
 timeline-message-actions-edit-message = メッセージを編集する
 # Context: message_actions
-timeline-message-actions-extensions = 拡張機能
 # Context: menu
-extensions-ui-menu-group-user = ユーザー
 # Context: menu
-extensions-ui-menu-group-conversation = 会話
 # Context: message_actions
 timeline-message-actions-forward = 転送
 # Context: message_actions

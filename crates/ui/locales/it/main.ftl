@@ -6,7 +6,6 @@ language-label = Lingua di visualizzazione
 language-description = Scegli la lingua di DTEW Cord. Il contenuto di Discord non viene mai tradotto.
 section-user = Impostazioni utente
 section-app = Impostazioni dell'app
-section-customization = Personalizzazione
 page-account = Il mio conto
 page-profile = Profilo
 page-general = Generale
@@ -19,8 +18,6 @@ page-voice = Voce e video
 page-keybinds = Combinazioni di tasti
 page-storage = Dati e privacy
 page-updates = Aggiornamenti
-page-extensions = Estensioni
-page-themes = Temi
 description-account = L'account Discord ha effettuato l'accesso su questo dispositivo.
 description-profile = Scegli come apparire su Discord.
 description-general = Comportamento all'avvio, alle finestre e alla grafica su questo dispositivo.
@@ -33,10 +30,6 @@ description-voice = Microfono, altoparlanti, fotocamera ed elaborazione vocale.
 description-keybinds = Scorciatoie da tastiera per DTEW Cord.
 description-storage = Ciò che DTEW Cord conserva su questo dispositivo.
 description-updates = Mantieni aggiornato DTEW Cord su questo dispositivo.
-description-extensions = Gestisci i plugin della community.
-description-themes = Scegli un tema comunitario.
-theme-maker = Creatore di temi
-theme-maker-description = Rendilo tuo. Visualizza in anteprima le modifiche nelle tue conversazioni.
 search = Ricerca
 no-settings-found = Nessuna impostazione trovata
 search-suggestion = Prova tema, notifiche, voce o cache.
@@ -893,131 +886,68 @@ emoji-picker-unicode-button-with-search-emoji = Cerca emoji
 
 ## crates/ui/src/extensions_ui.rs
 # Context: card_body
-extensions-ui-card-body-active = Attivo
 # Context: card_body
-extensions-ui-card-body-apply-this-installed-theme-to-the-app = Applica questo tema installato all'app.
 # Context: card_body
-extensions-ui-card-body-by = di
 # Context: card_body
-extensions-ui-card-body-cleanup-pending = Pulizia in sospeso
 # Context: card_body
-extensions-ui-card-body-enabled = Abilitato
 # Context: card_body
-extensions-ui-card-body-finish-removing-this-extension-and-its-local-data = Completa la rimozione di questa estensione e dei relativi dati locali.
 # Context: card_body
-extensions-ui-card-body-open-tool = Strumento aperto
 # Context: card_body
-extensions-ui-card-body-plugin = Collegare
 # Context: card_body
-extensions-ui-card-body-remove = Rimuovere
 # Context: card_body
-extensions-ui-card-body-remove-this-theme-and-delete-its-local-data = Rimuovi questo tema ed elimina i suoi dati locali.
 # Context: card_body
-extensions-ui-card-body-removes-this-extension-and-deletes-its-local-data = Rimuove questa estensione ed elimina i relativi dati locali.
 # Context: card_body
-extensions-ui-card-body-review-the-new-release-before-it-replaces-this-version = Esaminare la nuova versione prima che sostituisca questa versione.
 # Context: card_body
-extensions-ui-card-body-update = Aggiornamento
 # Context: composer_menu
-extensions-ui-composer-menu-tools = Utensili
 # Context: consent_modal
-extensions-ui-consent-modal-allow-every-listed-permission-to-continue = Consenti a tutte le autorizzazioni elencate di continuare.
 # Context: consent_modal
-extensions-ui-consent-modal-allow-this-extension-to = Consenti a questa estensione di
 # Context: consent_modal
-extensions-ui-consent-modal-by = di
 # Context: consent_modal
-extensions-ui-consent-modal-cancel = Cancellare
 # Context: consent_modal
-extensions-ui-consent-modal-disabling-removes-the-extension-and-its-local-data-re-enabling = La disabilitazione rimuove l'estensione e i relativi dati locali. La riattivazione ricomincia da capo.
 # Context: consent_modal
-extensions-ui-consent-modal-enable = Abilitare
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-extension = Abilita questa estensione
 # Context: consent_modal
-extensions-ui-consent-modal-enable-this-theme = Abilita questo tema
 # Context: consent_modal
-extensions-ui-consent-modal-everything-it-may-touch-is-listed-below = Tutto ciò che può toccare è elencato di seguito.
 # Context: consent_modal
-extensions-ui-consent-modal-no-access-to-conversations-or-composer-text = Nessun accesso alle conversazioni o al testo del compositore.
 # Context: consent_modal
-extensions-ui-consent-modal-reviewed = Recensito
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed = Non revisionato
 # Context: consent_modal
-extensions-ui-consent-modal-unreviewed-package-its-source-has-not-been-reviewed-for-the = Pacchetto non revisionato: la sua fonte non è stata revisionata per il catalogo.
 # Context: consent_modal
-extensions-ui-consent-modal-view-source = Visualizza fonte
 # Context: preview_image
-extensions-ui-preview-image-preview = Anteprima
 # Context: preview_image
-extensions-ui-preview-image-view-preview = Visualizza l'anteprima
 # Context: preview_modal
-extensions-ui-preview-modal-close-preview = Chiudi l'anteprima
 # Context: preview_modal
-extensions-ui-preview-modal-creator-preview = Anteprima del creatore
 # Context: preview_modal
-extensions-ui-preview-modal-example-deleted-message-appearance = Esempio di aspetto del messaggio eliminato
 # Context: preview_modal
 extensions-ui-preview-modal-selecting-artwork-sends-it-as-an-image-attachment = La selezione dell'opera d'arte la invia come immagine allegata.
-extensions-ui-preview-modal-unavailable-artwork-falls-back-to-images = Le emoji e gli adesivi non disponibili vengono inviati come immagini allegate.
 # Context: settings
-extensions-ui-settings-no-extensions-yet = Nessuna estensione ancora
 # Context: settings
-extensions-ui-settings-no-matches = Nessuna corrispondenza
 # Context: settings
-extensions-ui-settings-no-themes-yet = Nessun tema ancora
 # Context: settings
-extensions-ui-settings-refresh-the-catalog-or-import-a-creator-s-package-to = Aggiorna il catalogo o importa il pacchetto di un creatore per iniziare.
 # Context: settings
-extensions-ui-settings-try-a-different-name-or-creator = Prova un nome o un creatore diverso.
 # Context: show_result
-extensions-ui-show-result-apply-to-draft = Applica alla bozza
 # Context: show_result
-extensions-ui-show-result-close = Chiudi
 # Context: show_result
-extensions-ui-show-result-dismiss = Ignora
 # Context: show_result
-extensions-ui-show-result-extension-error = Errore di estensione
 # Context: show_result
-extensions-ui-show-result-proposed-app-action = Azione dell'app proposta
 # Context: show_result
-extensions-ui-show-result-proposed-composer-text = Testo proposto dal compositore
 # Context: show_result
-extensions-ui-show-result-review-the-result-app-actions-and-draft-changes-need-your = Esamina il risultato. Le azioni dell'app e le bozze delle modifiche richiedono la tua approvazione.
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-theme-editor = Torna all'editor del tema
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-back-to-themes = Ritorniamo ai temi
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-changes-are-not-saved-yet = Le modifiche non sono ancora state salvate
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-customize = Personalizza
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-previewing-theme = Tema in anteprima
 # Context: theme_preview_bar
-extensions-ui-theme-preview-bar-theme-preview = Anteprima del tema
 # Context: toolbar
-extensions-ui-toolbar-checking-for-packages-and-updates = Controllo di pacchetti e aggiornamenti
 # Context: toolbar
-extensions-ui-toolbar-clear-search = Cancella ricerca
 # Context: toolbar
-extensions-ui-toolbar-dismiss = Ignora
 # Context: toolbar
-extensions-ui-toolbar-import-theme = Importa tema...
 # Context: toolbar
-extensions-ui-toolbar-look-for-new-packages-and-updates-nothing-installs-on-its = Cerca nuovi pacchetti e aggiornamenti. Niente si installa da solo.
 # Context: toolbar
-extensions-ui-toolbar-open-a-package-file-from-this-computer = Apri un file di pacchetto da questo computer.
 # Context: toolbar
-extensions-ui-toolbar-refresh-catalog = Aggiorna catalogo
 # Context: toolbar
-extensions-ui-toolbar-search-extensions = Estensioni di ricerca
 # Context: toolbar
-extensions-ui-toolbar-search-themes = Cerca temi
 # Context: toolbar
-extensions-ui-toolbar-working-on-your-last-action = Sto lavorando alla tua ultima azione
-
 ## crates/ui/src/fonts.rs
 # Context: show
 fonts-show-import-font = Importa carattere...
@@ -1614,11 +1544,9 @@ lib-ime-updates-text-wait-for-readable-current-message-history = Attendi la cron
 # Context: mention_switch
 lib-mention-switch-ping-the-original-author = Effettua il ping dell'autore originale
 # Context: title_bar
-lib-title-bar-offline-preview = ANTEPRIMA OFFLINE
 # Context: title_bar
 lib-title-bar-sign-in-again = Accedi di nuovo
 # Context: title_bar
-lib-title-bar-synthetic-data-no-network-or-local-storage = Dati sintetici · nessuna rete o archiviazione locale
 
 ## apps/desktop/src/main.rs
 # Context: restoring
@@ -3634,191 +3562,101 @@ switcher-show-where-would-you-like-to-go = Dove ti piacerebbe andare?
 
 ## crates/ui/src/theme_editor.rs
 # Context: appearance_switch
-theme-editor-appearance-switch-colors-and-opacity-are-saved-separately-for-dark-and-light = I colori e l'opacità vengono salvati separatamente per l'aspetto scuro e chiaro.
 # Context: appearance_switch
 theme-editor-appearance-switch-dark = Scuro
 # Context: appearance_switch
-theme-editor-appearance-switch-editing = Modifica
 # Context: appearance_switch
 theme-editor-appearance-switch-light = Chiaro
 # Context: color_input
-theme-editor-color-input-use-rrggbb-or-rrggbbaa = Utilizza #RRGGBB o #RRGGBBAA
 # Context: color_override
-theme-editor-color-override-reset = Reset
 # Context: color_override
-theme-editor-color-override-use-rrggbb-or-rrggbbaa = Utilizza #RRGGBB o #RRGGBBAA.
 # Context: color_override
-theme-editor-color-override-use-the-default-color-for-this-appearance = Utilizza il colore predefinito per questo aspetto
 # Context: cover_card
-theme-editor-cover-card-automatic-preview = Anteprima automatica
 # Context: cover_card
-theme-editor-cover-card-choose-cover = Scegli la copertina
 # Context: cover_card
-theme-editor-cover-card-custom-cover = Copertina personalizzata
 # Context: cover_card
-theme-editor-cover-card-png-or-jpeg-up-to-2-mib-this-image-does = PNG o JPEG, fino a 2 MiB. Questa immagine non cambia lo sfondo della chat.
 # Context: cover_card
-theme-editor-cover-card-remove = Rimuovere
 # Context: cover_card
-theme-editor-cover-card-replace-cover = Sostituire il coperchio
 # Context: description
-theme-editor-description-direct-messages-and-channel-navigation = Messaggi diretti e navigazione nei canali
 # Context: description
-theme-editor-description-the-area-around-the-message-box = L'area intorno alla finestra del messaggio
 # Context: description
-theme-editor-description-the-conversation-timeline = La cronologia della conversazione
 # Context: description
-theme-editor-description-the-left-server-rail = La guida del server sinistra
 # Context: description
-theme-editor-description-the-member-and-search-pane-on-the-right = Il riquadro dei membri e di ricerca sulla destra
 # Context: description
-theme-editor-description-window-title-and-conversation-header = Titolo della finestra e intestazione della conversazione
 # Context: image_card
-theme-editor-image-card-background-image = Immagine di sfondo
 # Context: image_card
-theme-editor-image-card-choose-image = Scegli l'immagine
 # Context: image_card
-theme-editor-image-card-no-image-selected = Nessuna immagine selezionata
 # Context: image_card
-theme-editor-image-card-pixels = pixel
 # Context: image_card
-theme-editor-image-card-png-or-jpeg-up-to-2-mib = PNG o JPEG, fino a 2 MiB
 # Context: image_card
-theme-editor-image-card-remove = Rimuovere
 # Context: image_card
-theme-editor-image-card-replace-image = Sostituisci l'immagine
 # Context: label
-theme-editor-label-member-list = Elenco dei membri
 # Context: label
-theme-editor-label-message-input-area = Area di inserimento messaggi
 # Context: label
-theme-editor-label-message-list = Elenco dei messaggi
 # Context: label
-theme-editor-label-people-channels = Persone e canali
 # Context: label
-theme-editor-label-server-list = Elenco dei server
 # Context: label
-theme-editor-label-top-bars = Barre superiori
 # Context: metric_label
-theme-editor-metric-label-reset = Reset
 # Context: metric_label
-theme-editor-metric-label-use-the-built-in-value = Utilizza il valore integrato
 # Context: section_controls
-theme-editor-section-controls-0-shows-the-image-100-is-a-solid-section-color = 0% mostra l'immagine. 100% è un colore di sezione solido.
 # Context: section_controls
-theme-editor-section-controls-selected-section = Sezione selezionata
 # Context: section_controls
-theme-editor-section-controls-surface-opacity = Opacità della superficie
-# Context: show
-theme-editor-show-additional-colors-app-controls-and-sharing-details = Colori aggiuntivi, controlli dell'app e dettagli di condivisione.
-# Context: show
-theme-editor-show-advanced = Avanzato
-# Context: show
-theme-editor-show-app-background = Sfondo dell'app
 # Context: show
 # Context: show
-theme-editor-show-blend-two-colors-behind-the-app-s-surfaces = Unisci due colori dietro le superfici dell'app.
-# Context: show
-theme-editor-show-blur = Sfocatura
-# Context: show
-theme-editor-show-card-cover = Copertina della carta
-# Context: show
-theme-editor-show-choose-an-image-to-adjust-the-top-bar-lists-and = Scegli un'immagine per regolare la barra superiore, gli elenchi e l'area dei messaggi.
-# Context: show
-theme-editor-show-choose-the-image-shown-on-your-theme-card-in-themes = Scegli l'immagine mostrata sulla tua scheda tematica in Temi.
-# Context: show
-theme-editor-show-click-a-swatch-to-choose-a-color-or-enter-its = Fai clic su un campione per scegliere un colore o inserisci il suo valore esadecimale.
-# Context: show
-theme-editor-show-conversation-colors = Colori della conversazione
-# Context: show
-theme-editor-show-created-by = Creato da
-# Context: show
-theme-editor-show-creator-name-is-required = Il nome del creatore è obbligatorio.
-# Context: show
-theme-editor-show-export-theme = Tema di esportazione
-# Context: show
-theme-editor-show-fill-area = Riempi l'area
-# Context: show
-theme-editor-show-fit-entire-image = Adatta l'intera immagine
-# Context: show
-theme-editor-show-how-your-theme-appears-in-the-gallery = Come appare il tuo tema nella galleria.
-# Context: show
-theme-editor-show-image-opacity = Opacità dell'immagine
 # Context: show
 # Context: show
-theme-editor-show-license = Licenza
 # Context: show
-theme-editor-show-license-and-version-are-required = Sono necessarie licenza e versione.
 # Context: show
-theme-editor-show-more-colors = Più colori
 # Context: show
-theme-editor-show-only-share-images-you-own-or-have-permission-to-use = Condividi solo le immagini che possiedi o che sei autorizzato a utilizzare. Mantieni l'attribuzione richiesta.
 # Context: show
-theme-editor-show-override-the-default-appearance-setting-for-this-theme = Sostituisci l'impostazione Aspetto predefinita per questo tema.
 # Context: show
-theme-editor-show-requires-transparency-blur-in-appearance-then-an-app-restart = Richiede trasparenza e sfocatura nell'aspetto, quindi il riavvio dell'app.
 # Context: show
-theme-editor-show-section-opacity = Opacità della sezione
 # Context: show
-theme-editor-show-select-an-area-then-choose-how-much-of-the-image = Seleziona un'area, quindi scegli la quantità di immagine visibile.
 # Context: show
-theme-editor-show-sharing-export = Condivisione ed esportazione
 # Context: show
-theme-editor-show-source-url = URL di origine
 # Context: show
-theme-editor-show-text-spacing-corners = Testo, spaziatura e angoli
 # Context: show
-theme-editor-show-the-license-and-version-are-required-a-source-url-is = La licenza e la versione sono richieste. Un URL di origine è facoltativo per i temi locali.
 # Context: show
-theme-editor-show-theme-details = Dettagli del tema
 # Context: show
-theme-editor-show-theme-name = Nome del tema
 # Context: show
-theme-editor-show-theme-name-is-required = Il nome del tema è obbligatorio.
 # Context: show
-theme-editor-show-these-settings-apply-to-dark-and-light-appearances = Queste impostazioni si applicano agli aspetti scuri e chiari.
 # Context: show
-theme-editor-show-this-older-theme-uses-its-original-image-placement = Questo tema precedente utilizza il posizionamento dell'immagine originale.
 # Context: show
-theme-editor-show-transparency = Trasparenza
 # Context: show
-theme-editor-show-transparency-blur = Trasparenza e sfocatura
 # Context: show
-theme-editor-show-use-a-gradient = Usa una sfumatura
 # Context: show
-theme-editor-show-use-a-valid-https-source-url-or-leave-this-blank = Utilizza un URL di origine HTTPS valido o lascia vuoto questo campo.
 # Context: show
-theme-editor-show-use-image-across-the-app = Utilizza l'immagine nell'app
 # Context: show
-theme-editor-show-use-one-image-behind-your-conversations-and-sidebars = Usa un'immagine dietro le tue conversazioni e barre laterali.
 # Context: show
-theme-editor-show-use-rrggbb-or-rrggbbaa = Utilizza #RRGGBB o #RRGGBBAA.
 # Context: show
-theme-editor-show-version = Versione
 # Context: show
-theme-editor-show-window-effects = Effetti della finestra
 # Context: show
-theme-editor-show-window-gradient = Gradiente della finestra
 # Context: show
-theme-editor-show-your-primary-color-in-appearance-takes-precedence-over-this-accent = Il tuo colore primario in Aspetto ha la precedenza su questo accento.
 # Context: show
-theme-editor-show-the-system-applies-its-standard-blur-strength = Il sistema applica la sua intensità di sfocatura standard.
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
+# Context: show
 # Context: key
-theme-editor-tab-advanced = Avanzato
 # Context: key
-theme-editor-tab-background = Sfondo
 # Context: key
-theme-editor-tab-basics = Nozioni di base
 # Context: key
-theme-editor-tab-colors = Colori
 # Context: toolbar
-theme-editor-toolbar-back = Indietro
 # Context: toolbar
-theme-editor-toolbar-preview-in-app = Anteprima nell'app
 # Context: toolbar
-theme-editor-toolbar-save-and-apply = Salva e applica
 # Context: toolbar
-theme-editor-toolbar-unsaved-changes = Modifiche non salvate
 # Context: toolbar
 theme-editor-toolbar-working = Lavorando…
 
@@ -3858,11 +3696,8 @@ timeline-message-actions-delete-message = Elimina messaggio...
 # Context: message_actions
 timeline-message-actions-edit-message = Modifica messaggio
 # Context: message_actions
-timeline-message-actions-extensions = Estensioni
 # Context: menu
-extensions-ui-menu-group-user = Utente
 # Context: menu
-extensions-ui-menu-group-conversation = Conversazione
 # Context: message_actions
 timeline-message-actions-forward = Inoltra
 # Context: message_actions

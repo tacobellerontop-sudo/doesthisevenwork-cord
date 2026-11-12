@@ -37,25 +37,14 @@ mod recovery_demo;
 pub use recovery_demo::check as debug_resume_send_check;
 pub mod design;
 mod embeds;
-mod extension_account_actions;
-mod extension_actions;
-mod extension_admin_actions;
-mod extension_app;
-mod extension_server_actions;
-mod extensions_ui;
-mod interface_tweaks;
-mod new_message;
-pub mod proxy_auth;
-mod rich_presence;
-mod theme_editor;
-mod thread_create;
-pub use extensions_ui::{ExtensionContext, ExtensionEntry, ExtensionRequest, ExtensionUi};
 pub mod emoji;
 mod emoji_details;
 mod emoji_picker;
 mod emoticons;
 pub mod fonts;
 pub mod i18n;
+mod new_message;
+mod thread_create;
 #[cfg(all(debug_assertions, feature = "demo"))]
 pub fn debug_channel_creation(state: client_core::State) {
 	channel_menu::debug_creation(state);
@@ -257,8 +246,6 @@ pub const DEFAULT_IDLE_TIMEOUT_SECS: u32 = 10 * 60;
 
 #[derive(Default)]
 pub struct MessagingUi {
-	/// Interface tweaks switched on by enabled plugins.
-	interface_tweaks: std::sync::Arc<std::collections::BTreeSet<extensions::InterfaceTweak>>,
 	poll_creator: polls::Creator,
 	pub language: i18n::Language,
 	forwarding: forwarding::ForwardDialog,
@@ -271,7 +258,6 @@ pub struct MessagingUi {
 	interaction_components: components::Components,
 	pub verification: VerificationUi,
 	onboarding: onboarding::OnboardingUi,
-	pub extensions: ExtensionUi,
 	friends: friends::Friends,
 	account_menu: account_menu::AccountMenu,
 	pub own_presence: model::OwnPresence,
@@ -1533,28 +1519,6 @@ impl MessagingUi {
 							{
 								self.open_update_settings();
 							}
-						} else {
-							design::build_badge(ui, self.build);
-						}
-						if state.demo && !self.updates.available && !self.updates.ready {
-							egui::Frame::new()
-								.stroke(egui::Stroke::new(1.0, colors.border))
-								.corner_radius(10)
-								.inner_margin(egui::Margin::symmetric(8, 3))
-								.show(ui, |ui| {
-									ui.label(
-										design::semibold(
-											ui,
-											crate::i18n::translate("lib-title-bar-offline-preview"),
-											10.0,
-										)
-										.color(colors.muted),
-									);
-								})
-								.response
-								.on_hover_text(crate::i18n::translate(
-									"lib-title-bar-synthetic-data-no-network-or-local-storage",
-								));
 						}
 						if !state.demo
 							&& state.auth != client_core::auth::AuthState::Authenticated
@@ -3727,9 +3691,6 @@ impl MessagingUi {
                             .inner
                             .on_hover_text(crate::i18n::translate("lib-ime-updates-text-choose-drop-or-paste-files-ctrl-cmd-option-v-up")))
                     };
-                    if !editing_here {
-                        self.extensions.composer_menu(ui, state);
-                    }
                     if let Some(attach) = attach {
                         egui::Popup::menu(&attach)
                             .id(attach.id.with(("composer-add", state.generation, channel)))
@@ -4613,23 +4574,9 @@ impl MessagingUi {
 		}
 	}
 
-	/// Whether an enabled plugin switched `tweak` on.
-	pub fn interface_tweak_on(&self, tweak: extensions::InterfaceTweak) -> bool {
-		self.interface_tweaks.contains(&tweak)
-	}
-	/// Replaces the interface tweaks that enabled plugins switched on.
-	pub fn set_interface_tweaks(
-		&mut self,
-		tweaks: std::collections::BTreeSet<extensions::InterfaceTweak>,
-	) {
-		if *self.interface_tweaks != tweaks {
-			self.interface_tweaks = std::sync::Arc::new(tweaks);
-		}
-	}
 	/// Draws one frame of the signed-in client and returns the commands it produced for the
 	/// service layer.
 	pub fn show(&mut self, ui: &mut egui::Ui, state: &mut State) -> Vec<Command> {
-		interface_tweaks::publish(ui.ctx(), &self.interface_tweaks);
 		rtl::scope(
 			ui.ctx(),
 			state.generation,
@@ -4761,36 +4708,14 @@ impl MessagingUi {
 		});
 		let ctx = ui.ctx().clone();
 		user_menu::set_voice_available(&ctx, self.voice_available);
-		self.extensions.reset_theme_shortcut(&ctx);
-		self.extensions.context_menus(&ctx, state);
-		if self.extensions.has_result() {
-			self.settings.open = false;
-		}
-		if let Some(effect) = self.extensions.show_result(
-			&ctx,
-			state,
-			&mut self.draft_changes,
-			self.editing.is_some(),
-			&mut self.avatars,
-			(self.game_activity_status, self.share_game_activity),
-		) && let Err(error) = self.apply_extension_effect(&ctx, state, effect, &mut commands)
-		{
-			self.extensions.report_error(error);
-		}
 		self.keybinds_shortcut(&ctx);
-		self.theme_preview_navigation(ui);
 		let settings_open =
 			self.settings.open || self.server_settings.is_open() || self.channel_menu.is_open();
-		self.extensions.begin_theme_editor_frame();
 		if self.settings.open {
 			self.show_settings(&ctx, state, &mut commands);
-			if self.extensions.previewing_theme() {
-				self.settings.open = false;
-			}
 			ui.disable();
 		}
 		if self.server_settings.is_open() {
-			self.extensions.stop_theme_preview(&ctx);
 			if self.profile.open_user().is_some()
 				&& ctx
 					.input_mut(|input| input.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
@@ -5102,7 +5027,6 @@ impl MessagingUi {
 			self.search.focus_conversation(channel, state);
 		}
 		self.search.sync(&ctx, state, &mut commands);
-		self.search.extension_actions = self.extensions.message_actions();
 		let search_open =
 			self.search.results_visible(state) && state.selected.is_some() && !selected_voice;
 		let show_members = !selected_voice
@@ -5495,7 +5419,6 @@ impl MessagingUi {
 							.then_some(self.reading_preferences.double_click_emoji());
 						self.timeline.instant_scrolling =
 							!self.reading_preferences.smooth_scrolling;
-						self.timeline.extension_actions = self.extensions.message_actions();
 						self.timeline.quick_reactions =
 							Some(self.reaction_picker.quick_reactions(state));
 						let mut seen = std::collections::BTreeSet::new();
@@ -5540,11 +5463,6 @@ impl MessagingUi {
 							state.request_author_members(&self.timeline.visible_authors)
 						{
 							commands.push(command);
-						}
-						if let Some((action, text, target)) = self.timeline.extension_request.take()
-						{
-							self.extensions
-								.invoke_message(action, text, target, state, ui.ctx());
 						}
 						if let Some((message, anchor, trigger)) =
 							self.timeline.reaction_picker.take()
@@ -5743,10 +5661,6 @@ impl MessagingUi {
 		}
 		if let Some(link) = self.search.opening.take() {
 			self.timeline.opening = Some(link);
-		}
-		if let Some((action, text, target)) = self.search.extension_request.take() {
-			self.extensions
-				.invoke_message(action, text, target, state, &ctx);
 		}
 		if let Some(channel) = self.search.channel_reference.take() {
 			self.timeline.channel_reference = Some(channel);

@@ -13,7 +13,7 @@ DTEW Cord is a Rust Discord client organized as a Cargo workspace. Its backend i
 - **`local-store`** — SQLite-backed local persistence and worker-based storage operations.
 - **`platform`** — operating-system integrations such as credential storage and native dialogs. Some APIs are desktop-oriented and need adapters for a TUI.
 - **`discord-voice`** — voice transport and audio/media processing. Device selection and call controls need a terminal interaction design.
-- **`extensions`** — extension package validation, capability handling and runtime integration.
+- **`extensions`** — theme palette types only, kept until DTEW Cord's own theming system replaces them. The extension (plugin) system inherited from Serein was removed.
 - **`diagnostics`** — diagnostic and logging facilities.
 - **`ui`** — egui presentation components. This is not required by a terminal frontend.
 - **`apps/desktop`** — desktop composition root: startup, authentication lifecycle, worker wiring, native UI setup and application shutdown.
@@ -31,11 +31,11 @@ A terminal application generally needs:
 5. A Ratatui renderer that reads state but does not perform network requests.
 6. A cancellation and shutdown path that stops Gateway, REST, storage and voice workers cleanly.
 
-Keep event queues bounded. Do not block the terminal draw loop on REST calls, file I/O, media decoding or extension execution. Preserve the existing cache and payload limits when introducing new views.
+Keep event queues bounded. Do not block the terminal draw loop on REST calls, file I/O, media decoding. Preserve the existing cache and payload limits when introducing new views.
 
 ## Desktop-only functionality to adapt
 
-The current GUI includes egui panels, native dialogs, image/video surfaces, camera and screen capture controls, profile previews and graphical extension settings. These are not automatically portable to a TUI. Provide terminal equivalents where practical, and make unsupported operations explicit rather than silently dropping them.
+The current GUI includes egui panels, native dialogs, image/video surfaces, camera and screen capture controls, and profile previews. These are not automatically portable to a TUI. Provide terminal equivalents where practical, and make unsupported operations explicit rather than silently dropping them.
 
 ## Workspace notes
 

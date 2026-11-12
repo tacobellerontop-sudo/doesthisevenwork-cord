@@ -1,22 +1,6 @@
 //! Native destination selection; never interprets an attachment name as a path.
 use std::{path::PathBuf, sync::Arc};
 
-/// Explicit local extension import; selection grants no plugin capabilities.
-pub fn extension_source(
-	parent: Arc<winit::window::Window>,
-) -> impl std::future::Future<Output = Option<PathBuf>> + Send + 'static {
-	let dialog = rfd::AsyncFileDialog::new()
-		.set_parent(parent.as_ref())
-		.set_title("Import DTEW Cord extension")
-		.add_filter("DTEW Cord extensions", &["dtewcord-extension", "json"])
-		.pick_file();
-	async move {
-		let file = dialog.await?;
-		drop(parent);
-		Some(file.path().to_owned())
-	}
-}
-
 pub fn icon_source(
 	parent: Arc<winit::window::Window>,
 	title: &'static str,

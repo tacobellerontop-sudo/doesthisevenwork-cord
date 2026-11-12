@@ -892,6 +892,8 @@ fn readable_tint(base: Color32, background: Color32) -> Color32 {
 		dark
 	}
 }
+// Unused until the standalone theming system lists custom themes again.
+#[allow(dead_code)]
 pub(crate) fn theme_preview_palette(ui: &egui::Ui, theme: &extensions::Theme) -> Palette {
 	let base = builtin_colors(ui.visuals().dark_mode, variant());
 	let theme = if ui.visuals().dark_mode {

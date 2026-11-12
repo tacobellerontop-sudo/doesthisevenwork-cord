@@ -56,14 +56,6 @@ pub struct SearchUi {
 	pub opening: Option<String>,
 	pub channel_reference: Option<Id>,
 	pub channel_reference_load: Option<Id>,
-	/// Plugin message actions offered in a result's context menu.
-	pub(crate) extension_actions: std::sync::Arc<Vec<crate::extensions_ui::MenuAction>>,
-	/// Plugin message action chosen on a result this frame, with the message it applies to.
-	pub(crate) extension_request: Option<(
-		crate::extensions_ui::MenuAction,
-		String,
-		crate::extensions_ui::MessageTarget,
-	)>,
 }
 
 impl SearchUi {
@@ -91,7 +83,8 @@ impl SearchUi {
 		self.filter_draft = None;
 		self.viewing = None;
 	}
-	pub(super) fn open_extension(&mut self, channel: Id, pins: bool, query: Option<String>) {
+	#[cfg(test)]
+	pub(super) fn open_with_query(&mut self, channel: Id, pins: bool, query: Option<String>) {
 		self.channel = Some(channel);
 		self.open = true;
 		self.pins = pins;
@@ -1594,32 +1587,6 @@ impl SearchUi {
 		let readable = text != model::PREVIEW_LIMIT_NOTICE;
 		popup.show(|ui| {
 			ui.set_min_width(160.0);
-			if readable && !self.extension_actions.is_empty() {
-				let mut chosen = None;
-				ui.menu_button(
-					crate::i18n::translate("timeline-message-actions-extensions"),
-					|ui| {
-						for action in self.extension_actions.iter() {
-							if ui.button(&action.label).clicked() {
-								chosen = Some(action.clone());
-								ui.close();
-							}
-						}
-					},
-				);
-				if let Some(action) = chosen {
-					self.extension_request = Some((
-						action,
-						text.clone(),
-						crate::extensions_ui::MessageTarget {
-							channel: hit.channel,
-							message: hit.id,
-							author: hit.author.id,
-						},
-					));
-				}
-				ui.separator();
-			}
 			// The selection Copy is offered only for a selection made in this result's text.
 			if readable
 				&& crate::select::has_selection_in(ui.ctx(), response.rect)
